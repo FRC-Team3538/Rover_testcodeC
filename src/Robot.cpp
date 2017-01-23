@@ -601,8 +601,8 @@ public:
 
 	void TeleopPeriodic() {
 
-		double SpeedLeft = Drivestick.GetRawAxis(1) * -1; // get Yaxis value (forward)
-		double SpeedRight = Drivestick.GetRawAxis(4); // get Xaxis value (turn)
+		double SpeedLeft = Drivestick.GetRawAxis(1) * 1; // get Yaxis value (forward)
+		double SpeedRight = Drivestick.GetRawAxis(4) * -1; // get Xaxis value (turn)
 		// Set dead band for X and Y axis
 		float Deadband = 0.11;
 		if (SpeedLeft < Deadband and SpeedLeft > -Deadband)
