@@ -1,6 +1,3 @@
-
-//bladhldsjsdfjiowej testing :)
-
 #include <iostream>
 #include <memory>
 #include <string>
@@ -208,32 +205,32 @@ public:
 
 	int forward7ft(double speed, double target) {
 		double DistanceLeft = EncoderLeft.GetDistance();
-			double SpeedLeft = speed;
-			double SpeedRight = speed;
-			int done = 0;
-			if (abs(DistanceLeft) < abs(target)) {
-				// GetDistance is already calibrated to inches.
-				DriveLeft0.Set(SpeedLeft * -1);
-				DriveLeft1.Set(SpeedLeft * -1);
-				DriveRight0.Set(SpeedRight);
-				DriveRight1.Set(SpeedRight);
+		double SpeedLeft = speed;
+		double SpeedRight = speed;
+		int done = 0;
+		if (abs(DistanceLeft) < abs(target)) {
+			// GetDistance is already calibrated to inches.
+			DriveLeft0.Set(SpeedLeft * -1);
+			DriveLeft1.Set(SpeedLeft * -1);
+			DriveRight0.Set(SpeedRight);
+			DriveRight1.Set(SpeedRight);
 
-				SmartDashboard::PutNumber("Left Encoder Distance", DistanceLeft);
-				done = 0;
-			} else {
-				// All done with going straight
-				DriveLeft0.Set(0);
-				DriveLeft1.Set(0);
-				DriveRight0.Set(0);
-				DriveRight1.Set(0);
-				// done going forwards 7ft
+			SmartDashboard::PutNumber("Left Encoder Distance", DistanceLeft);
+			done = 0;
+		} else {
+			// All done with going straight
+			DriveLeft0.Set(0);
+			DriveLeft1.Set(0);
+			DriveRight0.Set(0);
+			DriveRight1.Set(0);
+			// done going forwards 7ft
 
-				EncoderLeft.Reset();
-				EncoderRight.Reset();
+			EncoderLeft.Reset();
+			EncoderRight.Reset();
 
-				done = 1;
-			}
-			return done;
+			done = 1;
+		}
+		return done;
 	}
 	int autonTurn(float targetYaw, float tolerance, float errorGain) {
 
@@ -269,8 +266,8 @@ public:
 		return done;
 	}
 
-	void autoBlue1(void) {
-		//
+	void autoBlue1A(void) {
+		//drives turns then drives again
 		//Blue boiler side code
 		//blue 1
 		//std::string autoSelected = *((std::string*) chooser.GetSelected());
@@ -303,7 +300,7 @@ public:
 			//waits a couple of seconds for balls
 			//rover on carpet: pause(1, 0.1)
 			//rover on tile: pause(1, 0.1)
-			if (pause(1, 0.1) == 1) {
+			if (timedDrive(1, 0.1, 0.1) == 1) {
 				state = 5;
 			}
 		} else if (state == 5) {
@@ -352,6 +349,71 @@ public:
 
 	}
 
+	void autoBlue1(void) {
+			//drives diagonally toward hopper
+			//Blue boiler side code
+			//blue 1
+			//std::string autoSelected = *((std::string*) chooser.GetSelected());
+			if (state == 1) {
+				// go forward 8 ft diagonally towards hopper
+				//rover on carpet:forward7ft(-0.8, 6.5 * 12.0)
+				//rover on tile: forward7ft(-0.8, 6.5 *12.0)
+				if (forward7ft(-0.8, 8 * 12.0) == 1) {
+					state = 4;
+					ahrs->Reset();
+				}
+			} else if (state == 4) {
+				//turns into hopper
+				//rover on carpet: pause(1, 0.1)
+				//rover on tile: pause(1, 0.1)
+				if (timedDrive(1, 0.2, 0.1) == 1) {
+					state = 5;
+				}
+			} else if (state == 5) {
+				//go backward 4-ish feet
+				//rover on carpet: forward(-0.8, 4 * 12.0)
+				//rover on tile: forward7ft(-0.8, 4 * 12.0)
+				if (forward7ft(-0.8, 4 * 12.0) == 1) {
+					state = 6;
+					ahrs->Reset();
+				}
+			} else if (state == 6) {
+				// turn enough degrees to face boiler
+				//rover on carpet: autonTurn(120, 5, -0.012)
+				//rover on tile: autonTurn(105, 5, -0.012)
+				if (autonTurn(120, 5, -0.012) == 1) {
+					state = 7;
+					EncoderLeft.Reset();
+					EncoderRight.Reset();
+				}
+			} else if (state == 7) {
+				//go forward 7-ish feet to run into boiler
+				//rover on carpet:forward7ft(-0.8, 8.5 * 12.0)
+				//rover on tile: forward7ft(-0.8, 8.5 * 12.0)
+				if (forward7ft(-0.8, 8.5 * 12.0) == 1) {
+					state = 8;
+					ahrs->Reset();
+				}
+			} else if (state == 8) {
+				//launch
+				state = 9;
+			} else if (state == 9) {
+				//stop
+				stopx();
+			} else {
+				state = 1;
+			}
+
+			SmartDashboard::PutNumber("DistanceLeft(raw)", EncoderLeft.GetRaw());
+			SmartDashboard::PutNumber("DistanceRight(raw)", EncoderRight.GetRaw());
+			SmartDashboard::PutNumber("DistanceLeft(Inch)",
+					EncoderLeft.GetDistance());
+			SmartDashboard::PutNumber("DistanceRight(Inch)",
+					EncoderRight.GetDistance());
+			SmartDashboard::PutNumber("State", state);
+			SmartDashboard::PutNumber("Timer", AutonTimer.Get());
+
+		}
 
 	void autoBlue2(void) {
 		if (state == 1) {
@@ -406,8 +468,9 @@ public:
 
 	}
 
-	void autoRed1(void) {
+	void autoRed1A(void) {
 		//Red center position code
+		//this version turns the robot in a right angle
 		SmartDashboard::PutString("autonMode", "Red 1");
 		//***red 1
 		//std::string autoSelected = *((std::string*) chooser.GetSelected());
@@ -438,10 +501,79 @@ public:
 				AutonTimer.Reset();
 			}
 		} else if (state == 4) {
-			//waits a couple of seconds for balls
+			//waits in front of hopper a couple of seconds for balls
 			//rover on carpet: pause(1, 0)
 			//rover on tile: pause(1, 0)
-			if (pause(1, 0) == 1) {
+			if (timedDrive(1, 0.1, 0.1) == 1) {
+				state = 5;
+			}
+		} else if (state == 5) {
+			//go backward 3-ish feet
+			//rover on carpet: forward7ft(-0.8, 3 * 12.0)
+			//rover on tile:forward7ft(-0.8, 3 * 12.0)
+			if (forward7ft(-0.8, 3 * 12.0) == 1) {
+				state = 6;
+				ahrs->Reset();
+			}
+		} else if (state == 6) {
+			// turns counterclockwise enough degrees to face boiler
+			//rover on carpet: autonTurn(-125, 5, -0.012)
+			//rover on tile: autonTurn(-115, 5, -0.012)
+			if (autonTurn(-125, 5, -0.012) == 1) {
+				state = 7;
+				EncoderLeft.Reset();
+				EncoderRight.Reset();
+			}
+		} else if (state == 7) {
+			//go forward 7-ish feet to run into boiler
+			//rover on carpet: forward7ft(-0.8, 8.5 * 12.0)
+			//rover on tile: forward7ft(-0.8, 8.5*12.0)
+			if (forward7ft(-0.8, 8.5 * 12.0) == 1) {
+				state = 8;
+				ahrs->Reset();
+			}
+		} else if (state == 8) {
+			//launch
+			state = 9;
+		} else if (state == 9) {
+			//stop
+			stopx();
+		} else {
+			state = 1;
+		}
+
+		SmartDashboard::PutNumber("DistanceLeft(raw)", EncoderLeft.GetRaw());
+		SmartDashboard::PutNumber("DistanceRight(raw)", EncoderRight.GetRaw());
+		SmartDashboard::PutNumber("DistanceLeft(Inch)",
+				EncoderLeft.GetDistance());
+		SmartDashboard::PutNumber("DistanceRight(Inch)",
+				EncoderRight.GetDistance());
+		SmartDashboard::PutNumber("State", state);
+		return;
+
+	}
+
+	void autoRed1(void) {
+		//Red center position code
+		//this version drive diagonally to the hopper
+		SmartDashboard::PutString("autonMode", "Red 1");
+		//***red 1
+		//std::string autoSelected = *((std::string*) chooser.GetSelected());
+
+		if (state == 1) {
+			// go forward 7 ft
+			//rover on carpet: forward7ft(-0.8, 6.5 * 12.0)
+			//rover on tile: forward7ft(-0.8, 6.5 * 12.0)
+			if (forward7ft(-0.8, 8 * 12.0) == 1) {
+				//goes directly to state 4 for consistency with autoRed1A
+				state = 4;
+				ahrs->Reset();
+			}
+		} else if (state == 4) {
+			//robot drives counterclockwise into hopper
+			//rover on carpet: pause(1, 0) 		// changed from pause -> timedDrive()
+			//rover on tile: pause(1, 0)
+			if (timedDrive(1, 0.1, 0.2) == 1) {
 				state = 5;
 			}
 		} else if (state == 5) {
@@ -545,21 +677,22 @@ public:
 
 	}
 
-	int pause(double pauseTime, double motorSpeed) {
-			int done;
-			float currentTime = AutonTimer.Get();
-			if (currentTime < pauseTime) {
-				DriveLeft0.Set(-motorSpeed);
-				DriveLeft1.Set(-motorSpeed);
-				DriveRight0.Set(motorSpeed);
-				DriveRight0.Set(motorSpeed);
+	int timedDrive(double driveTime, double leftMotorSpeed,
+			double rightMotorSpeed) {
+		int done;
+		float currentTime = AutonTimer.Get();
+		if (currentTime < driveTime) {
+			DriveLeft0.Set(-leftMotorSpeed);
+			DriveLeft1.Set(-leftMotorSpeed);
+			DriveRight0.Set(rightMotorSpeed);
+			DriveRight0.Set(rightMotorSpeed);
 
-				done = 0;
-			} else {
-				done = 1;
-			}
-			return done;
+			done = 0;
+		} else {
+			done = 1;
 		}
+		return done;
+	}
 
 //	void autonTurn(float targetYaw, float tolerance, float errorGain) {
 //
