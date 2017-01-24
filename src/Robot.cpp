@@ -271,6 +271,8 @@ public:
 		//Blue boiler side code
 		//blue 1
 		//std::string autoSelected = *((std::string*) chooser.GetSelected());
+
+		SmartDashboard::PutString("old blue 1", "yeah");
 		if (state == 1) {
 			// go forward 7 ft
 			//rover on carpet:forward7ft(-0.8, 6.5 * 12.0)
@@ -354,11 +356,13 @@ public:
 			//Blue boiler side code
 			//blue 1
 			//std::string autoSelected = *((std::string*) chooser.GetSelected());
+
+		SmartDashboard::PutString("blue 1", "yeah");
 			if (state == 1) {
 				// go forward 8 ft diagonally towards hopper
 				//rover on carpet:forward7ft(-0.8, 6.5 * 12.0)
 				//rover on tile: forward7ft(-0.8, 6.5 *12.0)
-				if (forward7ft(-0.8, 8 * 12.0) == 1) {
+				if (forward7ft(-0.8, 7 * 12.0) == 1) {
 					state = 4;
 					ahrs->Reset();
 				}
@@ -366,8 +370,8 @@ public:
 				//turns into hopper
 				//rover on carpet: pause(1, 0.1)
 				//rover on tile: pause(1, 0.1)
-				if (timedDrive(1, 0.2, 0.1) == 1) {
-					state = 5;
+				if (timedDrive(3, 0.2, -0.8) == 1) {
+					state = 9;
 				}
 			} else if (state == 5) {
 				//go backward 4-ish feet
@@ -573,7 +577,7 @@ public:
 			//robot drives counterclockwise into hopper
 			//rover on carpet: pause(1, 0) 		// changed from pause -> timedDrive()
 			//rover on tile: pause(1, 0)
-			if (timedDrive(1, 0.1, 0.2) == 1) {
+			if (timedDrive(1, 0.2, 0.1) == 1) {
 				state = 5;
 			}
 		} else if (state == 5) {
