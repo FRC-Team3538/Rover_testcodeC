@@ -40,7 +40,7 @@ public:
 			chooser.AddObject(autonNameBlue1, autonNameBlue1);
 			chooser.AddObject(autonNameBlue2, autonNameBlue2);
 			chooser.AddObject(autonNameBlue3, autonNameBlue3);
-			frc::SmartDashboard::PutData("Auto Modes2", &chooser);
+			frc::SmartDashboard::PutData("Auto Modes", &chooser);
 		}
 		EncoderLeft.SetDistancePerPulse(0.0243228675 * 4);
 		EncoderRight.SetDistancePerPulse(-0.0243228675 * 4);
@@ -92,6 +92,8 @@ public:
 		else
 			AutoVal2 = 0;
 		AutoVal = AutoVal0 + AutoVal1 + AutoVal2;
+
+		SmartDashboard::PutString("autonMode", "Off");
 
 		if (AutonOverride) {
 			autoSelected = chooser.GetSelected();
@@ -267,7 +269,7 @@ public:
 	}
 
 	void autoBlue1(void) {
-		//
+		SmartDashboard::PutString("autonMode", "Blue 1");
 		//Blue boiler side code
 		//blue 1
 		//std::string autoSelected = *((std::string*) chooser.GetSelected());
@@ -351,6 +353,8 @@ public:
 
 
 	void autoBlue2(void) {
+		SmartDashboard::PutString("autonMode", "Blue 2");
+
 		if (state == 1) {
 			//rover on carpet: forward7ft(-0.8, 7 * 12.0)
 			//rover on tile: forward7ft(-0.8, 7 * 12.0)
@@ -367,6 +371,7 @@ public:
 	}
 
 	void autoBlue3(void) {
+		SmartDashboard::PutString("autonMode", "Blue 3");
 		//blue three
 		if (state == 1) {
 			// go forward 7 ft
@@ -488,7 +493,7 @@ public:
 	}
 
 	void autoRed2(void) {
-
+		SmartDashboard::PutString("autonMode", "Red 2");
 		if (state == 1) {
 			//rover on carpet: forward7ft(-0.8, 7 * 12.0)
 			//rover on tile: forward7ft(-0.8, 7 * 12.0)
@@ -506,6 +511,7 @@ public:
 
 	void autoRed3(void) {
 		//red three
+		SmartDashboard::PutString("autonMode", "Red 3");
 		if (state == 1) {
 			// go forward 7 ft
 			//rover on carpet: forward7ft(-0.8, 9 * 12.0)
