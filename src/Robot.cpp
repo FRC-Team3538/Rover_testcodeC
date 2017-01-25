@@ -205,6 +205,15 @@ public:
 //		}
 	}
 
+	void motorSpeed(double leftMotor, double rightMotor) {
+		DriveLeft0.Set(leftMotor * -1);
+		DriveLeft1.Set(leftMotor * -1);
+		DriveLeft2.Set(leftMotor * -1);
+		DriveRight0.Set(rightMotor);
+		DriveRight1.Set(rightMotor);
+		DriveRight2.Set(rightMotor);
+	}
+
 	int forward7ft(double speed, double target) {
 		double DistanceLeft = EncoderLeft.GetDistance();
 		double SpeedLeft = speed;
@@ -213,18 +222,13 @@ public:
 		if (abs(DistanceLeft) < abs(target)) {
 			// GetDistance is already calibrated to inches.
 			DriveLeft0.Set(SpeedLeft * -1);
-			DriveLeft1.Set(SpeedLeft * -1);
-			DriveRight0.Set(SpeedRight);
-			DriveRight1.Set(SpeedRight);
+			motorSpeed(SpeedLeft, SpeedRight);
 
 			SmartDashboard::PutNumber("Left Encoder Distance", DistanceLeft);
 			done = 0;
 		} else {
 			// All done with going straight
-			DriveLeft0.Set(0);
-			DriveLeft1.Set(0);
-			DriveRight0.Set(0);
-			DriveRight1.Set(0);
+			motorSpeed(0,0);
 			// done going forwards 7ft
 
 			EncoderLeft.Reset();
@@ -250,10 +254,7 @@ public:
 		SmartDashboard::PutNumber("error gain", errorGain);
 
 		if (abs(yawError) > tolerance) {
-			DriveLeft0.Set(yawError * errorGain);
-			DriveLeft1.Set(yawError * errorGain);
-			DriveRight0.Set(yawError * errorGain);
-			DriveRight1.Set(yawError * errorGain);
+			motorSpeed(yawError * errorGain, yawError * errorGain);
 
 			SmartDashboard::PutNumber("motor speed", yawError * errorGain);
 
@@ -268,7 +269,7 @@ public:
 		return done;
 	}
 
-	void autoBlue1A(void) {
+	void autoBlue1(void) {
 		//drives turns then drives again
 		SmartDashboard::PutString("autonMode", "Blue 1");
 		//Blue boiler side code
@@ -280,7 +281,7 @@ public:
 			// go forward 7 ft
 			//rover on carpet:forward7ft(-0.8, 6.5 * 12.0)
 			//rover on tile: forward7ft(-0.8, 6.5 *12.0)
-			if (forward7ft(-0.8, 6.5 * 12.0) == 1) {
+			if (forward7ft(-0.4, 6.5 * 12.0) == 1) {
 				state = 2;
 				ahrs->Reset();
 			}
@@ -288,7 +289,7 @@ public:
 			// turn 90 degrees clockwise
 			//rover on carpet: autonTurn(85, 5, -0.012)
 			//rover on tile: autonTurn(75, 5, -0.012)
-			if (autonTurn(85, 5, -0.012) == 1) {
+			if (autonTurn(85, 5, -0.006) == 1) {
 				state = 3;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -297,7 +298,7 @@ public:
 			// go forward 7 ft to hit hopper
 			//rover on carpet: forward7ft(0.8, 7 * -1 * 12.0)
 			//rover on tile: forward7ft(0.8, 7 * -1 * 12.0)
-			if (forward7ft(0.8, 7 * -1 * 12.0) == 1) {
+			if (forward7ft(0.4, 7 * -1 * 12.0) == 1) {
 				state = 4;
 				AutonTimer.Reset();
 			}
@@ -305,14 +306,14 @@ public:
 			//waits a couple of seconds for balls
 			//rover on carpet: pause(1, 0.1)
 			//rover on tile: pause(1, 0.1)
-			if (timedDrive(1, 0.1, 0.1) == 1) {
+			if (timedDrive(1, 0.05, 0.05) == 1) {
 				state = 5;
 			}
 		} else if (state == 5) {
 			//go backward 4-ish feet
 			//rover on carpet: forward(-0.8, 4 * 12.0)
 			//rover on tile: forward7ft(-0.8, 4 * 12.0)
-			if (forward7ft(-0.8, 4 * 12.0) == 1) {
+			if (forward7ft(-0.4, 4 * 12.0) == 1) {
 				state = 6;
 				ahrs->Reset();
 			}
@@ -320,7 +321,7 @@ public:
 			// turn enough degrees to face boiler
 			//rover on carpet: autonTurn(120, 5, -0.012)
 			//rover on tile: autonTurn(105, 5, -0.012)
-			if (autonTurn(120, 5, -0.012) == 1) {
+			if (autonTurn(120, 5, -0.006) == 1) {
 				state = 7;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -329,7 +330,7 @@ public:
 			//go forward 7-ish feet to run into boiler
 			//rover on carpet:forward7ft(-0.8, 8.5 * 12.0)
 			//rover on tile: forward7ft(-0.8, 8.5 * 12.0)
-			if (forward7ft(-0.8, 8.5 * 12.0) == 1) {
+			if (forward7ft(-0.4, 8.5 * 12.0) == 1) {
 				state = 8;
 				ahrs->Reset();
 			}
@@ -354,7 +355,7 @@ public:
 
 	}
 
-	void autoBlue1(void) {
+	void autoBlue1A(void) {
 			//drives diagonally toward hopper
 			//Blue boiler side code
 			//blue 1
@@ -428,7 +429,7 @@ public:
 		if (state == 1) {
 			//rover on carpet: forward7ft(-0.8, 7 * 12.0)
 			//rover on tile: forward7ft(-0.8, 7 * 12.0)
-			if (forward7ft(-0.8, 7 * 12.0) == 1) {
+			if (forward7ft(-0.4, 7 * 12.0) == 1) {
 				state = 9;
 			}
 		} else if (state == 9) {
@@ -447,7 +448,7 @@ public:
 			// go forward 7 ft
 			//rover on carpet: forward 7ft(-0.8, 7 * 12.0)
 			//rover on tile: forward7ft(-0.8, 7 * 12.0)
-			if (forward7ft(-0.8, 7 * 12.0) == 1) {
+			if (forward7ft(-0.2, 7 * 12.0) == 1) {
 				state = 2;
 				ahrs->Reset();
 			}
@@ -455,7 +456,7 @@ public:
 			// turn 90 degrees counterclockwise
 			//rover on carpet: autonTurn(-60, 5, -0.012)
 			//rover on tile: autonTurn(-60, 5, -0.012)
-			if (autonTurn(-60, 5, -0.012) == 1) {
+			if (autonTurn(-60, 5, -0.006) == 1) {
 				state = 3;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -464,7 +465,7 @@ public:
 			// go forward
 			//rover on carpet: forward7ft(-0.6, 2 * 12.0)
 			//rover on tile: forward7ft(-0.5, 2 * 12)
-			if (forward7ft(-0.6, 2 * 12) == 1) {
+			if (forward7ft(-0.2, 2 * 12) == 1) {
 				state = 9;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -478,7 +479,7 @@ public:
 
 	}
 
-	void autoRed1A(void) {
+	void autoRed1(void) {
 		//Red center position code
 		//this version turns the robot in a right angle
 		SmartDashboard::PutString("autonMode", "Red 1");
@@ -489,7 +490,7 @@ public:
 			// go forward 7 ft
 			//rover on carpet: forward7ft(-0.8, 6.5 * 12.0)
 			//rover on tile: forward7ft(-0.8, 6.5 * 12.0)
-			if (forward7ft(-0.8, 6.5 * 12.0) == 1) {
+			if (forward7ft(-0.4, 6.5 * 12.0) == 1) {
 				state = 2;
 				ahrs->Reset();
 			}
@@ -497,7 +498,7 @@ public:
 			// turn 90 degrees counterclockwise
 			//rover on carpet: autonTurn(-95, 5, -0.012)
 			//rover on tile: autonTurn(-82, 5, -0.012)
-			if (autonTurn(-95, 5, -0.012) == 1) {
+			if (autonTurn(-95, 5, -0.006) == 1) {
 				state = 3;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -506,7 +507,7 @@ public:
 			// go forward 7 ft to hit hopper
 			//rover on carpet: forward7ft(0.8, 7 * -1 * 12.0)
 			//rover on tile: forward7ft(0.8, 7 * 12.0)
-			if (forward7ft(0.8, 7 * -1 * 12.0) == 1) {
+			if (forward7ft(0.4, 7 * -1 * 12.0) == 1) {
 				state = 4;
 				AutonTimer.Reset();
 			}
@@ -514,14 +515,14 @@ public:
 			//waits in front of hopper a couple of seconds for balls
 			//rover on carpet: pause(1, 0)
 			//rover on tile: pause(1, 0)
-			if (timedDrive(1, 0.1, 0.1) == 1) {
+			if (timedDrive(1, 0.05, 0.05) == 1) {
 				state = 5;
 			}
 		} else if (state == 5) {
 			//go backward 3-ish feet
 			//rover on carpet: forward7ft(-0.8, 3 * 12.0)
 			//rover on tile:forward7ft(-0.8, 3 * 12.0)
-			if (forward7ft(-0.8, 3 * 12.0) == 1) {
+			if (forward7ft(-0.4, 3 * 12.0) == 1) {
 				state = 6;
 				ahrs->Reset();
 			}
@@ -529,7 +530,7 @@ public:
 			// turns counterclockwise enough degrees to face boiler
 			//rover on carpet: autonTurn(-125, 5, -0.012)
 			//rover on tile: autonTurn(-115, 5, -0.012)
-			if (autonTurn(-125, 5, -0.012) == 1) {
+			if (autonTurn(-125, 5, -0.006) == 1) {
 				state = 7;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -538,7 +539,7 @@ public:
 			//go forward 7-ish feet to run into boiler
 			//rover on carpet: forward7ft(-0.8, 8.5 * 12.0)
 			//rover on tile: forward7ft(-0.8, 8.5*12.0)
-			if (forward7ft(-0.8, 8.5 * 12.0) == 1) {
+			if (forward7ft(-0.4, 8.5 * 12.0) == 1) {
 				state = 8;
 				ahrs->Reset();
 			}
@@ -563,7 +564,7 @@ public:
 
 	}
 
-	void autoRed1(void) {
+	void autoRed1A(void) {
 		//Red center position code
 		//this version drive diagonally to the hopper
 		SmartDashboard::PutString("autonMode", "Red 1");
@@ -637,7 +638,7 @@ public:
 		if (state == 1) {
 			//rover on carpet: forward7ft(-0.8, 7 * 12.0)
 			//rover on tile: forward7ft(-0.8, 7 * 12.0)
-			if (forward7ft(-0.8, 7 * 12.0) == 1) {
+			if (forward7ft(-0.4, 7 * 12.0) == 1) {
 				state = 9;
 			}
 		} else if (state == 9) {
@@ -656,7 +657,7 @@ public:
 			// go forward 7 ft
 			//rover on carpet: forward7ft(-0.8, 9 * 12.0)
 			//rover on tile: forward 7ft(-0.8, 9 * 12.0)
-			if (forward7ft(-0.8, 9 * 12.0) == 1) {
+			if (forward7ft(-0.2, 9 * 12.0) == 1) {
 				state = 2;
 				ahrs->Reset();
 			}
@@ -664,7 +665,7 @@ public:
 			// turn 60 degrees clockwise
 			//rover on carpet: autonTurn(60, 5, -0.019)
 			//rover on tile:autonTurn(60, 5, -0.012)
-			if (autonTurn(60, 5, -0.019) == 1) {
+			if (autonTurn(60, 5, -0.009) == 1) {
 				state = 3;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -673,7 +674,7 @@ public:
 			// go forward
 			//rover on carpet: forward7ft(-0.6, 2 * 12)
 			//rover on tile: forward7ft(-0.5, 2 * 12.0)
-			if (forward7ft(-0.6, 2 * 12) == 1) {
+			if (forward7ft(-0.2, 2 * 12) == 1) {
 				state = 9;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -732,10 +733,7 @@ public:
 //		}
 //	}
 	int stopx() {
-		DriveLeft0.Set(0);
-		DriveLeft1.Set(0);
-		DriveRight0.Set(0);
-		DriveRight1.Set(0);
+		motorSpeed(0,0);
 		//Go to next state turn left 90 degrees
 		return 0;
 	}
