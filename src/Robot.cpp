@@ -221,7 +221,6 @@ public:
 		int done = 0;
 		if (abs(DistanceLeft) < abs(target)) {
 			// GetDistance is already calibrated to inches.
-			DriveLeft0.Set(SpeedLeft * -1);
 			motorSpeed(SpeedLeft, SpeedRight);
 
 			SmartDashboard::PutNumber("Left Encoder Distance", DistanceLeft);
