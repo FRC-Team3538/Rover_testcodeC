@@ -206,6 +206,8 @@ public:
 	}
 
 	void motorSpeed(double leftMotor, double rightMotor) {
+		SmartDashboard::PutNumber("left motor speed", leftMotor);
+		SmartDashboard::PutNumber("right motor speed", rightMotor);
 		DriveLeft0.Set(leftMotor * -1);
 		DriveLeft1.Set(leftMotor * -1);
 		DriveLeft2.Set(leftMotor * -1);
@@ -253,7 +255,7 @@ public:
 		SmartDashboard::PutNumber("error gain", errorGain);
 
 		if (abs(yawError) > tolerance) {
-			motorSpeed(yawError * errorGain, yawError * errorGain);
+			motorSpeed(-1 *yawError * errorGain, yawError * errorGain);
 
 			SmartDashboard::PutNumber("motor speed", yawError * errorGain);
 
@@ -280,7 +282,7 @@ public:
 			// go forward 7 ft
 			//rover on carpet:forward7ft(-0.8, 6.5 * 12.0)
 			//rover on tile: forward7ft(-0.8, 6.5 *12.0)
-			if (forward7ft(-0.4, 6.5 * 12.0) == 1) {
+			if (forward7ft(-0.6, 6.5 * 12.0) == 1) {
 				state = 2;
 				ahrs->Reset();
 			}
@@ -288,7 +290,7 @@ public:
 			// turn 90 degrees clockwise
 			//rover on carpet: autonTurn(85, 5, -0.012)
 			//rover on tile: autonTurn(75, 5, -0.012)
-			if (autonTurn(85, 5, -0.006) == 1) {
+			if (autonTurn(90, 5, -0.012) == 1) {
 				state = 3;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -297,7 +299,7 @@ public:
 			// go forward 7 ft to hit hopper
 			//rover on carpet: forward7ft(0.8, 7 * -1 * 12.0)
 			//rover on tile: forward7ft(0.8, 7 * -1 * 12.0)
-			if (forward7ft(0.4, 7 * -1 * 12.0) == 1) {
+			if (forward7ft(0.6, 7 * -1 * 12.0) == 1) {
 				state = 4;
 				AutonTimer.Reset();
 			}
@@ -305,14 +307,14 @@ public:
 			//waits a couple of seconds for balls
 			//rover on carpet: pause(1, 0.1)
 			//rover on tile: pause(1, 0.1)
-			if (timedDrive(1, 0.05, 0.05) == 1) {
+			if (timedDrive(1, 0.15, 0.15) == 1) {
 				state = 5;
 			}
 		} else if (state == 5) {
 			//go backward 4-ish feet
 			//rover on carpet: forward(-0.8, 4 * 12.0)
 			//rover on tile: forward7ft(-0.8, 4 * 12.0)
-			if (forward7ft(-0.4, 4 * 12.0) == 1) {
+			if (forward7ft(-0.6, 4 * 12.0) == 1) {
 				state = 6;
 				ahrs->Reset();
 			}
@@ -320,7 +322,7 @@ public:
 			// turn enough degrees to face boiler
 			//rover on carpet: autonTurn(120, 5, -0.012)
 			//rover on tile: autonTurn(105, 5, -0.012)
-			if (autonTurn(120, 5, -0.006) == 1) {
+			if (autonTurn(120, 5, -0.012) == 1) {
 				state = 7;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -329,7 +331,7 @@ public:
 			//go forward 7-ish feet to run into boiler
 			//rover on carpet:forward7ft(-0.8, 8.5 * 12.0)
 			//rover on tile: forward7ft(-0.8, 8.5 * 12.0)
-			if (forward7ft(-0.4, 8.5 * 12.0) == 1) {
+			if (forward7ft(-0.6, 8.5 * 12.0) == 1) {
 				state = 8;
 				ahrs->Reset();
 			}
@@ -447,7 +449,7 @@ public:
 			// go forward 7 ft
 			//rover on carpet: forward 7ft(-0.8, 7 * 12.0)
 			//rover on tile: forward7ft(-0.8, 7 * 12.0)
-			if (forward7ft(-0.2, 7 * 12.0) == 1) {
+			if (forward7ft(-0.6, 7 * 12.0) == 1) {
 				state = 2;
 				ahrs->Reset();
 			}
@@ -455,7 +457,7 @@ public:
 			// turn 90 degrees counterclockwise
 			//rover on carpet: autonTurn(-60, 5, -0.012)
 			//rover on tile: autonTurn(-60, 5, -0.012)
-			if (autonTurn(-60, 5, -0.006) == 1) {
+			if (autonTurn(-60, 5, -0.012) == 1) {
 				state = 3;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -464,7 +466,7 @@ public:
 			// go forward
 			//rover on carpet: forward7ft(-0.6, 2 * 12.0)
 			//rover on tile: forward7ft(-0.5, 2 * 12)
-			if (forward7ft(-0.2, 2 * 12) == 1) {
+			if (forward7ft(-0.6, 2 * 12) == 1) {
 				state = 9;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -497,7 +499,7 @@ public:
 			// turn 90 degrees counterclockwise
 			//rover on carpet: autonTurn(-95, 5, -0.012)
 			//rover on tile: autonTurn(-82, 5, -0.012)
-			if (autonTurn(-95, 5, -0.006) == 1) {
+			if (autonTurn(-95, 5, -0.012) == 1) {
 				state = 3;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -514,14 +516,14 @@ public:
 			//waits in front of hopper a couple of seconds for balls
 			//rover on carpet: pause(1, 0)
 			//rover on tile: pause(1, 0)
-			if (timedDrive(1, 0.05, 0.05) == 1) {
+			if (timedDrive(1, 0.15, 0.15) == 1) {
 				state = 5;
 			}
 		} else if (state == 5) {
 			//go backward 3-ish feet
 			//rover on carpet: forward7ft(-0.8, 3 * 12.0)
 			//rover on tile:forward7ft(-0.8, 3 * 12.0)
-			if (forward7ft(-0.4, 3 * 12.0) == 1) {
+			if (forward7ft(-0.4, 4 * 12.0) == 1) {
 				state = 6;
 				ahrs->Reset();
 			}
@@ -529,7 +531,7 @@ public:
 			// turns counterclockwise enough degrees to face boiler
 			//rover on carpet: autonTurn(-125, 5, -0.012)
 			//rover on tile: autonTurn(-115, 5, -0.012)
-			if (autonTurn(-125, 5, -0.006) == 1) {
+			if (autonTurn(-120, 5, -0.012) == 1) {
 				state = 7;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -656,7 +658,7 @@ public:
 			// go forward 7 ft
 			//rover on carpet: forward7ft(-0.8, 9 * 12.0)
 			//rover on tile: forward 7ft(-0.8, 9 * 12.0)
-			if (forward7ft(-0.2, 9 * 12.0) == 1) {
+			if (forward7ft(-0.6, 9 * 12.0) == 1) {
 				state = 2;
 				ahrs->Reset();
 			}
@@ -664,7 +666,7 @@ public:
 			// turn 60 degrees clockwise
 			//rover on carpet: autonTurn(60, 5, -0.019)
 			//rover on tile:autonTurn(60, 5, -0.012)
-			if (autonTurn(60, 5, -0.009) == 1) {
+			if (autonTurn(60, 5, -0.012) == 1) {
 				state = 3;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -673,7 +675,7 @@ public:
 			// go forward
 			//rover on carpet: forward7ft(-0.6, 2 * 12)
 			//rover on tile: forward7ft(-0.5, 2 * 12.0)
-			if (forward7ft(-0.2, 2 * 12) == 1) {
+			if (forward7ft(-0.6, 2 * 12) == 1) {
 				state = 9;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -745,8 +747,8 @@ public:
 
 	void TeleopPeriodic() {
 
-		double SpeedLeft = Drivestick.GetRawAxis(1) * 1; // get Yaxis value (forward)
-		double SpeedRight = Drivestick.GetRawAxis(4) * -1; // get Xaxis value (turn)
+		double SpeedLeft = Drivestick.GetRawAxis(1) * -1; // get Yaxis value (forward)
+		double SpeedRight = Drivestick.GetRawAxis(4) * 1; // get Xaxis value (turn)
 		// Set dead band for X and Y axis
 		float Deadband = 0.11;
 		if (SpeedLeft < Deadband and SpeedLeft > -Deadband)
