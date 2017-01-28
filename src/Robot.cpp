@@ -27,7 +27,7 @@ public:
 					9), DiIn8(8), DiIn7(7), AutoVal(), AutoVal0(), AutoVal1(), AutoVal2(), OutputX(), OutputY()
 	//end of monitor example
 	{
-
+		GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
 	}
 
 	void RobotInit() {
@@ -118,6 +118,30 @@ public:
 			case 6:
 				autoSelected = autonNameRed3;
 				break;
+			case 14:
+				autoSelected = autonNameBlue1;
+				break;
+			case 13:
+				autoSelected = autonNameBlue2;
+				break;
+			case 12:
+				autoSelected = autonNameBlue3;
+				break;
+			case 11:
+				autoSelected = autonNameRed1;
+				break;
+			case 10:
+				autoSelected = autonNameRed2;
+				break;
+			case 9:
+				autoSelected = autonNameRed3;
+				break;
+			case 8:
+				autoSelected = autonNameBlue2;
+				break;
+			case 7:
+				autoSelected = autonNameRed2;
+				break;
 			default:
 				autoSelected = autonNameOFF;
 			}
@@ -152,7 +176,9 @@ public:
 //			// Default Auto goes here
 //		}
 	}
-
+	void DisabledPeriodic() {
+		SmartDashboardSenser();
+	}
 	void AutonomousPeriodic() {
 		if (autoSelected == autonNameRed1) {
 			//Red boiler side code
@@ -191,18 +217,29 @@ public:
 
 		}
 
-		SmartDashboard::PutNumber("DistanceLeft(raw)", EncoderLeft.GetRaw());
-		SmartDashboard::PutNumber("DistanceRight(raw)", EncoderRight.GetRaw());
-		SmartDashboard::PutNumber("DistanceLeft(Inch)",
-				EncoderLeft.GetDistance());
-		SmartDashboard::PutNumber("DistanceRight(Inch)",
-				EncoderRight.GetDistance());
-
+		SmartDashboardSenser();
 //		if (autoSelected == autoNameCustom) {
 //			// Custom Auto goes here
 //		} else {
 //			// Default Auto goes here1
 //		}
+	}
+	void SmartDashboardSenser() {
+
+		double DistanceLeft = EncoderLeft.GetRaw();
+		double DistanceRight = EncoderRight.GetRaw();
+		SmartDashboard::PutNumber("DistanceLeft(raw)", DistanceLeft);
+		SmartDashboard::PutNumber("DistanceRight(raw)", DistanceRight);
+		SmartDashboard::PutNumber("DistanceLeft(Inch)",
+				EncoderLeft.GetDistance());
+		SmartDashboard::PutNumber("DistanceRight(Inch)",
+				EncoderRight.GetDistance());
+		SmartDashboard::PutNumber("State", state);
+		SmartDashboard::PutNumber("Timer", AutonTimer.Get());
+
+
+		//std::vector<double> arr = GRIPTable->
+
 	}
 
 	void motorSpeed(double leftMotor, double rightMotor) {
@@ -343,15 +380,7 @@ public:
 			state = 1;
 		}
 
-		SmartDashboard::PutNumber("DistanceLeft(raw)", EncoderLeft.GetRaw());
-		SmartDashboard::PutNumber("DistanceRight(raw)", EncoderRight.GetRaw());
-		SmartDashboard::PutNumber("DistanceLeft(Inch)",
-				EncoderLeft.GetDistance());
-		SmartDashboard::PutNumber("DistanceRight(Inch)",
-				EncoderRight.GetDistance());
-		SmartDashboard::PutNumber("State", state);
-		SmartDashboard::PutNumber("Timer", AutonTimer.Get());
-
+		return;
 	}
 
 	void autoBlue1A(void) {
@@ -411,14 +440,7 @@ public:
 				state = 1;
 			}
 
-			SmartDashboard::PutNumber("DistanceLeft(raw)", EncoderLeft.GetRaw());
-			SmartDashboard::PutNumber("DistanceRight(raw)", EncoderRight.GetRaw());
-			SmartDashboard::PutNumber("DistanceLeft(Inch)",
-					EncoderLeft.GetDistance());
-			SmartDashboard::PutNumber("DistanceRight(Inch)",
-					EncoderRight.GetDistance());
-			SmartDashboard::PutNumber("State", state);
-			SmartDashboard::PutNumber("Timer", AutonTimer.Get());
+			return;
 
 		}
 
@@ -552,13 +574,6 @@ public:
 			state = 1;
 		}
 
-		SmartDashboard::PutNumber("DistanceLeft(raw)", EncoderLeft.GetRaw());
-		SmartDashboard::PutNumber("DistanceRight(raw)", EncoderRight.GetRaw());
-		SmartDashboard::PutNumber("DistanceLeft(Inch)",
-				EncoderLeft.GetDistance());
-		SmartDashboard::PutNumber("DistanceRight(Inch)",
-				EncoderRight.GetDistance());
-		SmartDashboard::PutNumber("State", state);
 		return;
 
 	}
@@ -621,13 +636,6 @@ public:
 			state = 1;
 		}
 
-		SmartDashboard::PutNumber("DistanceLeft(raw)", EncoderLeft.GetRaw());
-		SmartDashboard::PutNumber("DistanceRight(raw)", EncoderRight.GetRaw());
-		SmartDashboard::PutNumber("DistanceLeft(Inch)",
-				EncoderLeft.GetDistance());
-		SmartDashboard::PutNumber("DistanceRight(Inch)",
-				EncoderRight.GetDistance());
-		SmartDashboard::PutNumber("State", state);
 		return;
 
 	}
@@ -768,14 +776,7 @@ public:
 		Adrive.ArcadeDrive(OutputY, OutputX, true);
 		Bdrive.ArcadeDrive(OutputY, OutputX, true);
 
-		double DistanceLeft = EncoderLeft.GetRaw();
-		double DistanceRight = EncoderRight.GetRaw();
-		SmartDashboard::PutNumber("DistanceLeft(raw)", DistanceLeft);
-		SmartDashboard::PutNumber("DistanceRight(raw)", DistanceRight);
-		SmartDashboard::PutNumber("DistanceLeft(Inch)",
-				EncoderLeft.GetDistance());
-		SmartDashboard::PutNumber("DistanceRight(Inch)",
-				EncoderRight.GetDistance());
+		SmartDashboardSenser();
 
 	}
 
@@ -811,7 +812,7 @@ private:
 	DigitalInput DiIn9, DiIn8, DiIn7;
 	int AutoVal, AutoVal0, AutoVal1, AutoVal2;
 	float OutputX, OutputY;
-
+	std::shared_ptr<NetworkTable> GRIPTable;
 };
 
 START_ROBOT_CLASS(Robot)
