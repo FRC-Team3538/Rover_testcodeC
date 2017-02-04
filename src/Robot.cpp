@@ -12,20 +12,15 @@
 
 class Robot: public frc::IterativeRobot {
 
-	//From NAVX mxp data monitor example
-
-	//end of data monitor example
-
 public:
 	Robot() :
 			Adrive(DriveLeft0, DriveLeft1, DriveRight0, DriveRight1), Bdrive(
 					DriveLeft2, DriveRight2), chooser(), Drivestick(0), DriveLeft0(
 					0), DriveLeft1(1), DriveLeft2(2), DriveRight0(3), DriveRight1(
 					4), DriveRight2(5), EncoderLeft(0, 1), EncoderRight(2, 3),
-			//from data monitor example
+
 			table(NULL), ahrs(NULL), state(0), AutonOverride(), AutoSw1(), AutoSw2(), AutoSw3(), DiIn9(
 					9), DiIn8(8), DiIn7(7), AutoVal(), AutoVal0(), AutoVal1(), AutoVal2(), OutputX(), OutputY()
-	//end of monitor example
 	{
 		GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
 	}
@@ -42,38 +37,28 @@ public:
 			chooser.AddObject(autonNameBlue3, autonNameBlue3);
 			frc::SmartDashboard::PutData("Auto Modes", &chooser);
 		}
+		driveSolenoid->Set(false);      //turn off all solenoids
+
 		EncoderLeft.SetDistancePerPulse(0.0243228675 * 4);
 		EncoderRight.SetDistancePerPulse(0.0243228675 * 4);
 		OutputX = 0, OutputY = 0;
 
 		//from NAVX mxp data monitor example
-				try {								/////***** Let's do this differently.  We want Auton to fail gracefully, not just abort. Remember Ariane 5
-					/* Communicate w/navX MXP via the MXP SPI Bus.                                       */
-					/* Alternatively:  I2C::Port::kMXP, SerialPort::Port::kMXP or SerialPort::Port::kUSB */
-					/* See http://navx-mxp.kauailabs.com/guidance/selecting-an-interface/ for details.   */
-					ahrs = new AHRS(SPI::Port::kMXP, 200);
-					ahrs ->Reset();
-				} catch (std::exception ex) {
-					std::string err_string = "Error instantiating navX MXP:  ";
-					err_string += ex.what();
-					DriverStation::ReportError(err_string.c_str());
-				}
+		try {/////***** Let's do this differently.  We want Auton to fail gracefully, not just abort. Remember Ariane 5
+			/* Communicate w/navX MXP via the MXP SPI Bus.                                       */
+			/* Alternatively:  I2C::Port::kMXP, SerialPort::Port::kMXP or SerialPort::Port::kUSB */
+			/* See http://navx-mxp.kauailabs.com/guidance/selecting-an-interface/ for details.   */
+			ahrs = new AHRS(SPI::Port::kMXP, 200);
+			ahrs->Reset();
+		} catch (std::exception ex) {
+			std::string err_string = "Error instantiating navX MXP:  ";
+			err_string += ex.what();
+			DriverStation::ReportError(err_string.c_str());
+		}
 	}
 
-	/*
-	 * This autonomous (along with the chooser code above) shows how to select
-	 * between different autonomous modes using the dashboard. The sendable
-	 * chooser code works with the Java SmartDashboard. If you prefer the
-	 * LabVIEW Dashboard, remove all of the chooser code and uncomment the
-	 * GetString line to get the auto name from the text box below the Gyro.
-	 *
-	 * You can add additional auto modes by adding additional comparisons to the
-	 * if-else structure below with additional strings. If using the
-	 * SendableChooser make sure to add them to the chooser code above as well.
-	 */
-
 	void AutonomousInit() override {
-		state = 1; 							/////***** Rename this.  It is ambiguous with the global one.
+		state = 1; /////***** Rename this.  It is ambiguous with the global one.
 		isWaiting = 0;						/////***** Rename this.
 
 		AutonTimer.Reset();
@@ -88,9 +73,9 @@ public:
 		DriveRight0.Set(0);
 		DriveRight1.Set(0);
 		DriveRight2.Set(0);
-
-		if(ahrs){
-			ahrs ->ZeroYaw();
+		//zeros the navX
+		if (ahrs) {
+			ahrs->ZeroYaw();
 		}
 
 		SmartDashboard::PutString("autonMode", "Off");
@@ -154,7 +139,6 @@ public:
 		OutputX = 0, OutputY = 0;
 	}
 
-
 	void DisabledPeriodic() {
 		SmartDashboardSenser();
 	}
@@ -172,7 +156,7 @@ public:
 		else if (autoSelected == autonNameBlue3)
 			autoBlue3();
 		else
-			stopx(); 							/////***** let's rename this to something more descriptive
+			stopx(); /////***** let's rename this to something more descriptive
 
 		SmartDashboardSenser();
 	}
@@ -181,7 +165,16 @@ public:
 		float Deadband = 0.11;
 		float MaxSpeed = 0.5;
 
-		double SpeedLinear = Drivestick.GetRawAxis(1) * 1; // get Yaxis value (forward)
+		//high gear & low gear controls
+		bool LHbutton = Drivestick.GetRawButton(5); // get Left Bumper
+		bool RHbutton = Drivestick.GetRawButton(6); // get Right Bumper
+
+		if (RHbutton)
+			driveSolenoid->Set(true);			// High gear press RH bumper
+		if (LHbutton)
+			driveSolenoid->Set(false);			// Low gear press LH bumper
+
+		double SpeedLinear = Drivestick.GetRawAxis(1) * -1; // get Yaxis value (forward)
 		double SpeedRotate = Drivestick.GetRawAxis(4) * -1; // get Xaxis value (turn)
 
 		// Set dead band for X and Y axis
@@ -214,9 +207,9 @@ public:
 		//Blue boiler side code
 		//drives turns then drives again
 		switch (state) {  						/////***** rename this.
-		case 1: 								/////***** Let's change the state numbers to #define's.  They really should be enum's, but I don't want to work that hard.
+		case 1: /////***** Let's change the state numbers to #define's.  They really should be enum's, but I don't want to work that hard.
 			// go forward 7 ft
-			if (forward(6.5 * 12.0)) {  		/////***** Replace all "magic numbers" with #define's
+			if (forward(6.5 * 12.0)) { /////***** Replace all "magic numbers" with #define's
 				//rover on carpet:forward7ft(-0.8, 6.5 * 12.0)
 				//rover on tile: forward7ft(-0.8, 6.5 *12.0)
 				//bob on tile:forward(6.5 * 12.0, 0.2, 0.3, 0.16)
@@ -226,7 +219,7 @@ public:
 			break;
 		case 2: 								/////***** Use #define.
 			// turn 90 degrees clockwise
-			if (autonTurn(85)) {  				/////***** Magic number / Use #define
+			if (autonTurn(85)) {  		/////***** Magic number / Use #define
 				//rover on carpet: autonTurn(85, 5, -0.012)
 				//rover on tile: autonTurn(75, 5, -0.012)
 				//bob on tile: autonTurn(85, 10, -0.009)
@@ -238,7 +231,7 @@ public:
 			break;
 		case 3: 								/////***** Use #define
 			// go forward 7 ft to hit hopper
-			if (forward(7.6 * -1 * 12.0)) { 	/////***** Magic number / Use #define
+			if (forward(7.6 * -1 * 12.0)) { /////***** Magic number / Use #define
 				//rover on carpet: forward7ft(0.8, 7 * -1 * 12.0)
 				//rover on tile: forward7ft(0.8, 7 * -1 * 12.0)
 				//bob on tile: forward7ft(0.4, 7 * -1 * 12.0)
@@ -249,7 +242,7 @@ public:
 			break;
 		case 4: 								/////***** Use #define
 			//waits a couple of seconds for balls
-			if (timedDrive(2, 0.1, 0.1)) { 		/////***** Magic numbers / Use #define
+			if (timedDrive(2, 0.1, 0.1)) { /////***** Magic numbers / Use #define
 				//rover on carpet: pause(1, 0.1)
 				//rover on tile: pause(1, 0.1)
 				//bob on tile: timedDrive(2, 0.1, 0.1)
@@ -317,15 +310,15 @@ public:
 				//rover on tile: forward7ft(-0.8, 6.5 *12.0)
 				state = 2;						/////***** Use #define
 				//ahrs->Reset();
-				ahrs->ZeroYaw();				/////***** We need a better way to do initialization for the next state.
-												/////***** This isn't important right now, but as the software gets more complicated, it will become more of a problem.
-												/////***** I've noticed that we have too many "ahrs->ZeroYaw()"
-												/////***** You can see that this initialization is already out of line.
-												/////***** "State 2" used to use the gyroscope, but doesn't any more.
-												/////***** The initialization for the old routine is still here.
-												/////***** This isn't complicated enough to go full object-oriented,
-												/////***** but whatever-we-call-case-2.init() would work.
-												/////***** Can you think of a simpler way?
+				ahrs->ZeroYaw();/////***** We need a better way to do initialization for the next state.
+								/////***** This isn't important right now, but as the software gets more complicated, it will become more of a problem.
+								/////***** I've noticed that we have too many "ahrs->ZeroYaw()"
+								/////***** You can see that this initialization is already out of line.
+								/////***** "State 2" used to use the gyroscope, but doesn't any more.
+								/////***** The initialization for the old routine is still here.
+								/////***** This isn't complicated enough to go full object-oriented,
+								/////***** but whatever-we-call-case-2.init() would work.
+								/////***** Can you think of a simpler way?
 			}
 			break;
 		case 2:									/////***** Use #define
@@ -465,7 +458,7 @@ public:
 			break;
 		case 2:
 			// turn 90 degrees counterclockwise
-			if (autonTurn(-95) ) {				/////***** use #define
+			if (autonTurn(-95)) {				/////***** use #define
 				//rover on carpet: autonTurn(-95, 5, -0.012)
 				//rover on tile: autonTurn(-82, 5, -0.012)
 				state = 3;						/////***** rename/use #define
@@ -475,7 +468,7 @@ public:
 			break;
 		case 3:									/////***** use #define
 			// go forward 7 ft to hit hopper
-			if (forward(7 * -1 * 12.0) ) {		/////***** Use #define
+			if (forward(7 * -1 * 12.0)) {		/////***** Use #define
 				//rover on carpet: forward7ft(0.8, 7 * -1 * 12.0)
 				//rover on tile: forward7ft(0.8, 7 * 12.0)
 				state = 4;						/////***** rename / use #define.
@@ -484,7 +477,7 @@ public:
 			break;
 		case 4:									/////***** use #define
 			//waits in front of hopper a couple of seconds for balls
-			if (timedDrive(1, 0.05, 0.05) ) {	/////***** Use #define
+			if (timedDrive(1, 0.05, 0.05)) {	/////***** Use #define
 				//rover on carpet: pause(1, 0)
 				//rover on tile: pause(1, 0)
 				state = 5;						/////***** rename / use #define
@@ -492,7 +485,7 @@ public:
 			break;
 		case 5:									/////***** use #define
 			//go backward 3-ish feet
-			if (forward(3 * 12.0) ) {			/////***** use #define
+			if (forward(3 * 12.0)) {			/////***** use #define
 				//rover on carpet: forward7ft(-0.8, 3 * 12.0)
 				//rover on tile:forward7ft(-0.8, 3 * 12.0)
 				state = 6;						/////***** rename / use #define
@@ -502,7 +495,7 @@ public:
 			break;
 		case 6:									/////***** use #define
 			// turns counterclockwise enough degrees to face boiler
-			if (autonTurn(-125) ) {				/////***** use #define
+			if (autonTurn(-125)) {				/////***** use #define
 				//rover on carpet: autonTurn(-125, 5, -0.012)
 				//rover on tile: autonTurn(-115, 5, -0.012)
 				state = 7;						/////***** rename / use #define
@@ -512,7 +505,7 @@ public:
 			break;
 		case 7:									/////***** use #define
 			//go forward 7-ish feet to run into boiler
-			if (forward(8.5 * 12.0) ) {			/////***** use #define
+			if (forward(8.5 * 12.0)) {			/////***** use #define
 				//rover on carpet: forward7ft(-0.8, 8.5 * 12.0)
 				//rover on tile: forward7ft(-0.8, 8.5*12.0)
 				state = 8;						/////***** rename / use #define
@@ -537,7 +530,7 @@ public:
 		switch (state) {						/////***** rename
 		case 1:									/////***** use #define
 			// go forward 7 ft
-			if (forward(8 * 12.0) ) {			/////***** use #define
+			if (forward(8 * 12.0)) {			/////***** use #define
 				//rover on carpet: forward7ft(-0.8, 6.5 * 12.0)
 				//rover on tile: forward7ft(-0.8, 6.5 * 12.0)
 				state = 2;						/////***** rename / use #define
@@ -547,7 +540,7 @@ public:
 			break;
 		case 2:									/////***** use #define
 			//robot drives counterclockwise into hopper
-			if (timedDrive(1, 0.2, 0.1) ) {		/////***** use #define
+			if (timedDrive(1, 0.2, 0.1)) {		/////***** use #define
 				//rover on carpet: pause(1, 0) 		// changed from pause -> timedDrive()
 				//rover on tile: pause(1, 0)
 				state = 3;						/////***** rename / use #define
@@ -555,7 +548,7 @@ public:
 			break;
 		case 3:									/////***** use #define
 			//go backward 3-ish feet
-			if (forward(3 * 12.0) ) {			/////***** use #define / It is not obvious that this is correct.  Why is backing up using a positive speed?
+			if (forward(3 * 12.0)) {/////***** use #define / It is not obvious that this is correct.  Why is backing up using a positive speed?
 				//rover on carpet: forward7ft(-0.8, 3 * 12.0)
 				//rover on tile:forward7ft(-0.8, 3 * 12.0)
 				state = 4;						/////***** rename / use #define
@@ -565,7 +558,7 @@ public:
 			break;
 		case 4:									/////***** use #define
 			// turns counterclockwise enough degrees to face boiler
-			if (autonTurn(-125) ) {				/////***** use #define.  Remember right and left turns may need different angles.
+			if (autonTurn(-125)) {/////***** use #define.  Remember right and left turns may need different angles.
 				//rover on carpet: autonTurn(-125, 5, -0.012)
 				//rover on tile: autonTurn(-115, 5, -0.012)
 				state = 5;						/////***** rename / use #define
@@ -575,7 +568,7 @@ public:
 			break;
 		case 5:									/////***** use #define
 			//go forward 7-ish feet to run into boiler
-			if (forward(8.5 * 12.0) ) {			/////***** use #define
+			if (forward(8.5 * 12.0)) {			/////***** use #define
 				//rover on carpet: forward7ft(-0.8, 8.5 * 12.0)
 				//rover on tile: forward7ft(-0.8, 8.5*12.0)
 				state = 6;						/////***** rename / use #define
@@ -597,7 +590,7 @@ public:
 		//puts gear on front of airship
 		switch (state) {						/////***** rename
 		case 1:									/////***** use #define
-			if (forward(7 * 12.0) ) {			/////***** use #define
+			if (forward(7 * 12.0)) {			/////***** use #define
 				//rover on carpet: forward7ft(-0.8, 7 * 12.0)
 				//rover on tile: forward7ft(-0.8, 7 * 12.0)
 				state = 9;						/////***** rename / use #define
@@ -616,7 +609,7 @@ public:
 		switch (state) {						/////***** rename
 		case 1:									/////***** use #define
 			// go forward 7 ft
-			if (forward(9 * 12.0) ) {			/////***** use #define
+			if (forward(9 * 12.0)) {			/////***** use #define
 				//rover on carpet: forward7ft(-0.8, 9 * 12.0)
 				//rover on tile: forward 7ft(-0.8, 9 * 12.0)
 				state = 2;						/////***** rename / use #define
@@ -626,7 +619,7 @@ public:
 			break;
 		case 2:									/////***** use #define
 			// turn 60 degrees clockwise
-			if (autonTurn(60) ) {				/////***** use #define
+			if (autonTurn(60)) {				/////***** use #define
 				//rover on carpet: autonTurn(60, 5, -0.019)
 				//rover on tile:autonTurn(60, 5, -0.012)
 				state = 3;						/////***** rename / use #define
@@ -636,7 +629,7 @@ public:
 			break;
 		case 3:									/////**** use #define
 			// go forward
-			if (forward(2 * 12) ) {				/////***** use #define
+			if (forward(2 * 12)) {				/////***** use #define
 				//rover on carpet: forward7ft(-0.6, 2 * 12)
 				//rover on tile: forward7ft(-0.5, 2 * 12.0)
 				state = 9;						/////***** rename / use #define
@@ -676,7 +669,7 @@ public:
 			double gyroAngle = ahrs->GetAngle();
 			SmartDashboard::PutNumber("Gyro Angle", gyroAngle);
 		} else {
-			SmartDashboard::PutNumber("Gyro Angle", 999);   /////***** don't use sentinels / use #define
+			SmartDashboard::PutNumber("Gyro Angle", 999); /////***** don't use sentinels / use #define
 		}
 		//std::vector<double> arr = GRIPTable->
 	}
@@ -693,16 +686,16 @@ public:
 		SmartDashboard::PutNumber("Drive Speed Right", rightMotor);
 	}
 
-	int forward(double targetDistance) {		/////***** It is hard to find these when you are changing calibrations in a hurry.
-												/////***** Putting them at the beginning makes them easier to find.
-												/////***** There aren't any assignments to these variables. Use #define's instead.
+	int forward(double targetDistance) {/////***** It is hard to find these when you are changing calibrations in a hurry.
+										/////***** Putting them at the beginning makes them easier to find.
+										/////***** There aren't any assignments to these variables. Use #define's instead.
 		double tolerance = 0.2;	//inches		/////***** use #define
 		double kP_Linear = 0.3;					/////***** use #define
 		double kP_Rotation = 0.012;				/////***** use #define
 		double settlingTime = 0.16;	//seconds	/////***** use #define
 		double maxDriveSpeed = 0.75; //percent	/////***** use #define
 
-												//put all encoder stuff in same place
+		//put all encoder stuff in same place
 		double encoderDistance = EncoderRight.GetDistance();
 		double encoderError = encoderDistance - targetDistance;
 		double driveCommandLinear = encoderError * kP_Linear;
@@ -710,8 +703,8 @@ public:
 		//limits max drive speed
 		if (driveCommandLinear > maxDriveSpeed) {
 			driveCommandLinear = maxDriveSpeed;
-		} else if (driveCommandLinear < -1 * maxDriveSpeed) {  	/////***** "-1" is a "magic number." At least put a clear comment in here.
-			driveCommandLinear = -1 * maxDriveSpeed;			/////***** same as above.
+		} else if (driveCommandLinear < -1 * maxDriveSpeed) { /////***** "-1" is a "magic number." At least put a clear comment in here.
+			driveCommandLinear = -1 * maxDriveSpeed;/////***** same as above.
 		}
 
 		double gyroAngle = ahrs->GetAngle();
@@ -721,7 +714,7 @@ public:
 				driveCommandLinear - driveCommandRotation);
 
 		//routine helps prevent the robot from overshooting the distance
-		if (isWaiting == 0) {					/////***** Rename "isWaiting."  This isWaiting overlaps with the autonTurn() isWaiting.  There is nothing like 2 globals that are used for different things, but have the same name.
+		if (isWaiting == 0) {/////***** Rename "isWaiting."  This isWaiting overlaps with the autonTurn() isWaiting.  There is nothing like 2 globals that are used for different things, but have the same name.
 			if (abs(encoderError) < tolerance) {
 				isWaiting = 1;
 				AutonTimer.Reset();
@@ -741,7 +734,7 @@ public:
 	}
 
 	int autonTurn(float targetYaw) {
-		float tolerance = 5.0;					/////***** These aren't assigned in this routine. Use #define's
+		float tolerance = 5.0;/////***** These aren't assigned in this routine. Use #define's
 		float errorGain = -0.012;				/////***** use #define
 		float settlingTime = 0.03;				/////***** use #define
 		float currentYaw = ahrs->GetAngle();
@@ -749,7 +742,7 @@ public:
 
 		motorSpeed(-1 * yawError * errorGain, yawError * errorGain);
 
-		if (isWaiting == 0) {					/////***** Rename "isWaiting."  This isWaiting overlaps with the forward() isWaiting.  There is nothing like 2 globals that are used for different things, but have the same name.
+		if (isWaiting == 0) {/////***** Rename "isWaiting."  This isWaiting overlaps with the forward() isWaiting.  There is nothing like 2 globals that are used for different things, but have the same name.
 			if (abs(yawError) < tolerance) {
 				isWaiting = 1;
 				AutonTimer.Reset();
@@ -768,8 +761,6 @@ public:
 		return 0;
 	}
 
-
-
 	int timedDrive(double driveTime, double leftMotorSpeed,
 			double rightMotorSpeed) {
 		float currentTime = AutonTimer.Get();
@@ -787,7 +778,6 @@ public:
 		//Go to next state turn left 90 degrees
 		return 1;
 	}
-
 
 	void TestPeriodic() {
 		lw->Run();
@@ -817,13 +807,15 @@ private:
 	Encoder EncoderRight;
 	std::shared_ptr<NetworkTable> table;
 	AHRS *ahrs;
-	int state; 								/////***** let's rename this.  We have a couple of different "state"'s and it isn't clear which is which
+	int state; /////***** let's rename this.  We have a couple of different "state"'s and it isn't clear which is which
 	bool AutonOverride, AutoSw1, AutoSw2, AutoSw3;
 	DigitalInput DiIn9, DiIn8, DiIn7;
 	int AutoVal, AutoVal0, AutoVal1, AutoVal2;
 	float OutputX, OutputY;
 	std::shared_ptr<NetworkTable> GRIPTable;
-	int isWaiting = 0;						/////***** Divide this into 2 variables.
+	int isWaiting = 0;					/////***** Divide this into 2 variables.
+
+	Solenoid *driveSolenoid = new Solenoid(0);
 }
 ;
 
