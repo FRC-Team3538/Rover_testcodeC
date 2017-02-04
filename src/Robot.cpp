@@ -43,8 +43,21 @@ public:
 			frc::SmartDashboard::PutData("Auto Modes", &chooser);
 		}
 		EncoderLeft.SetDistancePerPulse(0.0243228675 * 4);
-		EncoderRight.SetDistancePerPulse(-0.0243228675 * 4);
+		EncoderRight.SetDistancePerPulse(0.0243228675 * 4);
 		OutputX = 0, OutputY = 0;
+
+		//from NAVX mxp data monitor example
+				try {								/////***** Let's do this differently.  We want Auton to fail gracefully, not just abort. Remember Ariane 5
+					/* Communicate w/navX MXP via the MXP SPI Bus.                                       */
+					/* Alternatively:  I2C::Port::kMXP, SerialPort::Port::kMXP or SerialPort::Port::kUSB */
+					/* See http://navx-mxp.kauailabs.com/guidance/selecting-an-interface/ for details.   */
+					ahrs = new AHRS(SPI::Port::kMXP, 200);
+					ahrs ->Reset();
+				} catch (std::exception ex) {
+					std::string err_string = "Error instantiating navX MXP:  ";
+					err_string += ex.what();
+					DriverStation::ReportError(err_string.c_str());
+				}
 	}
 
 	/*
@@ -75,6 +88,10 @@ public:
 		DriveRight0.Set(0);
 		DriveRight1.Set(0);
 		DriveRight2.Set(0);
+
+		if(ahrs){
+			ahrs ->ZeroYaw();
+		}
 
 		SmartDashboard::PutString("autonMode", "Off");
 
@@ -128,19 +145,6 @@ public:
 			default:
 				autoSelected = autonNameOFF;
 			}
-		}
-		//from NAVX mxp data monitor example
-		ahrs->Reset(); 						/////*****PAB: This doesn't make sense.  We are resetting ahrs before we create it.
-		ahrs->ZeroYaw();
-		try {								/////***** Let's do this differently.  We want Auton to fail gracefully, not just abort. Remember Ariane 5
-			/* Communicate w/navX MXP via the MXP SPI Bus.                                       */
-			/* Alternatively:  I2C::Port::kMXP, SerialPort::Port::kMXP or SerialPort::Port::kUSB */
-			/* See http://navx-mxp.kauailabs.com/guidance/selecting-an-interface/ for details.   */
-			ahrs = new AHRS(SPI::Port::kMXP, 200);
-		} catch (std::exception ex) {
-			std::string err_string = "Error instantiating navX MXP:  ";
-			err_string += ex.what();
-			DriverStation::ReportError(err_string.c_str());
 		}
 	}
 
@@ -239,7 +243,7 @@ public:
 				//rover on tile: forward7ft(0.8, 7 * -1 * 12.0)
 				//bob on tile: forward7ft(0.4, 7 * -1 * 12.0)
 				//bob on tile:forward(7.6 * -1 * 12.0, 0.2, 0.3, 0.16)
-				state = 4; 						/////***** Use #define
+				state = 9; 						/////***** Use #define
 				AutonTimer.Reset();
 			}
 			break;
@@ -698,7 +702,8 @@ public:
 		double settlingTime = 0.16;	//seconds	/////***** use #define
 		double maxDriveSpeed = 0.75; //percent	/////***** use #define
 
-		double encoderDistance = EncoderLeft.GetDistance();
+												//put all encoder stuff in same place
+		double encoderDistance = EncoderRight.GetDistance();
 		double encoderError = encoderDistance - targetDistance;
 		double driveCommandLinear = encoderError * kP_Linear;
 
@@ -823,3 +828,4 @@ private:
 ;
 
 START_ROBOT_CLASS(Robot)
+
