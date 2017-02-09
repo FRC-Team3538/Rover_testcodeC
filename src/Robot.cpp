@@ -10,6 +10,82 @@
 #include <SmartDashboard/SendableChooser.h>
 #include <SmartDashboard/SmartDashboard.h>
 
+//Calibrations
+
+//------------------------Bob on tile calibrations START---------------------
+// go forward 6.5 ft, turn clockwise 90 degrees
+//    back up 7.6 ft, go slowly forward for 3 seconds [**** is the sign backwards?****]
+//    turn clockwise 120 degrees, go forwards 8.5 ft
+#define BLUE_1_CASE1_FWD (6.5 * 12.0)
+#define BLUE_1_CASE2_TURN (90)
+#define BLUE_1_CASE3_FWD (7.6 * -1 * 12.0)
+#define BLUE_1_CASE4_FWD_TIME (3)
+#define BLUE_1_CASE4_FWD_LEFT_SPD (0.1)
+#define BLUE_1_CASE4_FWD_RIGHT_SPD (0.1)
+#define BLUE_1_CASE5_FWD (2.5 * 12.0)
+#define BLUE_1_CASE6_TURN (120)
+#define BLUE_1_CASE7_FWD (8.5 * 12.0)
+
+// go forward 4 ft.
+#define BLUE_2_CASE2_FWD (4 * 12)
+
+// go forward 7 ft, turn counter-clockwise 60 degrees
+//    go forward 2 ft
+#define BLUE_3_CASE1_FWD (7 * 12.0)
+#define BLUE_3_CASE2_TURN (-60)
+#define BLUE_3_CASE3_FWD (2 * 12)
+
+// go forward 6.5 ft, turn counterclockwise 90 degrees
+//    back up 7 ft, go slowly forward for 1 second [**** is the sign backwards?****]
+//    turn counterclockwise 125 degrees, go forwards 8.5 ft
+#define RED_1_CASE1_FWD (6.5 * 12.0)
+#define RED_1_CASE2_TURN (-95)
+#define RED_1_CASE3_FWD (7 * -1 * 12.0)
+#define RED_1_CASE4_FWD_TIME (1)
+#define RED_1_CASE4_FWD_LEFT_SPD (0.05)
+#define RED_1_CASE4_FWD_RIGHT_SPD (0.05)
+#define RED_1_CASE5_FWD (3 * 12.0)
+#define RED_1_CASE6_TURN (-125)
+#define RED_1_CASE7_FWD (8.5 * 12.0)
+
+// go forward 7 ft.
+#define RED_2_CASE2_FWD (7 * 12.0)
+
+// go forward 9 ft, turn clockwise 60 degrees
+//    go forward 2 ft
+#define RED_3_CASE1_FWD (9 * 12.0)
+#define RED_3_CASE2_TURN (60)
+#define RED_3_CASE3_FWD (2 * 12)
+
+//linear calibrations
+#define LINEAR_TOLERANCE (0.2)
+#define KP_LINEAR (0.3)
+#define KP_ROTATION (0.012)
+#define LINEAR_SETTLING_TIME (5)
+#define LINEAR_MAX_DRIVE_SPEED (0.75)
+
+//turning calibrations
+#define ROTATIONAL_TOLERANCE (5.0)
+#define ERROR_GAIN (-0.012)
+#define ROTATIONAL_SETTLING_TIME (5)
+
+//------------------------Bob on tile calibrations END---------------------
+
+//------------------------Rover calibrations START-------------------------
+
+////linear calibrations
+//#define LINEAR_TOLERANCE ()
+//#define KP_LINEAR (-0.8)
+//#define KP_ROTATION ()
+//#define LINEAR_SETTLING_TIME ()
+//#define LINEAR_MAX_DRIVE_SPEED ()
+
+//------------------------Rover calibrations END---------------------------
+
+
+
+
+
 class Robot: public frc::IterativeRobot {
 
 public:
@@ -212,7 +288,7 @@ public:
 		switch (modeState) {
 		case 1: /////***** Let's change the state numbers to #define's.  They really should be enum's, but I don't want to work that hard.
 			// go forward 7 ft
-			if (forward(6.5 * 12.0)) { /////***** Replace all "magic numbers" with #define's
+			if (forward(BLUE_1_CASE1_FWD)) {
 				//rover on carpet:forward7ft(-0.8, 6.5 * 12.0)
 				//rover on tile: forward7ft(-0.8, 6.5 *12.0)
 				//bob on tile:forward(6.5 * 12.0, 0.2, 0.3, 0.16)
@@ -222,7 +298,7 @@ public:
 			break;
 		case 2: 								/////***** Use #define.
 			// turn 90 degrees clockwise
-			if (autonTurn(90)) {  		/////***** Magic number / Use #define
+			if (autonTurn(BLUE_1_CASE2_TURN)) {
 				//rover on carpet: autonTurn(85, 5, -0.012)
 				//rover on tile: autonTurn(75, 5, -0.012)
 				//bob on tile: autonTurn(85, 10, -0.009)
@@ -234,7 +310,8 @@ public:
 			break;
 		case 3: 								/////***** Use #define
 			// go forward 7 ft to hit hopper
-			if (forward(7.6 * -1 * 12.0)) { /////***** Magic number / Use #define
+			//change to timed drive
+			if (forward(BLUE_1_CASE3_FWD)) {
 				//rover on carpet: forward7ft(0.8, 7 * -1 * 12.0)
 				//rover on tile: forward7ft(0.8, 7 * -1 * 12.0)
 				//bob on tile: forward7ft(0.4, 7 * -1 * 12.0)
@@ -245,7 +322,7 @@ public:
 			break;
 		case 4: 								/////***** Use #define
 			//waits a couple of seconds for balls
-			if (timedDrive(3, 0.1, 0.1)) { /////***** Magic numbers / Use #define
+			if (timedDrive(BLUE_1_CASE4_FWD_TIME, BLUE_1_CASE4_FWD_LEFT_SPD, BLUE_1_CASE4_FWD_RIGHT_SPD)) {
 				//rover on carpet: pause(1, 0.1)
 				//rover on tile: pause(1, 0.1)
 				//bob on tile: timedDrive(2, 0.1, 0.1)
@@ -257,7 +334,7 @@ public:
 			break;
 		case 5:  								/////***** Use #define
 			//go backward 4-ish feet
-			if (forward(2.5 * 12.0)) { 			/////***** Use #define
+			if (forward(BLUE_1_CASE5_FWD)) {
 				//rover on carpet: forward(-0.8, 4 * 12.0)
 				//rover on tile: forward7ft(-0.8, 4 * 12.0)
 				//bob on tile: forward7ft(-0.4, 4*12.0)
@@ -269,7 +346,7 @@ public:
 			break;
 		case 6: 								/////***** Use #define
 			// turn enough degrees to face boiler
-			if (autonTurn(120)) { 				/////***** Use #define
+			if (autonTurn(BLUE_1_CASE6_TURN)) {
 				//rover on carpet: autonTurn(120, 5, -0.012)
 				//rover on tile: autonTurn(105, 5, -0.012)
 				//bob on tile: autonTurn(120, 5, -0.009)
@@ -281,7 +358,8 @@ public:
 			break;
 		case 7:  								/////***** Use #define
 			//go forward 7-ish feet to run into boiler
-			if (forward(8.5 * 12.0)) { 			/////***** Use #define
+			//change to timed drive
+			if (forward(BLUE_1_CASE7_FWD)) {
 				//rover on carpet:forward7ft(-0.8, 8.5 * 12.0)
 				//rover on tile: forward7ft(-0.8, 8.5 * 12.0)
 				//bob on tile: forward7ft(-0.4, 8.5 * 12.0)
@@ -386,8 +464,8 @@ public:
 			break;
 
 		case 2:									/////***** use #define
-			if (forward(4 * 12)) {				/////***** Use #define
-				//gain = 0.05 is too small
+			if (forward(BLUE_2_CASE2_FWD)) {
+				//change to timed drive
 				//rover on carpet: forward7ft(-0.8, 7 * 12.0)
 				//rover on tile: forward7ft(-0.8, 7 * 12.0)
 				//if (forward7ft(-0.4, 7 * 12.0)) {
@@ -409,7 +487,7 @@ public:
 		switch (modeState) {
 		case 1:									/////***** use #define
 			// go forward 7 ft
-			if (forward(7 * 12.0)) {			/////***** use #define
+			if (forward(BLUE_3_CASE1_FWD)) {
 				//rover on carpet: forward 7ft(-0.8, 7 * 12.0)
 				//rover on tile: forward7ft(-0.8, 7 * 12.0)
 				modeState = 2;						/////***** use #define
@@ -420,7 +498,7 @@ public:
 
 		case 2:									/////***** use #define
 			// turn 90 degrees counterclockwise
-			if (autonTurn(-60)) {				/////***** Use #define
+			if (autonTurn(BLUE_3_CASE2_TURN)) {
 				//rover on carpet: autonTurn(-60, 5, -0.012)
 				//rover on tile: autonTurn(-60, 5, -0.012)
 				modeState = 3;						/////*****use #define
@@ -431,7 +509,8 @@ public:
 			break;
 		case 3:									/////***** use #define
 			// go forward
-			if (forward(2 * 12)) {				/////***** Use #define
+			//timed drive
+			if (forward(BLUE_3_CASE3_FWD)) {
 				//rover on carpet: forward7ft(-0.6, 2 * 12.0)
 				//rover on tile: forward7ft(-0.5, 2 * 12)
 				modeState = 9;						/////***** se #define
@@ -452,7 +531,7 @@ public:
 		switch (modeState) {
 		case 1:									/////***** use #define
 			// go forward 7 ft
-			if (forward(6.5 * 12.0)) {			/////***** Use #define
+			if (forward(RED_1_CASE1_FWD)) {
 				//rover on carpet: forward7ft(-0.8, 6.5 * 12.0)
 				//rover on tile: forward7ft(-0.8, 6.5 * 12.0)
 				modeState = 2;						/////***** use #define
@@ -462,7 +541,7 @@ public:
 			break;
 		case 2:
 			// turn 90 degrees counterclockwise
-			if (autonTurn(-95)) {				/////***** use #define
+			if (autonTurn(RED_1_CASE2_TURN)) {
 				//rover on carpet: autonTurn(-95, 5, -0.012)
 				//rover on tile: autonTurn(-82, 5, -0.012)
 				modeState = 3;						/////***** use #define
@@ -471,8 +550,9 @@ public:
 			}
 			break;
 		case 3:									/////***** use #define
+			//change to timed drive
 			// go forward 7 ft to hit hopper
-			if (forward(7 * -1 * 12.0)) {		/////***** Use #define
+			if (forward(RED_1_CASE3_FWD)) {
 				//rover on carpet: forward7ft(0.8, 7 * -1 * 12.0)
 				//rover on tile: forward7ft(0.8, 7 * 12.0)
 				modeState = 4;						/////***** use #define.
@@ -481,7 +561,7 @@ public:
 			break;
 		case 4:									/////***** use #define
 			//waits in front of hopper a couple of seconds for balls
-			if (timedDrive(1, 0.05, 0.05)) {	/////***** Use #define
+			if (timedDrive(RED_1_CASE4_FWD_TIME, RED_1_CASE4_FWD_LEFT_SPD, RED_1_CASE4_FWD_RIGHT_SPD)) {
 				//rover on carpet: pause(1, 0)
 				//rover on tile: pause(1, 0)
 				modeState = 5;						/////***** use #define
@@ -489,7 +569,7 @@ public:
 			break;
 		case 5:									/////***** use #define
 			//go backward 3-ish feet
-			if (forward(3 * 12.0)) {			/////***** use #define
+			if (forward(RED_1_CASE5_FWD)) {
 				//rover on carpet: forward7ft(-0.8, 3 * 12.0)
 				//rover on tile:forward7ft(-0.8, 3 * 12.0)
 				modeState = 6;						/////***** use #define
@@ -499,7 +579,7 @@ public:
 			break;
 		case 6:									/////***** use #define
 			// turns counterclockwise enough degrees to face boiler
-			if (autonTurn(-125)) {				/////***** use #define
+			if (autonTurn(RED_1_CASE6_TURN)) {
 				//rover on carpet: autonTurn(-125, 5, -0.012)
 				//rover on tile: autonTurn(-115, 5, -0.012)
 				modeState = 7;						/////*****  use #define
@@ -508,8 +588,9 @@ public:
 			}
 			break;
 		case 7:									/////***** use #define
+			//change to timed drive
 			//go forward 7-ish feet to run into boiler
-			if (forward(8.5 * 12.0)) {			/////***** use #define
+			if (forward(RED_1_CASE7_FWD)) {
 				//rover on carpet: forward7ft(-0.8, 8.5 * 12.0)
 				//rover on tile: forward7ft(-0.8, 8.5*12.0)
 				modeState = 8;						/////***** use #define
@@ -591,10 +672,11 @@ public:
 	}
 
 	void autoRed2(void) {
+		//change to timed drive
 		//puts gear on front of airship
 		switch (modeState) {
 		case 1:									/////***** use #define
-			if (forward(7 * 12.0)) {			/////***** use #define
+			if (forward(RED_2_CASE2_FWD)) {
 				//rover on carpet: forward7ft(-0.8, 7 * 12.0)
 				//rover on tile: forward7ft(-0.8, 7 * 12.0)
 				modeState = 9;						/////*****use #define
@@ -613,7 +695,7 @@ public:
 		switch (modeState) {
 		case 1:									/////***** use #define
 			// go forward 7 ft
-			if (forward(9 * 12.0)) {			/////***** use #define
+			if (forward(RED_3_CASE1_FWD)) {
 				//rover on carpet: forward7ft(-0.8, 9 * 12.0)
 				//rover on tile: forward 7ft(-0.8, 9 * 12.0)
 				modeState = 2;						/////***** use #define
@@ -623,7 +705,7 @@ public:
 			break;
 		case 2:									/////***** use #define
 			// turn 60 degrees clockwise
-			if (autonTurn(60)) {				/////***** use #define
+			if (autonTurn(RED_3_CASE2_TURN)) {
 				//rover on carpet: autonTurn(60, 5, -0.019)
 				//rover on tile:autonTurn(60, 5, -0.012)
 				modeState = 3;						/////***** use #define
@@ -632,8 +714,9 @@ public:
 			}
 			break;
 		case 3:									/////**** use #define
+			//change to timed drive
 			// go forward
-			if (forward(2 * 12)) {				/////***** use #define
+			if (forward(RED_3_CASE3_FWD)) {
 				//rover on carpet: forward7ft(-0.6, 2 * 12)
 				//rover on tile: forward7ft(-0.5, 2 * 12.0)
 				modeState = 9;						/////*****  use #define
@@ -693,36 +776,28 @@ public:
 	int forward(double targetDistance) {/////***** It is hard to find these when you are changing calibrations in a hurry.
 										/////***** Putting them at the beginning makes them easier to find.
 										/////***** There aren't any assignments to these variables. Use #define's instead.
-		double tolerance = 0.2;	//inches		/////***** use #define
-		double kP_Linear = 0.3;					/////***** use #define
-												//kP_Linear for rover: -0.8
-												//kP_Linear for bob: 0.3
-		double kP_Rotation = 0.012;				/////***** use #define
-		double settlingTime = 5;	//seconds	/////***** use #define
-												//bob on tile: 0.16
-		double maxDriveSpeed = 0.75; //percent	/////***** use #define
 
 		//put all encoder stuff in same place
 		double encoderDistance = EncoderRight.GetDistance();
 		double encoderError = encoderDistance - targetDistance;
-		double driveCommandLinear = encoderError * kP_Linear;
+		double driveCommandLinear = encoderError * KP_LINEAR;
 
 		//limits max drive speed
-		if (driveCommandLinear > maxDriveSpeed) {
-			driveCommandLinear = maxDriveSpeed;
-		} else if (driveCommandLinear < -1 * maxDriveSpeed) { /////***** "-1" is a "magic number." At least put a clear comment in here.
-			driveCommandLinear = -1 * maxDriveSpeed;/////***** same as above.
+		if (driveCommandLinear > LINEAR_MAX_DRIVE_SPEED) {
+			driveCommandLinear = LINEAR_MAX_DRIVE_SPEED;
+		} else if (driveCommandLinear < -1 * LINEAR_MAX_DRIVE_SPEED) { /////***** "-1" is a "magic number." At least put a clear comment in here.
+			driveCommandLinear = -1 * LINEAR_MAX_DRIVE_SPEED;/////***** same as above.
 		}
 
 		double gyroAngle = ahrs->GetAngle();
-		double driveCommandRotation = gyroAngle * kP_Rotation;
+		double driveCommandRotation = gyroAngle * KP_ROTATION;
 		//calculates and sets motor speeds
 		motorSpeed(driveCommandLinear + driveCommandRotation,
 				driveCommandLinear - driveCommandRotation);
 
 		//routine helps prevent the robot from overshooting the distance
 		if (isWaiting == 0) {/////***** Rename "isWaiting."  This isWaiting overlaps with the autonTurn() isWaiting.  There is nothing like 2 globals that are used for different things, but have the same name.
-			if (abs(encoderError) < tolerance) {
+			if (abs(encoderError) < LINEAR_TOLERANCE) {
 				isWaiting = 1;
 				AutonTimer.Reset();
 			}
@@ -730,9 +805,9 @@ public:
 		//timed wait
 		else {
 			float currentTime = AutonTimer.Get();
-			if (abs(encoderError) > tolerance) {
+			if (abs(encoderError) > LINEAR_TOLERANCE) {
 				isWaiting = 0;					/////***** Rename
-			} else if (currentTime > settlingTime) {
+			} else if (currentTime > LINEAR_SETTLING_TIME) {
 				isWaiting = 0;					/////***** Rename
 				return 1;
 			}
@@ -741,17 +816,14 @@ public:
 	}
 
 	int autonTurn(float targetYaw) {
-		float tolerance = 5.0;/////***** These aren't assigned in this routine. Use #define's
-		float errorGain = -0.012;				/////***** use #define
-		float settlingTime = 5;				/////***** use #define
-												//bob on tile: 0.03
+
 		float currentYaw = ahrs->GetAngle();
 		float yawError = currentYaw - targetYaw;
 
-		motorSpeed(-1 * yawError * errorGain, yawError * errorGain);
+		motorSpeed(-1 * yawError * ERROR_GAIN, yawError * ERROR_GAIN);
 
 		if (isWaiting == 0) {/////***** Rename "isWaiting."  This isWaiting overlaps with the forward() isWaiting.  There is nothing like 2 globals that are used for different things, but have the same name.
-			if (abs(yawError) < tolerance) {
+			if (abs(yawError) < ROTATIONAL_TOLERANCE) {
 				isWaiting = 1;
 				AutonTimer.Reset();
 			}
@@ -759,9 +831,9 @@ public:
 		//timed wait
 		else {
 			float currentTime = AutonTimer.Get();
-			if (abs(yawError) > tolerance) {
+			if (abs(yawError) > ROTATIONAL_TOLERANCE) {
 				isWaiting = 0;					/////***** Rename
-			} else if (currentTime > settlingTime) {
+			} else if (currentTime > ROTATIONAL_SETTLING_TIME) {
 				isWaiting = 0;					/////***** Rename
 				return 1;
 			}
