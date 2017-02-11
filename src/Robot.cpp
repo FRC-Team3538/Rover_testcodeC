@@ -10,12 +10,31 @@
 #include <SmartDashboard/SendableChooser.h>
 #include <SmartDashboard/SmartDashboard.h>
 
-//Calibrations
+// vision:
+// Use x and y coordinates from "myContours report"
+// if there are no objects use dead reckoning,
+// if there is only one, use x, y coordinates in the table,
+// if there are more than one, use the x, y coordinates for the blob with the largest area.
+// There will be two "myContours." One will be for the boiler, one will be for the gear target.
+//
 
+//Calibrations
 //------------------------Bob on tile calibrations START---------------------
+// This will go to the middle of the field,
+//		turn away from the hopper,
+//		back up into the hopper.  (Timed so that collision with the hopper will set the robot position.)
+//		hold the robot in position until all of the balls have fallen out of the hopper,
+//		back up until the robot is in a position that can see the boiler,
+//		point toward the boiler
+//		go until collision with the boiler
+//			(Timed so that collision will put the robot in position to shoot)
+//			(This can be supported with vision when it is ready.)
+//		launch the "fuel."
+//
 // go forward 6.5 ft, turn clockwise 90 degrees
-//    back up 7.6 ft, go slowly forward for 3 seconds [**** is the sign backwards?****]
+//    back up 7.6 ft, go slowly forward for 3 seconds [**** This sign is backwards****]
 //    turn clockwise 120 degrees, go forwards 8.5 ft
+
 #define BLUE_1_CASE1_FWD (6.5 * 12.0)
 #define BLUE_1_CASE2_TURN (90)
 #define BLUE_1_CASE3_FWD (7.6 * -1 * 12.0)
@@ -26,11 +45,22 @@
 #define BLUE_1_CASE6_TURN (120)
 #define BLUE_1_CASE7_FWD (8.5 * 12.0)
 
+// This will go to the gear in front of the middle start position.
+//		This is timed so that collision with the airship will put the robot in position.
+//		This can be supported with vision when it is ready.
+//
 // go forward for .75 seconds at .9 speed
 #define BLUE_2_CASE2_TIME (0.75)
 #define BLUE_2_CASE2_LSPEED (-0.9)
 #define BLUE_2_CASE2_RSPEED (-0.9)
 
+// This will go to the correct position to see the gear position in front of position 3
+//	Turn until the gear intake points to the gear.
+//		This can be supported by vision when it is available.
+//	go forward until the robot is in position for getting the gear.
+//		This is timed so that collision with the airship will put the robot in the right position.
+//		This can be supported by vision when it is available.
+//
 // go forward 7 ft, turn counter-clockwise 60 degrees
 //    go forward 2 ft
 #define BLUE_3_CASE1_FWD (7 * 12.0)
@@ -39,6 +69,17 @@
 #define BLUE_3_CASE3_LSPEED (-0.75)
 #define BLUE_3_CASE3_RSPEED (-0.75)
 
+// This will go to the middle of the field,
+//		turn away from the hopper,
+//		back up into the hopper.  (Timed so that collision with the hopper will set the robot position.)
+//		hold the robot in position until all of the balls have fallen out of the hopper,
+//		back up until the robot is in a position that can see the boiler,
+//		point toward the boiler
+//		go until collision with the boiler
+//			(Timed so that collision will put the robot in position to shoot)
+//			(This can be supported with vision when it is ready.)
+//		launch the "fuel."
+//
 // go forward 6.5 ft, turn counterclockwise 90 degrees
 //    back up 7 ft, go slowly forward for 1 second [**** is the sign backwards?****]
 //    turn counterclockwise 125 degrees, go forwards 8.5 ft
@@ -52,11 +93,24 @@
 #define RED_1_CASE6_TURN (-125)
 #define RED_1_CASE7_FWD (8.5 * 12.0)
 
-// go forward 7 ft.
+// This will go to the gear in front of the middle start position.
+//		This is timed so that collision with the airship will put the robot in position.
+//		This can be supported with vision when it is ready.
+//
+// Time forward: go forward for 0.75 seconds.
+// This will get us to the gear and stop.
 #define RED_2_CASE2_TIME (0.75)
 #define RED_2_CASE2_LSPEED (-0.9)
 #define RED_2_CASE2_RSPEED (-0.9)
 
+// Go to the correct position to see the gear position in front of position 3
+//	Turn until the gear intake points to the gear.
+//		This can be supported by vision when it is available.
+//	go forward until the robot is in position for getting the gear.
+//		This is timed so airship collision puts the robot in the
+//			right position.
+//		This can be supported by vision when it is available.
+//
 // go forward 9 ft, turn clockwise 60 degrees
 //    go forward 2 ft
 #define RED_3_CASE1_FWD (9 * 12.0)
@@ -65,19 +119,48 @@
 
 //linear calibrations
 #define LINEAR_TOLERANCE (0.2)
+// This is the gain for using the encoders to set the distance
+//		while going straight.
 #define KP_LINEAR (0.3)
+// This is the gain for using the gyroscope to go straight
 #define KP_ROTATION (0.012)
 #define LINEAR_SETTLING_TIME (0.1)
 #define LINEAR_MAX_DRIVE_SPEED (0.75)
 
 //turning calibrations
 #define ROTATIONAL_TOLERANCE (5.0)
+// This is the gain for turning using the gyroscope
 #define ERROR_GAIN (-0.012)
 #define ROTATIONAL_SETTLING_TIME (0.1)
 
 //------------------------Bob on tile calibrations END---------------------
 
 //------------------------Rover calibrations START-------------------------
+//Rover calibrations are out of date, but it gives us somewhere to start,
+//	if we need to.
+//Blue 1
+//				carpet:	forward7ft( 0.8, 7 * -1 * 12.0)tile:forward7ft( 0.8, 7 * -1 * 12.0)
+//				carpet:	forward7ft(-0.8, 6.5 * 12.0)tile: 	forward7ft(-0.8, 6.5 *12.0)
+//b1 case 2:	carpet:	autonTurn(85, 5, -0.012)	tile:	autonTurn(75, 5, -0.012)
+//b1 case 4:	carpet:	pause(1, 0.1)				tile:	pause(1, 0.1)
+//b1 case 5:	carpet:	forward(   -0.8, 4 * 12.0)	tile:	forward7ft(-0.8, 4 * 12.0)
+//b1 case 5:	carpet:	autonTurn(120, 5, -0.012)	tile:	autonTurn(105, 5, -0.012)
+//b1 case 7:	carpet:	forward7ft(-0.8, 8.5 * 12.0)tile: 	forward7ft(-0.8, 8.5 * 12.0)
+//b2 			carpet:	forward7ft(-0.8, 7 * 12.0)	tile: 	forward7ft(-0.8, 7 * 12.0)
+//b3 AB3_FWD:	carpet:	forward7ft(-0.8, 7 * 12.0)	tile: 	forward7ft(-0.8, 7 * 12.0)
+//b3 AB3_TURN	carpet: autonTurn(-60, 5, -0.012)	tile: 	autonTurn(-60, 5, -0.012)
+//b3 AB3_STR8	carpet:	forward7ft(-0.6, 2 * 12.0)	tile: 	forward7ft(-0.5, 2 * 12)
+//R1 CASE1_FWD	carpet: forward7ft(-0.8, 6.5 * 12.0)tile: 	forward7ft(-0.8, 6.5 * 12.0)
+//R1_CASE2_TURN	carpet:	autonTurn(-95, 5, -0.012)	tile: 	autonTurn(-82, 5, -0.012)
+//R1_CASE3_FWD	carpet:	forward7ft(0.8, 7 * -1 * 12.0)tile:	forward7ft(0.8, 7 * 12.0)
+//R1_CASE4_FWD_TIMEcarpet:pause(1, 0)				tile: 	pause(1, 0)
+//R1_CASE5_FWD	carpet:	forward7ft(-0.8, 3 * 12.0)	tile:	forward7ft(-0.8, 3 * 12.0)
+//R1_CASE6_TURN	carpet:	autonTurn(-125, 5, -0.012)	tile: 	autonTurn(-115, 5, -0.012)
+//R1_CASE7_FWD	carpet:	forward7ft(-0.8, 8.5 * 12.0)tile: 	forward7ft(-0.8, 8.5*12.0)
+//R2_CASE2_TIME	carpet: forward7ft(-0.8, 7 * 12.0)	tile:	forward7ft(-0.8, 7 * 12.0)
+//R3_CASE1_FWD	carpet: forward7ft(-0.8, 9 * 12.0)	tile:	forward7ft(-0.8, 9 * 12.0)
+//R3_CASE2_TURN	carpet: autonTurn(60, 5, -0.019)	tile:	autonTurn(60, 5, -0.012)
+//R3_CASE3_FWD	carpet: forward7ft(-0.6, 2 * 12)	tile:	forward7ft(-0.5, 2 * 12.0)
 
 ////linear calibrations
 //#define LINEAR_TOLERANCE ()
@@ -85,7 +168,6 @@
 //#define KP_ROTATION ()
 //#define LINEAR_SETTLING_TIME ()
 //#define LINEAR_MAX_DRIVE_SPEED ()
-
 //------------------------Rover calibrations END---------------------------
 
 class Robot: public frc::IterativeRobot {
@@ -132,6 +214,10 @@ public:
 			err_string += ex.what();
 			DriverStation::ReportError(err_string.c_str());
 		}
+		// This gives the NAVX time to reset.
+		// It takes about 0.5 seconds for the reset to complete.
+		// RobotInit runs well before the autonomous mode starts,
+		//		so there is plenty of time.
 		Wait(1);
 	}
 
@@ -164,6 +250,8 @@ public:
 			autoSelected = chooser.GetSelected();
 			std::cout << "Auto selected: " << autoSelected << std::endl;
 		} else {
+			// This decodes all of the possible switch outputs.
+			// Only 3 bits are connected to the RoboRio, so they aren't all needed.
 			switch (AutoVal) {
 			case 1:
 				autoSelected = autonNameBlue1;
@@ -281,6 +369,10 @@ public:
 		SmartDashboardSenser();
 
 	}
+// These are the state numbers for each part of autoBlue1
+//		These are here so we can easily add states.
+// 		State 1 is always the first one to run.
+//		Always have an "end" state.
 #define AB1_INIT
 #define AB1_FWD 1
 #define AB1_TURN90 2
@@ -297,12 +389,9 @@ public:
 		//Blue boiler side code
 		//drives turns then drives again
 		switch (modeState) {
-		case 1: /////***** Let's change the state numbers to #define's.  They really should be enum's, but I don't want to work that hard.
+		case 1: 								/////***** Use #define
 			// go forward 7 ft
 			if (forward(BLUE_1_CASE1_FWD)) {
-				//rover on carpet:forward7ft(-0.8, 6.5 * 12.0)
-				//rover on tile: forward7ft(-0.8, 6.5 *12.0)
-				//bob on tile:forward(6.5 * 12.0, 0.2, 0.3, 0.16)
 				modeState = 2; 					/////***** Use #define
 				ahrs->ZeroYaw();
 			}
@@ -310,9 +399,6 @@ public:
 		case 2: 								/////***** Use #define.
 			// turn 90 degrees clockwise
 			if (autonTurn(BLUE_1_CASE2_TURN)) {
-				//rover on carpet: autonTurn(85, 5, -0.012)
-				//rover on tile: autonTurn(75, 5, -0.012)
-				//bob on tile: autonTurn(85, 10, -0.009)
 				modeState = 3; 					/////***** Use #define
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -323,10 +409,6 @@ public:
 			// go forward 7 ft to hit hopper
 			//change to timed drive
 			if (forward(BLUE_1_CASE3_FWD)) {
-				//rover on carpet: forward7ft(0.8, 7 * -1 * 12.0)
-				//rover on tile: forward7ft(0.8, 7 * -1 * 12.0)
-				//bob on tile: forward7ft(0.4, 7 * -1 * 12.0)
-				//bob on tile:forward(7.6 * -1 * 12.0, 0.2, 0.3, 0.16)
 				modeState = 4; 					/////***** Use #define
 				AutonTimer.Reset();
 			}
@@ -335,9 +417,6 @@ public:
 			//waits a couple of seconds for balls
 			if (timedDrive(BLUE_1_CASE4_FWD_TIME, BLUE_1_CASE4_FWD_LEFT_SPD,
 					BLUE_1_CASE4_FWD_RIGHT_SPD)) {
-				//rover on carpet: pause(1, 0.1)
-				//rover on tile: pause(1, 0.1)
-				//bob on tile: timedDrive(2, 0.1, 0.1)
 				modeState = 5; 					/////*****Use #define
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -347,21 +426,13 @@ public:
 		case 5:  								/////***** Use #define
 			//go backward 4-ish feet
 			if (forward(BLUE_1_CASE5_FWD)) {
-				//rover on carpet: forward(-0.8, 4 * 12.0)
-				//rover on tile: forward7ft(-0.8, 4 * 12.0)
-				//bob on tile: forward7ft(-0.4, 4*12.0)
-				//bob on tile: forward(2.5 * 12.0, 0.2, 0.3, 0.16)
 				modeState = 6; 					/////***** Use #define
-				//ahrs->Reset();
 				ahrs->ZeroYaw();
 			}
 			break;
 		case 6: 								/////***** Use #define
 			// turn enough degrees to face boiler
 			if (autonTurn(BLUE_1_CASE6_TURN)) {
-				//rover on carpet: autonTurn(120, 5, -0.012)
-				//rover on tile: autonTurn(105, 5, -0.012)
-				//bob on tile: autonTurn(120, 5, -0.009)
 				modeState = 7; 					/////***** Use #define
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -372,12 +443,7 @@ public:
 			//go forward 7-ish feet to run into boiler
 			//change to timed drive
 			if (forward(BLUE_1_CASE7_FWD)) {
-				//rover on carpet:forward7ft(-0.8, 8.5 * 12.0)
-				//rover on tile: forward7ft(-0.8, 8.5 * 12.0)
-				//bob on tile: forward7ft(-0.4, 8.5 * 12.0)
-				//bob on tile: forward(8.5 * 12.0, 0.2, 0.3, 0.16)
 				modeState = 8; 						/////***** Use #define
-				//ahrs->Reset();
 				ahrs->ZeroYaw();
 			}
 			break;
@@ -402,7 +468,6 @@ public:
 				//rover on carpet:forward7ft(-0.8, 6.5 * 12.0)
 				//rover on tile: forward7ft(-0.8, 6.5 *12.0)
 				modeState = 2;					/////***** Use #define
-				//ahrs->Reset();
 				ahrs->ZeroYaw();/////***** We need a better way to do initialization for the next state.
 								/////***** This isn't important right now, but as the software gets more complicated, it will become more of a problem.
 								/////***** I've noticed that we have too many "ahrs->ZeroYaw()"
@@ -428,7 +493,6 @@ public:
 				//rover on carpet: forward(-0.8, 4 * 12.0)
 				//rover on tile: forward7ft(-0.8, 4 * 12.0)
 				modeState = 4;					/////***** Use #define
-				//ahrs->Reset();
 				ahrs->ZeroYaw();
 			}
 			break;
@@ -448,7 +512,6 @@ public:
 				//rover on carpet:forward7ft(-0.8, 8.5 * 12.0)
 				//rover on tile: forward7ft(-0.8, 8.5 * 12.0)
 				modeState = 8;						/////***** Use #define
-				//ahrs->Reset();
 				ahrs->ZeroYaw();
 			}
 			break;
@@ -485,8 +548,6 @@ public:
 			if (timedDrive(BLUE_2_CASE2_TIME, BLUE_2_CASE2_LSPEED,
 					BLUE_2_CASE2_RSPEED)) {
 				//change to timed drive
-				//rover on carpet: forward7ft(-0.8, 7 * 12.0)
-				//rover on tile: forward7ft(-0.8, 7 * 12.0)
 				//if (forward7ft(-0.4, 7 * 12.0)) {
 				modeState = AB2_END;					/////***** use #define
 			}
@@ -511,36 +572,28 @@ public:
 		case AB3_INIT:
 			modeState = AB3_FWD;
 			break;
-		case AB3_FWD:									/////***** use #define
+		case AB3_FWD:
 			// go forward 7 ft
 			if (forward(BLUE_3_CASE1_FWD)) {
-				//rover on carpet: forward 7ft(-0.8, 7 * 12.0)
-				//rover on tile: forward7ft(-0.8, 7 * 12.0)
-				modeState = AB3_TURN;					/////***** use #define
-				//ahrs->Reset();
+				modeState = AB3_TURN;
 				ahrs->ZeroYaw();
 			}
 			break;
-
-		case AB3_TURN:									/////***** use #define
+		case AB3_TURN:
 			// turn 90 degrees counterclockwise
 			if (autonTurn(BLUE_3_CASE2_TURN)) {
-				//rover on carpet: autonTurn(-60, 5, -0.012)
-				//rover on tile: autonTurn(-60, 5, -0.012)
-				modeState = AB3_STR8;					/////*****use #define
+				modeState = AB3_STR8;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 				ahrs->ZeroYaw();
 			}
 			break;
-		case AB3_STR8:									/////***** use #define
+		case AB3_STR8:
 			// go forward
 			//timed drive
 			//CHANGE THIS IT DOESN'T WORK BC IT DOESN'T MOVE FORWARD LIKE IT'S SUPPOSED TO :) (2/10)
 			if (timedDrive(BLUE_3_CASE3_TIME, BLUE_3_CASE3_LSPEED, BLUE_3_CASE3_RSPEED)) {
-				//rover on carpet: forward7ft(-0.6, 2 * 12.0)
-				//rover on tile: forward7ft(-0.5, 2 * 12)
-				modeState = AB3_END;					/////***** se #define
+				modeState = AB3_END;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 			}
@@ -570,18 +623,13 @@ public:
 		case 1:									/////***** use #define
 			// go forward 7 ft
 			if (forward(RED_1_CASE1_FWD)) {
-				//rover on carpet: forward7ft(-0.8, 6.5 * 12.0)
-				//rover on tile: forward7ft(-0.8, 6.5 * 12.0)
 				modeState = 2;					/////***** use #define
-				//ahrs->Reset();
 				ahrs->ZeroYaw();
 			}
 			break;
 		case 2:
 			// turn 90 degrees counterclockwise
 			if (autonTurn(RED_1_CASE2_TURN)) {
-				//rover on carpet: autonTurn(-95, 5, -0.012)
-				//rover on tile: autonTurn(-82, 5, -0.012)
 				modeState = 3;					/////***** use #define
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -591,8 +639,6 @@ public:
 			//change to timed drive
 			// go forward 7 ft to hit hopper
 			if (forward(RED_1_CASE3_FWD)) {
-				//rover on carpet: forward7ft(0.8, 7 * -1 * 12.0)
-				//rover on tile: forward7ft(0.8, 7 * 12.0)
 				modeState = 4;					/////***** use #define.
 				AutonTimer.Reset();
 			}
@@ -601,26 +647,19 @@ public:
 			//waits in front of hopper a couple of seconds for balls
 			if (timedDrive(RED_1_CASE4_FWD_TIME, RED_1_CASE4_FWD_LEFT_SPD,
 					RED_1_CASE4_FWD_RIGHT_SPD)) {
-				//rover on carpet: pause(1, 0)
-				//rover on tile: pause(1, 0)
 				modeState = 5;					/////***** use #define
 			}
 			break;
 		case 5:									/////***** use #define
 			//go backward 3-ish feet
 			if (forward(RED_1_CASE5_FWD)) {
-				//rover on carpet: forward7ft(-0.8, 3 * 12.0)
-				//rover on tile:forward7ft(-0.8, 3 * 12.0)
 				modeState = 6;					/////***** use #define
-				//ahrs->Reset();
 				ahrs->ZeroYaw();
 			}
 			break;
 		case 6:									/////***** use #define
 			// turns counterclockwise enough degrees to face boiler
 			if (autonTurn(RED_1_CASE6_TURN)) {
-				//rover on carpet: autonTurn(-125, 5, -0.012)
-				//rover on tile: autonTurn(-115, 5, -0.012)
 				modeState = 7;					/////*****  use #define
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -630,10 +669,7 @@ public:
 			//change to timed drive
 			//go forward 7-ish feet to run into boiler
 			if (forward(RED_1_CASE7_FWD)) {
-				//rover on carpet: forward7ft(-0.8, 8.5 * 12.0)
-				//rover on tile: forward7ft(-0.8, 8.5*12.0)
 				modeState = 8;					/////***** use #define
-				//ahrs->Reset();
 				ahrs->ZeroYaw();
 			}
 			break;
@@ -696,7 +732,6 @@ public:
 				//rover on carpet: forward7ft(-0.8, 8.5 * 12.0)
 				//rover on tile: forward7ft(-0.8, 8.5*12.0)
 				modeState = 6;					/////*****use #define
-				//ahrs->Reset();
 				ahrs->ZeroYaw();
 			}
 			break;
@@ -727,8 +762,6 @@ public:
 		case AR2_FWD:
 			if (timedDrive(RED_2_CASE2_TIME, RED_2_CASE2_LSPEED,
 					RED_2_CASE2_RSPEED)) {
-				//rover on carpet: forward7ft(-0.8, 7 * 12.0)
-				//rover on tile: forward7ft(-0.8, 7 * 12.0)
 				modeState = AR2_END;
 			}
 			break;
@@ -748,33 +781,26 @@ public:
 		//puts gear onto side of airship
 
 		switch (modeState) {
-		case AR3_FWD:									/////***** use #define
+		case AR3_FWD:
 			// go forward 7 ft
 			if (forward(RED_3_CASE1_FWD)) {
-				//rover on carpet: forward7ft(-0.8, 9 * 12.0)
-				//rover on tile: forward 7ft(-0.8, 9 * 12.0)
-				modeState = AR3_TURN;					/////***** use #define
-				//ahrs->Reset();
+				modeState = AR3_TURN;
 				ahrs->ZeroYaw();
 			}
 			break;
-		case AR3_TURN:									/////***** use #define
+		case AR3_TURN:
 			// turn 60 degrees clockwise
 			if (autonTurn(RED_3_CASE2_TURN)) {
-				//rover on carpet: autonTurn(60, 5, -0.019)
-				//rover on tile:autonTurn(60, 5, -0.012)
-				modeState = AR3_STR8;					/////***** use #define
+				modeState = AR3_STR8;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 			}
 			break;
-		case AR3_STR8:									/////**** use #define
+		case AR3_STR8:
 			//change to timed drive
 			// go forward
 			if (forward(RED_3_CASE3_FWD)) {
-				//rover on carpet: forward7ft(-0.6, 2 * 12)
-				//rover on tile: forward7ft(-0.5, 2 * 12.0)
-				modeState = AR3_END;					/////*****  use #define
+				modeState = AR3_END;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 			}
