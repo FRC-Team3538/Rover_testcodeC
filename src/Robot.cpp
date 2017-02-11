@@ -26,14 +26,18 @@
 #define BLUE_1_CASE6_TURN (120)
 #define BLUE_1_CASE7_FWD (8.5 * 12.0)
 
-// go forward 4 ft.
-#define BLUE_2_CASE2_FWD (4 * 12)
+// go forward for .75 seconds at .9 speed
+#define BLUE_2_CASE2_TIME (0.75)
+#define BLUE_2_CASE2_LSPEED (-0.9)
+#define BLUE_2_CASE2_RSPEED (-0.9)
 
 // go forward 7 ft, turn counter-clockwise 60 degrees
 //    go forward 2 ft
 #define BLUE_3_CASE1_FWD (7 * 12.0)
 #define BLUE_3_CASE2_TURN (-60)
-#define BLUE_3_CASE3_FWD (2 * 12)
+#define BLUE_3_CASE3_TIME (0.1)
+#define BLUE_3_CASE3_LSPEED (-0.75)
+#define BLUE_3_CASE3_RSPEED (-0.75)
 
 // go forward 6.5 ft, turn counterclockwise 90 degrees
 //    back up 7 ft, go slowly forward for 1 second [**** is the sign backwards?****]
@@ -49,7 +53,9 @@
 #define RED_1_CASE7_FWD (8.5 * 12.0)
 
 // go forward 7 ft.
-#define RED_2_CASE2_FWD (7 * 12.0)
+#define RED_2_CASE2_TIME (0.75)
+#define RED_2_CASE2_LSPEED (-0.9)
+#define RED_2_CASE2_RSPEED (-0.9)
 
 // go forward 9 ft, turn clockwise 60 degrees
 //    go forward 2 ft
@@ -61,13 +67,13 @@
 #define LINEAR_TOLERANCE (0.2)
 #define KP_LINEAR (0.3)
 #define KP_ROTATION (0.012)
-#define LINEAR_SETTLING_TIME (5)
+#define LINEAR_SETTLING_TIME (0.1)
 #define LINEAR_MAX_DRIVE_SPEED (0.75)
 
 //turning calibrations
 #define ROTATIONAL_TOLERANCE (5.0)
 #define ERROR_GAIN (-0.012)
-#define ROTATIONAL_SETTLING_TIME (5)
+#define ROTATIONAL_SETTLING_TIME (0.1)
 
 //------------------------Bob on tile calibrations END---------------------
 
@@ -82,10 +88,6 @@
 
 //------------------------Rover calibrations END---------------------------
 
-
-
-
-
 class Robot: public frc::IterativeRobot {
 
 public:
@@ -96,8 +98,7 @@ public:
 					4), DriveRight2(5), EncoderLeft(0, 1), EncoderRight(2, 3),
 
 			table(NULL), ahrs(NULL), modeState(0), AutonOverride(), AutoSw1(), AutoSw2(), AutoSw3(), DiIn9(
-					9), DiIn8(8), DiIn7(7), AutoVal(), AutoVal0(), AutoVal1(), AutoVal2(), OutputX(), OutputY()
-	{
+					9), DiIn8(8), DiIn7(7), AutoVal(), AutoVal0(), AutoVal1(), AutoVal2(), OutputX(), OutputY() {
 		GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
 	}
 
@@ -120,7 +121,7 @@ public:
 		OutputX = 0, OutputY = 0;
 
 		//from NAVX mxp data monitor example
-		try {/////***** Let's do this differently.  We want Auton to fail gracefully, not just abort. Remember Ariane 5
+		try { /////***** Let's do this differently.  We want Auton to fail gracefully, not just abort. Remember Ariane 5
 			/* Communicate w/navX MXP via the MXP SPI Bus.                                       */
 			/* Alternatively:  I2C::Port::kMXP, SerialPort::Port::kMXP or SerialPort::Port::kUSB */
 			/* See http://navx-mxp.kauailabs.com/guidance/selecting-an-interface/ for details.   */
@@ -136,7 +137,7 @@ public:
 
 	void AutonomousInit() override {
 		modeState = 1;
-		isWaiting = 0;						/////***** Rename this.
+		isWaiting = 0;							/////***** Rename this.
 
 		AutonTimer.Reset();
 		AutonTimer.Start();
@@ -280,6 +281,16 @@ public:
 		SmartDashboardSenser();
 
 	}
+#define AB1_INIT
+#define AB1_FWD 1
+#define AB1_TURN90 2
+#define AB1_BKUP 3
+#define AB1_WAIT 4
+#define AB1_FWD2 5
+#define AB1_FACE_BOILER 6
+#define AB1_TO_BOILER 7
+#define AR1_SHOOT 8
+#define AB1_END 9
 
 	void autoBlue1(void) {
 
@@ -292,7 +303,7 @@ public:
 				//rover on carpet:forward7ft(-0.8, 6.5 * 12.0)
 				//rover on tile: forward7ft(-0.8, 6.5 *12.0)
 				//bob on tile:forward(6.5 * 12.0, 0.2, 0.3, 0.16)
-				modeState = 2; 						/////***** Use #define
+				modeState = 2; 					/////***** Use #define
 				ahrs->ZeroYaw();
 			}
 			break;
@@ -302,7 +313,7 @@ public:
 				//rover on carpet: autonTurn(85, 5, -0.012)
 				//rover on tile: autonTurn(75, 5, -0.012)
 				//bob on tile: autonTurn(85, 10, -0.009)
-				modeState = 3; 						/////***** Use #define
+				modeState = 3; 					/////***** Use #define
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 				ahrs->ZeroYaw();
@@ -316,17 +327,18 @@ public:
 				//rover on tile: forward7ft(0.8, 7 * -1 * 12.0)
 				//bob on tile: forward7ft(0.4, 7 * -1 * 12.0)
 				//bob on tile:forward(7.6 * -1 * 12.0, 0.2, 0.3, 0.16)
-				modeState = 4; 						/////***** Use #define
+				modeState = 4; 					/////***** Use #define
 				AutonTimer.Reset();
 			}
 			break;
 		case 4: 								/////***** Use #define
 			//waits a couple of seconds for balls
-			if (timedDrive(BLUE_1_CASE4_FWD_TIME, BLUE_1_CASE4_FWD_LEFT_SPD, BLUE_1_CASE4_FWD_RIGHT_SPD)) {
+			if (timedDrive(BLUE_1_CASE4_FWD_TIME, BLUE_1_CASE4_FWD_LEFT_SPD,
+					BLUE_1_CASE4_FWD_RIGHT_SPD)) {
 				//rover on carpet: pause(1, 0.1)
 				//rover on tile: pause(1, 0.1)
 				//bob on tile: timedDrive(2, 0.1, 0.1)
-				modeState = 5; 						/////*****Use #define
+				modeState = 5; 					/////*****Use #define
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 				ahrs->ZeroYaw();
@@ -339,7 +351,7 @@ public:
 				//rover on tile: forward7ft(-0.8, 4 * 12.0)
 				//bob on tile: forward7ft(-0.4, 4*12.0)
 				//bob on tile: forward(2.5 * 12.0, 0.2, 0.3, 0.16)
-				modeState = 6; 						/////***** Use #define
+				modeState = 6; 					/////***** Use #define
 				//ahrs->Reset();
 				ahrs->ZeroYaw();
 			}
@@ -350,7 +362,7 @@ public:
 				//rover on carpet: autonTurn(120, 5, -0.012)
 				//rover on tile: autonTurn(105, 5, -0.012)
 				//bob on tile: autonTurn(120, 5, -0.009)
-				modeState = 7; 						/////***** Use #define
+				modeState = 7; 					/////***** Use #define
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 				ahrs->ZeroYaw();
@@ -371,7 +383,7 @@ public:
 			break;
 		case 8: 								/////***** Use #define
 			//launch
-			modeState = 9; 							/////***** Use #define
+			modeState = 9; 						/////***** Use #define
 			break;
 		default:
 			stopMotors();
@@ -389,7 +401,7 @@ public:
 			if (forward(7 * 12.0)) {			/////***** Use #define
 				//rover on carpet:forward7ft(-0.8, 6.5 * 12.0)
 				//rover on tile: forward7ft(-0.8, 6.5 *12.0)
-				modeState = 2;						/////***** Use #define
+				modeState = 2;					/////***** Use #define
 				//ahrs->Reset();
 				ahrs->ZeroYaw();/////***** We need a better way to do initialization for the next state.
 								/////***** This isn't important right now, but as the software gets more complicated, it will become more of a problem.
@@ -407,7 +419,7 @@ public:
 			if (timedDrive(3, 0.2, -0.8)) {		/////***** Use #define
 				//rover on carpet: pause(1, 0.1)
 				//rover on tile: pause(1, 0.1)
-				modeState = 3;						/////***** Use #define
+				modeState = 3;					/////***** Use #define
 			}
 			break;
 		case 3:									/////***** Use #define
@@ -415,7 +427,7 @@ public:
 			if (forward(4 * 12.0)) {			/////***** Use #define
 				//rover on carpet: forward(-0.8, 4 * 12.0)
 				//rover on tile: forward7ft(-0.8, 4 * 12.0)
-				modeState = 4;						/////***** Use #define
+				modeState = 4;					/////***** Use #define
 				//ahrs->Reset();
 				ahrs->ZeroYaw();
 			}
@@ -425,7 +437,7 @@ public:
 			if (autonTurn(120)) {				/////***** Use #define
 				//rover on carpet: autonTurn(120, 5, -0.012)
 				//rover on tile: autonTurn(105, 5, -0.012)
-				modeState = 5;						/////***** Use #define
+				modeState = 5;					/////***** Use #define
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 			}
@@ -442,7 +454,7 @@ public:
 			break;
 		case 6:									/////***** Use #define
 			//launch
-			modeState = 9;							/////*****use #define
+			modeState = 9;						/////*****use #define
 			break;
 		default:
 			stopMotors();
@@ -451,25 +463,32 @@ public:
 		return;
 
 	}
+
+#define AB2_INIT 1
+#define AB2_FWD 2
+#define AB2_END 3
 
 	void autoBlue2(void) {
 		//blue side code
 		//goes forward to put gear on pin
 
 		switch (modeState) {
-		case 1:									/////***** use #define
-			//ahrs->Reset();
+		case AB2_INIT:									/////***** use #define
+			// This uses state 1 for initialization.
+			// This keeps the initialization and the code all in one place.
+
 			ahrs->ZeroYaw();
-			modeState = 2;							/////***** use #define
+			modeState = AB2_FWD;						/////***** use #define
 			break;
 
-		case 2:									/////***** use #define
-			if (forward(BLUE_2_CASE2_FWD)) {
+		case AB2_FWD:									/////***** use #define
+			if (timedDrive(BLUE_2_CASE2_TIME, BLUE_2_CASE2_LSPEED,
+					BLUE_2_CASE2_RSPEED)) {
 				//change to timed drive
 				//rover on carpet: forward7ft(-0.8, 7 * 12.0)
 				//rover on tile: forward7ft(-0.8, 7 * 12.0)
 				//if (forward7ft(-0.4, 7 * 12.0)) {
-				modeState = 3;						/////***** use #define
+				modeState = AB2_END;					/////***** use #define
 			}
 			break;
 
@@ -479,41 +498,49 @@ public:
 		}
 		return;
 	}
-
+#define AB3_INIT 1
+#define AB3_FWD 2
+#define AB3_TURN 3
+#define AB3_STR8 4
+#define AB3_END 5
 	void autoBlue3(void) {
 		//blue side code
 		//puts gear on pin on side of airship
 
 		switch (modeState) {
-		case 1:									/////***** use #define
+		case AB3_INIT:
+			modeState = AB3_FWD;
+			break;
+		case AB3_FWD:									/////***** use #define
 			// go forward 7 ft
 			if (forward(BLUE_3_CASE1_FWD)) {
 				//rover on carpet: forward 7ft(-0.8, 7 * 12.0)
 				//rover on tile: forward7ft(-0.8, 7 * 12.0)
-				modeState = 2;						/////***** use #define
+				modeState = AB3_TURN;					/////***** use #define
 				//ahrs->Reset();
 				ahrs->ZeroYaw();
 			}
 			break;
 
-		case 2:									/////***** use #define
+		case AB3_TURN:									/////***** use #define
 			// turn 90 degrees counterclockwise
 			if (autonTurn(BLUE_3_CASE2_TURN)) {
 				//rover on carpet: autonTurn(-60, 5, -0.012)
 				//rover on tile: autonTurn(-60, 5, -0.012)
-				modeState = 3;						/////*****use #define
+				modeState = AB3_STR8;					/////*****use #define
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
-				ahrs ->ZeroYaw();
+				ahrs->ZeroYaw();
 			}
 			break;
-		case 3:									/////***** use #define
+		case AB3_STR8:									/////***** use #define
 			// go forward
 			//timed drive
-			if (forward(BLUE_3_CASE3_FWD)) {
+			//CHANGE THIS IT DOESN'T WORK BC IT DOESN'T MOVE FORWARD LIKE IT'S SUPPOSED TO :) (2/10)
+			if (timedDrive(BLUE_3_CASE3_TIME, BLUE_3_CASE3_LSPEED, BLUE_3_CASE3_RSPEED)) {
 				//rover on carpet: forward7ft(-0.6, 2 * 12.0)
 				//rover on tile: forward7ft(-0.5, 2 * 12)
-				modeState = 9;						/////***** se #define
+				modeState = AB3_END;					/////***** se #define
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 			}
@@ -523,6 +550,17 @@ public:
 		}
 		return;
 	}
+
+#define AR1_INIT
+#define AR1_FWD 1
+#define AR1_TURN90 2
+#define AR1_BKUP 3
+#define AR1_WAIT 4
+#define AR1_FWD2 5
+#define AR1_FACE_BOILER 6
+#define AR1_TO_BOILER 7
+#define AR1_SHOOT 8
+#define AR1_END 9
 
 	void autoRed1(void) {
 		//Red center position code
@@ -534,7 +572,7 @@ public:
 			if (forward(RED_1_CASE1_FWD)) {
 				//rover on carpet: forward7ft(-0.8, 6.5 * 12.0)
 				//rover on tile: forward7ft(-0.8, 6.5 * 12.0)
-				modeState = 2;						/////***** use #define
+				modeState = 2;					/////***** use #define
 				//ahrs->Reset();
 				ahrs->ZeroYaw();
 			}
@@ -544,7 +582,7 @@ public:
 			if (autonTurn(RED_1_CASE2_TURN)) {
 				//rover on carpet: autonTurn(-95, 5, -0.012)
 				//rover on tile: autonTurn(-82, 5, -0.012)
-				modeState = 3;						/////***** use #define
+				modeState = 3;					/////***** use #define
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 			}
@@ -555,16 +593,17 @@ public:
 			if (forward(RED_1_CASE3_FWD)) {
 				//rover on carpet: forward7ft(0.8, 7 * -1 * 12.0)
 				//rover on tile: forward7ft(0.8, 7 * 12.0)
-				modeState = 4;						/////***** use #define.
+				modeState = 4;					/////***** use #define.
 				AutonTimer.Reset();
 			}
 			break;
 		case 4:									/////***** use #define
 			//waits in front of hopper a couple of seconds for balls
-			if (timedDrive(RED_1_CASE4_FWD_TIME, RED_1_CASE4_FWD_LEFT_SPD, RED_1_CASE4_FWD_RIGHT_SPD)) {
+			if (timedDrive(RED_1_CASE4_FWD_TIME, RED_1_CASE4_FWD_LEFT_SPD,
+					RED_1_CASE4_FWD_RIGHT_SPD)) {
 				//rover on carpet: pause(1, 0)
 				//rover on tile: pause(1, 0)
-				modeState = 5;						/////***** use #define
+				modeState = 5;					/////***** use #define
 			}
 			break;
 		case 5:									/////***** use #define
@@ -572,7 +611,7 @@ public:
 			if (forward(RED_1_CASE5_FWD)) {
 				//rover on carpet: forward7ft(-0.8, 3 * 12.0)
 				//rover on tile:forward7ft(-0.8, 3 * 12.0)
-				modeState = 6;						/////***** use #define
+				modeState = 6;					/////***** use #define
 				//ahrs->Reset();
 				ahrs->ZeroYaw();
 			}
@@ -582,7 +621,7 @@ public:
 			if (autonTurn(RED_1_CASE6_TURN)) {
 				//rover on carpet: autonTurn(-125, 5, -0.012)
 				//rover on tile: autonTurn(-115, 5, -0.012)
-				modeState = 7;						/////*****  use #define
+				modeState = 7;					/////*****  use #define
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 			}
@@ -593,14 +632,14 @@ public:
 			if (forward(RED_1_CASE7_FWD)) {
 				//rover on carpet: forward7ft(-0.8, 8.5 * 12.0)
 				//rover on tile: forward7ft(-0.8, 8.5*12.0)
-				modeState = 8;						/////***** use #define
+				modeState = 8;					/////***** use #define
 				//ahrs->Reset();
 				ahrs->ZeroYaw();
 			}
 			break;
 		case 8:									/////***** use #define
 			//launch
-			modeState = 9;							/////*****  use #define
+			modeState = 9;						/////*****  use #define
 			break;
 		default:
 			stopMotors();
@@ -618,7 +657,7 @@ public:
 			if (forward(8 * 12.0)) {			/////***** use #define
 				//rover on carpet: forward7ft(-0.8, 6.5 * 12.0)
 				//rover on tile: forward7ft(-0.8, 6.5 * 12.0)
-				modeState = 2;						/////***** use #define
+				modeState = 2;					/////***** use #define
 				//ahrs->Reset();
 				ahrs->ZeroYaw();
 			}
@@ -628,7 +667,7 @@ public:
 			if (timedDrive(1, 0.2, 0.1)) {		/////***** use #define
 				//rover on carpet: pause(1, 0) 		// changed from pause -> timedDrive()
 				//rover on tile: pause(1, 0)
-				modeState = 3;						/////***** use #define
+				modeState = 3;					/////***** use #define
 			}
 			break;
 		case 3:									/////***** use #define
@@ -636,7 +675,7 @@ public:
 			if (forward(3 * 12.0)) {/////***** use #define / It is not obvious that this is correct.  Why is backing up using a positive speed?
 				//rover on carpet: forward7ft(-0.8, 3 * 12.0)
 				//rover on tile:forward7ft(-0.8, 3 * 12.0)
-				modeState = 4;						/////***** use #define
+				modeState = 4;					/////***** use #define
 				//ahrs->Reset();
 				ahrs->ZeroYaw();
 			}
@@ -646,7 +685,7 @@ public:
 			if (autonTurn(-125)) {/////***** use #define.  Remember right and left turns may need different angles.
 				//rover on carpet: autonTurn(-125, 5, -0.012)
 				//rover on tile: autonTurn(-115, 5, -0.012)
-				modeState = 5;						/////***** use #define
+				modeState = 5;					/////***** use #define
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 			}
@@ -656,14 +695,14 @@ public:
 			if (forward(8.5 * 12.0)) {			/////***** use #define
 				//rover on carpet: forward7ft(-0.8, 8.5 * 12.0)
 				//rover on tile: forward7ft(-0.8, 8.5*12.0)
-				modeState = 6;						/////*****use #define
+				modeState = 6;					/////*****use #define
 				//ahrs->Reset();
 				ahrs->ZeroYaw();
 			}
 			break;
 		case 6:									/////***** use #define
 			//launch
-			modeState = 9;							/////***** use #define
+			modeState = 9;						/////***** use #define
 			break;
 		default:
 			stopMotors();
@@ -671,15 +710,26 @@ public:
 		return;
 	}
 
+#define AR2_INIT 1
+#define AR2_FWD 2
+#define AR2_END 3
 	void autoRed2(void) {
 		//change to timed drive
 		//puts gear on front of airship
 		switch (modeState) {
-		case 1:									/////***** use #define
-			if (forward(RED_2_CASE2_FWD)) {
+		case AR2_INIT:
+			// This uses state 1 for initialization.
+			// This keeps the initialization and the code all in one place.
+
+			ahrs->ZeroYaw();
+			modeState = AR2_FWD;
+			break;
+		case AR2_FWD:
+			if (timedDrive(RED_2_CASE2_TIME, RED_2_CASE2_LSPEED,
+					RED_2_CASE2_RSPEED)) {
 				//rover on carpet: forward7ft(-0.8, 7 * 12.0)
 				//rover on tile: forward7ft(-0.8, 7 * 12.0)
-				modeState = 9;						/////*****use #define
+				modeState = AR2_END;
 			}
 			break;
 		default:
@@ -688,38 +738,43 @@ public:
 		return;
 	}
 
+#define AR3_INIT
+#define AR3_FWD 1
+#define AR3_TURN 2
+#define AR3_STR8 3
+#define AR3_END 4
 	void autoRed3(void) {
 		//red three
 		//puts gear onto side of airship
 
 		switch (modeState) {
-		case 1:									/////***** use #define
+		case AR3_FWD:									/////***** use #define
 			// go forward 7 ft
 			if (forward(RED_3_CASE1_FWD)) {
 				//rover on carpet: forward7ft(-0.8, 9 * 12.0)
 				//rover on tile: forward 7ft(-0.8, 9 * 12.0)
-				modeState = 2;						/////***** use #define
+				modeState = AR3_TURN;					/////***** use #define
 				//ahrs->Reset();
 				ahrs->ZeroYaw();
 			}
 			break;
-		case 2:									/////***** use #define
+		case AR3_TURN:									/////***** use #define
 			// turn 60 degrees clockwise
 			if (autonTurn(RED_3_CASE2_TURN)) {
 				//rover on carpet: autonTurn(60, 5, -0.019)
 				//rover on tile:autonTurn(60, 5, -0.012)
-				modeState = 3;						/////***** use #define
+				modeState = AR3_STR8;					/////***** use #define
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 			}
 			break;
-		case 3:									/////**** use #define
+		case AR3_STR8:									/////**** use #define
 			//change to timed drive
 			// go forward
 			if (forward(RED_3_CASE3_FWD)) {
 				//rover on carpet: forward7ft(-0.6, 2 * 12)
 				//rover on tile: forward7ft(-0.5, 2 * 12.0)
-				modeState = 9;						/////*****  use #define
+				modeState = AR3_END;					/////*****  use #define
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 			}
@@ -773,10 +828,7 @@ public:
 		SmartDashboard::PutNumber("Drive Speed Right", rightMotor);
 	}
 
-	int forward(double targetDistance) {/////***** It is hard to find these when you are changing calibrations in a hurry.
-										/////***** Putting them at the beginning makes them easier to find.
-										/////***** There aren't any assignments to these variables. Use #define's instead.
-
+	int forward(double targetDistance) {
 		//put all encoder stuff in same place
 		double encoderDistance = EncoderRight.GetDistance();
 		double encoderError = encoderDistance - targetDistance;
@@ -786,7 +838,7 @@ public:
 		if (driveCommandLinear > LINEAR_MAX_DRIVE_SPEED) {
 			driveCommandLinear = LINEAR_MAX_DRIVE_SPEED;
 		} else if (driveCommandLinear < -1 * LINEAR_MAX_DRIVE_SPEED) { /////***** "-1" is a "magic number." At least put a clear comment in here.
-			driveCommandLinear = -1 * LINEAR_MAX_DRIVE_SPEED;/////***** same as above.
+			driveCommandLinear = -1 * LINEAR_MAX_DRIVE_SPEED; /////***** same as above.
 		}
 
 		double gyroAngle = ahrs->GetAngle();
@@ -796,7 +848,7 @@ public:
 				driveCommandLinear - driveCommandRotation);
 
 		//routine helps prevent the robot from overshooting the distance
-		if (isWaiting == 0) {/////***** Rename "isWaiting."  This isWaiting overlaps with the autonTurn() isWaiting.  There is nothing like 2 globals that are used for different things, but have the same name.
+		if (isWaiting == 0) { /////***** Rename "isWaiting."  This isWaiting overlaps with the autonTurn() isWaiting.  There is nothing like 2 globals that are used for different things, but have the same name.
 			if (abs(encoderError) < LINEAR_TOLERANCE) {
 				isWaiting = 1;
 				AutonTimer.Reset();
@@ -841,6 +893,7 @@ public:
 		return 0;
 	}
 
+	//need to change signs!!!
 	int timedDrive(double driveTime, double leftMotorSpeed,
 			double rightMotorSpeed) {
 		float currentTime = AutonTimer.Get();
@@ -888,8 +941,7 @@ private:
 	std::shared_ptr<NetworkTable> table;
 	AHRS *ahrs;
 	//tells us what state we are in in each auto mode
-	int modeState;
-	bool AutonOverride, AutoSw1, AutoSw2, AutoSw3;
+	int modeState;bool AutonOverride, AutoSw1, AutoSw2, AutoSw3;
 	DigitalInput DiIn9, DiIn8, DiIn7;
 	int AutoVal, AutoVal0, AutoVal1, AutoVal2;
 	float OutputX, OutputY;
