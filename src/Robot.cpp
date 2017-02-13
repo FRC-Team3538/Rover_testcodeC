@@ -175,12 +175,18 @@ class Robot: public frc::IterativeRobot {
 public:
 	Robot() :
 			Adrive(DriveLeft0, DriveLeft1, DriveRight0, DriveRight1), Bdrive(
-					DriveLeft2, DriveRight2), chooser(), Drivestick(0), DriveLeft0(
-					0), DriveLeft1(1), DriveLeft2(2), DriveRight0(3), DriveRight1(
-					4), DriveRight2(5), EncoderLeft(0, 1), EncoderRight(2, 3),
+					DriveLeft2, DriveRight2), chooser(), Drivestick(0), OperatorStick(
+					0), DriveLeft0(0), DriveLeft1(1), DriveLeft2(2), DriveRight0(
+					3), DriveRight1(4), DriveRight2(5), EncoderLeft(0, 1), EncoderRight(
+					2, 3),
 
 			table(NULL), ahrs(NULL), modeState(0), AutonOverride(), AutoSw1(), AutoSw2(), AutoSw3(), DiIn9(
-					9), DiIn8(8), DiIn7(7), AutoVal(), AutoVal0(), AutoVal1(), AutoVal2(), OutputX(), OutputY() {
+					9), DiIn8(8), DiIn7(7), AutoVal(), AutoVal0(), AutoVal1(), AutoVal2(), OutputX(), OutputY(), Winch0(
+					11), Winch1(9), Shooter0(12), Shooter1(7), Conveyor(13), Agitator(
+					6), FloorIntakeRoller(14), MeterWheel(8), DeflectorMotor(
+					10), EncoderShoot(4, 5), WinchStop(6), DeflectorAnglePOT(0, 270, 0), ClosedLoop(
+			false), DeflectorTarget(0), DeflectorHighLimit(16), DeflectorLowLimit(
+					17) {
 		GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
 	}
 
@@ -200,6 +206,7 @@ public:
 
 		EncoderLeft.SetDistancePerPulse(0.0243228675 * 4);
 		EncoderRight.SetDistancePerPulse(-1 * 0.0243228675 * 4);
+		EncoderShoot.SetDistancePerPulse(1.0 / 32.0 * 4.0);
 		OutputX = 0, OutputY = 0;
 
 		//from NAVX mxp data monitor example
@@ -368,6 +375,68 @@ public:
 
 		SmartDashboardSenser();
 
+		// Turn on the shooter, conveyer, and agitator
+		if (OperatorStick.GetRawAxis(2) < -0.1) {
+
+			Shooter0.Set(1);
+			Shooter1.Set(1);
+			Conveyor.Set(1);
+			Agitator.Set(1);
+
+		} else {
+
+			Shooter0.Set(0);
+			Shooter1.Set(0);
+			Conveyor.Set(0);
+			Agitator.Set(0);
+		}
+
+		// Turn on Metering WHeel
+		if (OperatorStick.GetRawButton(1)) {
+
+			MeterWheel.Set(1);
+		} else {
+			MeterWheel.Set(0);
+		}
+
+		//Put out intake
+		if (OperatorStick.GetRawAxis(3) > 0.1) {
+
+			FloorIntakeRoller.Set(1);
+			FloorIntakeArm->Set(true);
+
+		} else {
+
+			FloorIntakeRoller.Set(0);
+			FloorIntakeArm->Set(false);
+		}
+
+		//Button to get and release the gear
+		GearIn->Set(OperatorStick.GetRawButton(3));
+		GearOut->Set(OperatorStick.GetRawButton(3));
+
+		//turn on winch
+		Winch0.Set(OperatorStick.GetRawAxis(1));
+		Winch1.Set(OperatorStick.GetRawAxis(1));
+
+		//control deflector angle in open loop
+		DeflectorMotor.Set(OperatorStick.GetRawAxis(4));
+
+		// Turn off the the sensors/reset
+		if (OperatorStick.GetRawButton(8)) {
+			ClosedLoop = true;
+		}
+		if (OperatorStick.GetRawButton(7)) {
+			ClosedLoop = false;
+		}
+
+		//Controll the angle of the deflector
+		if (OperatorStick.GetRawButton(5)) {
+			DeflectorTarget = 90;
+		}
+		if (OperatorStick.GetRawButton(6)) {
+			DeflectorTarget = 0;
+		}
 	}
 // These are the state numbers for each part of autoBlue1
 //		These are here so we can easily add states.
@@ -416,7 +485,9 @@ public:
 		case 4: 								/////***** Use #define
 			//waits a couple of seconds for balls
 			if (timedDrive(BLUE_1_CASE4_FWD_TIME, BLUE_1_CASE4_FWD_LEFT_SPD,
+
 					BLUE_1_CASE4_FWD_RIGHT_SPD)) {
+
 				modeState = 5; 					/////*****Use #define
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -546,7 +617,7 @@ public:
 
 		case AB2_FWD:									/////***** use #define
 			if (timedDrive(BLUE_2_CASE2_TIME, BLUE_2_CASE2_LSPEED,
-					BLUE_2_CASE2_RSPEED)) {
+			BLUE_2_CASE2_RSPEED)) {
 				//change to timed drive
 				//if (forward7ft(-0.4, 7 * 12.0)) {
 				modeState = AB2_END;					/////***** use #define
@@ -592,6 +663,7 @@ public:
 			// go forward
 			//timed drive
 			//CHANGE THIS IT DOESN'T WORK BC IT DOESN'T MOVE FORWARD LIKE IT'S SUPPOSED TO :) (2/10)
+
 			if (timedDrive(BLUE_3_CASE3_TIME, BLUE_3_CASE3_LSPEED, BLUE_3_CASE3_RSPEED)) {
 				modeState = AB3_END;
 				EncoderLeft.Reset();
@@ -839,7 +911,26 @@ public:
 		} else {
 			SmartDashboard::PutNumber("Gyro Angle", 999); /////***** don't use sentinels / use #define
 		}
+
+		//Manipulator
+		//shooter
+		SmartDashboard::PutNumber("ShooterEncoder(raw)", EncoderShoot.GetRaw());
+		SmartDashboard::PutNumber("ShooterEncoder(RPM)", EncoderShoot.GetRate());
+
+		SmartDashboard::PutBoolean("WinchStop", WinchStop.Get());
+		SmartDashboard::PutBoolean("DeflectorHighLimit",
+				DeflectorHighLimit.Get());
+		SmartDashboard::PutBoolean("DeflectorLowLimit",
+				DeflectorLowLimit.Get());
+
+		//Get angle for the deflector
+		SmartDashboard::PutNumber("DeflectorAnglePOT(DEG)", DeflectorAnglePOT.Get());
+
+		//State varible
+		SmartDashboard::PutNumber("DeflectorAngleTarget", DeflectorTarget);
+		SmartDashboard::PutBoolean("DeflectorTarget", ClosedLoop);
 		//std::vector<double> arr = GRIPTable->
+
 	}
 
 	void motorSpeed(double leftMotor, double rightMotor) {
@@ -955,6 +1046,7 @@ private:
 	const std::string autonNameRed3 = "Red 3";
 	std::string autoSelected;
 	Joystick Drivestick;
+	Joystick OperatorStick;
 	VictorSP DriveLeft0;
 	VictorSP DriveLeft1;
 	VictorSP DriveLeft2;
@@ -974,7 +1066,25 @@ private:
 	std::shared_ptr<NetworkTable> GRIPTable;
 	int isWaiting = 0;					/////***** Divide this into 2 variables.
 
-	Solenoid *driveSolenoid = new Solenoid(0);
+	Solenoid *driveSolenoid = new Solenoid(4);
+	//manipulator
+	VictorSP Winch0, Winch1;
+	VictorSP Shooter0, Shooter1;
+	VictorSP Conveyor;
+	VictorSP Agitator;
+	VictorSP FloorIntakeRoller;
+	VictorSP MeterWheel;
+	VictorSP DeflectorMotor;
+	Solenoid *FloorIntakeArm = new Solenoid(3);
+	Solenoid *GearIn = new Solenoid(2);
+	Solenoid *GearOut = new Solenoid(1);
+	Encoder EncoderShoot;
+	DigitalInput WinchStop;
+	AnalogPotentiometer DeflectorAnglePOT;
+	bool ClosedLoop;
+	double DeflectorTarget;
+	DigitalInput DeflectorHighLimit, DeflectorLowLimit;
+
 }
 ;
 
