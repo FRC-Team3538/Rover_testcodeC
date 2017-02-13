@@ -184,9 +184,9 @@ public:
 					9), DiIn8(8), DiIn7(7), AutoVal(), AutoVal0(), AutoVal1(), AutoVal2(), OutputX(), OutputY(), Winch0(
 					11), Winch1(9), Shooter0(12), Shooter1(7), Conveyor(13), Agitator(
 					6), FloorIntakeRoller(14), MeterWheel(8), DeflectorMotor(
-					10), EncoderShoot(4, 5), WinchStop(6), DeflectorAnglePOT(0, 270, 0), ClosedLoop(
-			false), DeflectorTarget(0), DeflectorHighLimit(16), DeflectorLowLimit(
-					17) {
+					10), EncoderShoot(4, 5), WinchStop(6), DeflectorAnglePOT(0,270, 0),
+					ClosedLoop(false), DeflectorTarget(0), DeflectorHighLimit(16),DeflectorLowLimit(17)
+{
 		GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
 	}
 
@@ -393,7 +393,6 @@ public:
 
 		// Turn on Metering WHeel
 		if (OperatorStick.GetRawButton(1)) {
-
 			MeterWheel.Set(1);
 		} else {
 			MeterWheel.Set(0);
@@ -401,12 +400,9 @@ public:
 
 		//Put out intake
 		if (OperatorStick.GetRawAxis(3) > 0.1) {
-
 			FloorIntakeRoller.Set(1);
 			FloorIntakeArm->Set(true);
-
 		} else {
-
 			FloorIntakeRoller.Set(0);
 			FloorIntakeArm->Set(false);
 		}
@@ -915,7 +911,8 @@ public:
 		//Manipulator
 		//shooter
 		SmartDashboard::PutNumber("ShooterEncoder(raw)", EncoderShoot.GetRaw());
-		SmartDashboard::PutNumber("ShooterEncoder(RPM)", EncoderShoot.GetRate());
+		SmartDashboard::PutNumber("ShooterEncoder(RPM)",
+				EncoderShoot.GetRate());
 
 		SmartDashboard::PutBoolean("WinchStop", WinchStop.Get());
 		SmartDashboard::PutBoolean("DeflectorHighLimit",
@@ -924,7 +921,8 @@ public:
 				DeflectorLowLimit.Get());
 
 		//Get angle for the deflector
-		SmartDashboard::PutNumber("DeflectorAnglePOT(DEG)", DeflectorAnglePOT.Get());
+		SmartDashboard::PutNumber("DeflectorAnglePOT(DEG)",
+				DeflectorAnglePOT.Get());
 
 		//State varible
 		SmartDashboard::PutNumber("DeflectorAngleTarget", DeflectorTarget);
@@ -1066,7 +1064,7 @@ private:
 	std::shared_ptr<NetworkTable> GRIPTable;
 	int isWaiting = 0;					/////***** Divide this into 2 variables.
 
-	Solenoid *driveSolenoid = new Solenoid(4);
+	Solenoid *driveSolenoid = new Solenoid(0);
 	//manipulator
 	VictorSP Winch0, Winch1;
 	VictorSP Shooter0, Shooter1;
@@ -1080,8 +1078,7 @@ private:
 	Solenoid *GearOut = new Solenoid(1);
 	Encoder EncoderShoot;
 	DigitalInput WinchStop;
-	AnalogPotentiometer DeflectorAnglePOT;
-	bool ClosedLoop;
+	AnalogPotentiometer DeflectorAnglePOT;bool ClosedLoop;
 	double DeflectorTarget;
 	DigitalInput DeflectorHighLimit, DeflectorLowLimit;
 
