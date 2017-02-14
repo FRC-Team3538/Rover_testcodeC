@@ -434,6 +434,7 @@ public:
 			DeflectorTarget = 0;
 		}
 	}
+
 // These are the state numbers for each part of autoBlue1
 //		These are here so we can easily add states.
 // 		State 1 is always the first one to run.
@@ -448,75 +449,74 @@ public:
 #define AB1_TO_BOILER 7
 #define AR1_SHOOT 8
 #define AB1_END 9
-
+//***needs INIT case still
 	void autoBlue1(void) {
 
 		//Blue boiler side code
 		//drives turns then drives again
 		switch (modeState) {
-		case 1: 								/////***** Use #define
+		case AB1_FWD:
 			// go forward 7 ft
 			if (forward(BLUE_1_CASE1_FWD)) {
-				modeState = 2; 					/////***** Use #define
+				modeState = AB1_TURN90;
 				ahrs->ZeroYaw();
 			}
 			break;
-		case 2: 								/////***** Use #define.
+		case AB1_TURN90:
 			// turn 90 degrees clockwise
 			if (autonTurn(BLUE_1_CASE2_TURN)) {
-				modeState = 3; 					/////***** Use #define
+				modeState = AB1_BKUP;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 				ahrs->ZeroYaw();
 			}
 			break;
-		case 3: 								/////***** Use #define
+		case AB1_BKUP:
 			// go forward 7 ft to hit hopper
 			//change to timed drive
 			if (forward(BLUE_1_CASE3_FWD)) {
-				modeState = 4; 					/////***** Use #define
+				modeState = AB1_WAIT;
 				AutonTimer.Reset();
 			}
 			break;
-		case 4: 								/////***** Use #define
+		case AB1_WAIT:
 			//waits a couple of seconds for balls
 			if (timedDrive(BLUE_1_CASE4_FWD_TIME, BLUE_1_CASE4_FWD_LEFT_SPD,
-
 					BLUE_1_CASE4_FWD_RIGHT_SPD)) {
 
-				modeState = 5; 					/////*****Use #define
+				modeState = AB1_FWD2;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 				ahrs->ZeroYaw();
 			}
 			break;
-		case 5:  								/////***** Use #define
+		case AB1_FWD2:
 			//go backward 4-ish feet
 			if (forward(BLUE_1_CASE5_FWD)) {
-				modeState = 6; 					/////***** Use #define
+				modeState = AB1_FACE_BOILER;
 				ahrs->ZeroYaw();
 			}
 			break;
-		case 6: 								/////***** Use #define
+		case AB1_FACE_BOILER:
 			// turn enough degrees to face boiler
 			if (autonTurn(BLUE_1_CASE6_TURN)) {
-				modeState = 7; 					/////***** Use #define
+				modeState = AB1_TO_BOILER;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 				ahrs->ZeroYaw();
 			}
 			break;
-		case 7:  								/////***** Use #define
+		case AB1_TO_BOILER:
 			//go forward 7-ish feet to run into boiler
 			//change to timed drive
 			if (forward(BLUE_1_CASE7_FWD)) {
-				modeState = 8; 						/////***** Use #define
+				modeState = AR1_SHOOT;
 				ahrs->ZeroYaw();
 			}
 			break;
-		case 8: 								/////***** Use #define
+		case AR1_SHOOT:
 			//launch
-			modeState = 9; 						/////***** Use #define
+			modeState = AB1_END;
 			break;
 		default:
 			stopMotors();
@@ -626,6 +626,7 @@ public:
 		}
 		return;
 	}
+
 #define AB3_INIT 1
 #define AB3_FWD 2
 #define AB3_TURN 3
@@ -682,68 +683,68 @@ public:
 #define AR1_TO_BOILER 7
 #define AR1_SHOOT 8
 #define AR1_END 9
-
+//***also still needs INIT case
 	void autoRed1(void) {
 		//Red center position code
 		//this version turns the robot in a right angle
 
 		switch (modeState) {
-		case 1:									/////***** use #define
+		case AR1_FWD:
 			// go forward 7 ft
 			if (forward(RED_1_CASE1_FWD)) {
-				modeState = 2;					/////***** use #define
+				modeState = AR1_TURN90;
 				ahrs->ZeroYaw();
 			}
 			break;
-		case 2:
+		case AR1_TURN90:
 			// turn 90 degrees counterclockwise
 			if (autonTurn(RED_1_CASE2_TURN)) {
-				modeState = 3;					/////***** use #define
+				modeState = AR1_BKUP;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 			}
 			break;
-		case 3:									/////***** use #define
+		case AR1_BKUP:
 			//change to timed drive
 			// go forward 7 ft to hit hopper
 			if (forward(RED_1_CASE3_FWD)) {
-				modeState = 4;					/////***** use #define.
+				modeState = AR1_WAIT;
 				AutonTimer.Reset();
 			}
 			break;
-		case 4:									/////***** use #define
+		case AR1_WAIT:
 			//waits in front of hopper a couple of seconds for balls
 			if (timedDrive(RED_1_CASE4_FWD_TIME, RED_1_CASE4_FWD_LEFT_SPD,
 					RED_1_CASE4_FWD_RIGHT_SPD)) {
-				modeState = 5;					/////***** use #define
+				modeState = AR1_FWD2;
 			}
 			break;
-		case 5:									/////***** use #define
+		case AR1_FWD2:
 			//go backward 3-ish feet
 			if (forward(RED_1_CASE5_FWD)) {
-				modeState = 6;					/////***** use #define
+				modeState = AR1_FACE_BOILER;
 				ahrs->ZeroYaw();
 			}
 			break;
-		case 6:									/////***** use #define
+		case AR1_FACE_BOILER:
 			// turns counterclockwise enough degrees to face boiler
 			if (autonTurn(RED_1_CASE6_TURN)) {
-				modeState = 7;					/////*****  use #define
+				modeState = AR1_TO_BOILER;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 			}
 			break;
-		case 7:									/////***** use #define
+		case AR1_TO_BOILER:
 			//change to timed drive
 			//go forward 7-ish feet to run into boiler
 			if (forward(RED_1_CASE7_FWD)) {
-				modeState = 8;					/////***** use #define
+				modeState = AR1_SHOOT;
 				ahrs->ZeroYaw();
 			}
 			break;
-		case 8:									/////***** use #define
+		case AR1_SHOOT:
 			//launch
-			modeState = 9;						/////*****  use #define
+			modeState = AR1_END;
 			break;
 		default:
 			stopMotors();
