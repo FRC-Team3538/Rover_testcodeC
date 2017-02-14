@@ -175,7 +175,7 @@ class Robot: public frc::IterativeRobot {
 public:
 	Robot() :
 			Adrive(DriveLeft0, DriveLeft1, DriveRight0, DriveRight1), Bdrive(
-					DriveLeft2, DriveRight2), chooser(), Drivestick(0), OperatorStick(
+					DriveLeft2, DriveRight2), chooser(), chooseEncoder(), Drivestick(0), OperatorStick(
 					0), DriveLeft0(0), DriveLeft1(1), DriveLeft2(2), DriveRight0(
 					3), DriveRight1(4), DriveRight2(5), AutonTimer(), EncoderLeft(
 					0, 1), EncoderRight(2, 3),
@@ -186,7 +186,8 @@ public:
 					6), FloorIntakeRoller(14), MeterWheel(8), DeflectorMotor(
 					10), EncoderShoot(4, 5), WinchStop(6), DeflectorAnglePOT(0,
 					270, 0), ClosedLoop(false), DeflectorTarget(0), DeflectorHighLimit(
-					22), DeflectorLowLimit(23) {
+					22), DeflectorLowLimit(23),
+					rightEncoder() {
 		GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
 	}
 
@@ -202,6 +203,11 @@ public:
 			chooser.AddObject(autonNameBlue3, autonNameBlue3);
 			frc::SmartDashboard::PutData("Auto Modes", &chooser);
 		}
+
+		chooseEncoder.AddDefault(RH_Encoder, RH_Encoder);
+		chooseEncoder.AddObject(LH_Encoder, LH_Encoder);
+		frc::SmartDashboard::PutData("Encoder", &chooseEncoder);
+
 		driveSolenoid->Set(false);      //turn off all solenoids
 
 		Adrive.SetSafetyEnabled(false);
@@ -211,6 +217,9 @@ public:
 		EncoderRight.SetDistancePerPulse(-1 * 0.0243228675 * 4);
 		EncoderShoot.SetDistancePerPulse(1.0 / 32.0 * 4.0);
 		OutputX = 0, OutputY = 0;
+
+		//variable that chooses which encoder robot is reading
+		rightEncoder = true;
 
 		//from NAVX mxp data monitor example
 		try { /////***** Let's do this differently.  We want Auton to fail gracefully, not just abort. Remember Ariane 5
@@ -378,63 +387,63 @@ public:
 		SmartDashboardSenser();
 
 		// Turn on the shooter, conveyer, and agitator
-//		if (OperatorStick.GetRawAxis(2) < -0.1) {
-//
-//			Shooter0.Set(1);
-//			Shooter1.Set(1);
-//			Conveyor.Set(1);
-//			Agitator.Set(1);
-//
-//		} else {
-//
-//			Shooter0.Set(0);
-//			Shooter1.Set(0);
-//			Conveyor.Set(0);
-//			Agitator.Set(0);
-//		}
-//
-//		// Turn on Metering WHeel
-//		if (OperatorStick.GetRawButton(1)) {
-//			MeterWheel.Set(1);
-//		} else {
-//			MeterWheel.Set(0);
-//		}
-//
-//		//Put out intake
-//		if (OperatorStick.GetRawAxis(3) > 0.1) {
-//			FloorIntakeRoller.Set(1);
-//			FloorIntakeArm->Set(true);
-//		} else {
-//			FloorIntakeRoller.Set(0);
-//			FloorIntakeArm->Set(false);
-//		}
-//
-//		//Button to get and release the gear
-//		GearIn->Set(OperatorStick.GetRawButton(3));
-//		GearOut->Set(OperatorStick.GetRawButton(3));
-//
-//		//turn on winch
-//		Winch0.Set(OperatorStick.GetRawAxis(1));
-//		Winch1.Set(OperatorStick.GetRawAxis(1));
-//
-//		//control deflector angle in open loop
-//		DeflectorMotor.Set(OperatorStick.GetRawAxis(4));
-//
-//		// Turn off the the sensors/reset
-//		if (OperatorStick.GetRawButton(8)) {
-//			ClosedLoop = true;
-//		}
-//		if (OperatorStick.GetRawButton(7)) {
-//			ClosedLoop = false;
-//		}
-//
-//		//Controll the angle of the deflector
-//		if (OperatorStick.GetRawButton(5)) {
-//			DeflectorTarget = 90;
-//		}
-//		if (OperatorStick.GetRawButton(6)) {
-//			DeflectorTarget = 0;
-//		}
+		if (OperatorStick.GetRawAxis(2) < -0.1) {
+
+			Shooter0.Set(1);
+			Shooter1.Set(1);
+			Conveyor.Set(1);
+			Agitator.Set(1);
+
+		} else {
+
+			Shooter0.Set(0);
+			Shooter1.Set(0);
+			Conveyor.Set(0);
+			Agitator.Set(0);
+		}
+
+		// Turn on Metering WHeel
+		if (OperatorStick.GetRawButton(1)) {
+			MeterWheel.Set(1);
+		} else {
+			MeterWheel.Set(0);
+		}
+
+		//Put out intake
+		if (OperatorStick.GetRawAxis(3) > 0.1) {
+			FloorIntakeRoller.Set(1);
+			FloorIntakeArm->Set(true);
+		} else {
+			FloorIntakeRoller.Set(0);
+			FloorIntakeArm->Set(false);
+		}
+
+		//Button to get and release the gear
+		GearIn->Set(OperatorStick.GetRawButton(3));
+		GearOut->Set(OperatorStick.GetRawButton(3));
+
+		//turn on winch
+		Winch0.Set(OperatorStick.GetRawAxis(1));
+		Winch1.Set(OperatorStick.GetRawAxis(1));
+
+		//control deflector angle in open loop
+		DeflectorMotor.Set(OperatorStick.GetRawAxis(4));
+
+		// Turn off the the sensors/reset
+		if (OperatorStick.GetRawButton(8)) {
+			ClosedLoop = true;
+		}
+		if (OperatorStick.GetRawButton(7)) {
+			ClosedLoop = false;
+		}
+
+		//Controll the angle of the deflector
+		if (OperatorStick.GetRawButton(5)) {
+			DeflectorTarget = 90;
+		}
+		if (OperatorStick.GetRawButton(6)) {
+			DeflectorTarget = 0;
+		}
 	}
 
 // These are the state numbers for each part of autoBlue1
@@ -907,6 +916,12 @@ public:
 		SmartDashboard::PutNumber("DistanceRight(Inch)",
 				EncoderRight.GetDistance());
 
+		encoderSelected = chooseEncoder.GetSelected();
+		if(encoderSelected == RH_Encoder)
+			rightEncoder = true;
+		else
+			rightEncoder = false;
+
 		if (ahrs) {
 			double gyroAngle = ahrs->GetAngle();
 			SmartDashboard::PutNumber("Gyro Angle", gyroAngle);
@@ -951,7 +966,12 @@ public:
 
 	int forward(double targetDistance) {
 		//put all encoder stuff in same place
-		double encoderDistance = EncoderRight.GetDistance();
+		double encoderDistance;
+		if(rightEncoder)
+			encoderDistance = EncoderRight.GetDistance();
+		else
+			encoderDistance = EncoderLeft.GetDistance();
+
 		double encoderError = encoderDistance - targetDistance;
 		double driveCommandLinear = encoderError * KP_LINEAR;
 
@@ -1040,7 +1060,7 @@ public:
 private:
 	RobotDrive Adrive, Bdrive;
 	frc::LiveWindow* lw = LiveWindow::GetInstance();
-	frc::SendableChooser<std::string> chooser;
+	frc::SendableChooser<std::string> chooser, chooseEncoder;
 	const std::string autonNameOFF = "0 OFF";
 	const std::string autonNameBlue1 = "Blue 1";
 	const std::string autonNameBlue2 = "Blue 2";
@@ -1048,7 +1068,9 @@ private:
 	const std::string autonNameRed1 = "Red 1";
 	const std::string autonNameRed2 = "Red 2";
 	const std::string autonNameRed3 = "Red 3";
-	std::string autoSelected;
+	const std::string RH_Encoder = "RH_Encoder";
+	const std::string LH_Encoder = "LH_Encoder";
+	std::string autoSelected, encoderSelected;
 	Joystick Drivestick;
 	Joystick OperatorStick;
 	VictorSP DriveLeft0;
@@ -1087,6 +1109,8 @@ private:
 	AnalogPotentiometer DeflectorAnglePOT;bool ClosedLoop;
 	double DeflectorTarget;
 	DigitalInput DeflectorHighLimit, DeflectorLowLimit;
+
+	bool rightEncoder;
 
 }
 ;
