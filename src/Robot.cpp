@@ -177,16 +177,16 @@ public:
 			Adrive(DriveLeft0, DriveLeft1, DriveRight0, DriveRight1), Bdrive(
 					DriveLeft2, DriveRight2), chooser(), Drivestick(0), OperatorStick(
 					0), DriveLeft0(0), DriveLeft1(1), DriveLeft2(2), DriveRight0(
-					3), DriveRight1(4), DriveRight2(5), EncoderLeft(0, 1), EncoderRight(
-					2, 3),
+					3), DriveRight1(4), DriveRight2(5), AutonTimer(), EncoderLeft(
+					0, 1), EncoderRight(2, 3),
 
 			table(NULL), ahrs(NULL), modeState(0), AutonOverride(), AutoSw1(), AutoSw2(), AutoSw3(), DiIn9(
 					9), DiIn8(8), DiIn7(7), AutoVal(), AutoVal0(), AutoVal1(), AutoVal2(), OutputX(), OutputY(), Winch0(
 					11), Winch1(9), Shooter0(12), Shooter1(7), Conveyor(13), Agitator(
 					6), FloorIntakeRoller(14), MeterWheel(8), DeflectorMotor(
-					10), EncoderShoot(4, 5), WinchStop(6), DeflectorAnglePOT(0,270, 0),
-					ClosedLoop(false), DeflectorTarget(0), DeflectorHighLimit(16),DeflectorLowLimit(17)
-{
+					10), EncoderShoot(4, 5), WinchStop(6), DeflectorAnglePOT(0,
+					270, 0), ClosedLoop(false), DeflectorTarget(0), DeflectorHighLimit(
+					22), DeflectorLowLimit(23) {
 		GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
 	}
 
@@ -203,6 +203,9 @@ public:
 			frc::SmartDashboard::PutData("Auto Modes", &chooser);
 		}
 		driveSolenoid->Set(false);      //turn off all solenoids
+
+		Adrive.SetSafetyEnabled(false);
+		Bdrive.SetSafetyEnabled(false);
 
 		EncoderLeft.SetDistancePerPulse(0.0243228675 * 4);
 		EncoderRight.SetDistancePerPulse(-1 * 0.0243228675 * 4);
@@ -309,8 +312,7 @@ public:
 	}
 
 	void TeleopInit() {
-		Adrive.SetSafetyEnabled(true);
-		Bdrive.SetSafetyEnabled(true);
+
 		OutputX = 0, OutputY = 0;
 	}
 
@@ -376,63 +378,63 @@ public:
 		SmartDashboardSenser();
 
 		// Turn on the shooter, conveyer, and agitator
-		if (OperatorStick.GetRawAxis(2) < -0.1) {
-
-			Shooter0.Set(1);
-			Shooter1.Set(1);
-			Conveyor.Set(1);
-			Agitator.Set(1);
-
-		} else {
-
-			Shooter0.Set(0);
-			Shooter1.Set(0);
-			Conveyor.Set(0);
-			Agitator.Set(0);
-		}
-
-		// Turn on Metering WHeel
-		if (OperatorStick.GetRawButton(1)) {
-			MeterWheel.Set(1);
-		} else {
-			MeterWheel.Set(0);
-		}
-
-		//Put out intake
-		if (OperatorStick.GetRawAxis(3) > 0.1) {
-			FloorIntakeRoller.Set(1);
-			FloorIntakeArm->Set(true);
-		} else {
-			FloorIntakeRoller.Set(0);
-			FloorIntakeArm->Set(false);
-		}
-
-		//Button to get and release the gear
-		GearIn->Set(OperatorStick.GetRawButton(3));
-		GearOut->Set(OperatorStick.GetRawButton(3));
-
-		//turn on winch
-		Winch0.Set(OperatorStick.GetRawAxis(1));
-		Winch1.Set(OperatorStick.GetRawAxis(1));
-
-		//control deflector angle in open loop
-		DeflectorMotor.Set(OperatorStick.GetRawAxis(4));
-
-		// Turn off the the sensors/reset
-		if (OperatorStick.GetRawButton(8)) {
-			ClosedLoop = true;
-		}
-		if (OperatorStick.GetRawButton(7)) {
-			ClosedLoop = false;
-		}
-
-		//Controll the angle of the deflector
-		if (OperatorStick.GetRawButton(5)) {
-			DeflectorTarget = 90;
-		}
-		if (OperatorStick.GetRawButton(6)) {
-			DeflectorTarget = 0;
-		}
+//		if (OperatorStick.GetRawAxis(2) < -0.1) {
+//
+//			Shooter0.Set(1);
+//			Shooter1.Set(1);
+//			Conveyor.Set(1);
+//			Agitator.Set(1);
+//
+//		} else {
+//
+//			Shooter0.Set(0);
+//			Shooter1.Set(0);
+//			Conveyor.Set(0);
+//			Agitator.Set(0);
+//		}
+//
+//		// Turn on Metering WHeel
+//		if (OperatorStick.GetRawButton(1)) {
+//			MeterWheel.Set(1);
+//		} else {
+//			MeterWheel.Set(0);
+//		}
+//
+//		//Put out intake
+//		if (OperatorStick.GetRawAxis(3) > 0.1) {
+//			FloorIntakeRoller.Set(1);
+//			FloorIntakeArm->Set(true);
+//		} else {
+//			FloorIntakeRoller.Set(0);
+//			FloorIntakeArm->Set(false);
+//		}
+//
+//		//Button to get and release the gear
+//		GearIn->Set(OperatorStick.GetRawButton(3));
+//		GearOut->Set(OperatorStick.GetRawButton(3));
+//
+//		//turn on winch
+//		Winch0.Set(OperatorStick.GetRawAxis(1));
+//		Winch1.Set(OperatorStick.GetRawAxis(1));
+//
+//		//control deflector angle in open loop
+//		DeflectorMotor.Set(OperatorStick.GetRawAxis(4));
+//
+//		// Turn off the the sensors/reset
+//		if (OperatorStick.GetRawButton(8)) {
+//			ClosedLoop = true;
+//		}
+//		if (OperatorStick.GetRawButton(7)) {
+//			ClosedLoop = false;
+//		}
+//
+//		//Controll the angle of the deflector
+//		if (OperatorStick.GetRawButton(5)) {
+//			DeflectorTarget = 90;
+//		}
+//		if (OperatorStick.GetRawButton(6)) {
+//			DeflectorTarget = 0;
+//		}
 	}
 
 // These are the state numbers for each part of autoBlue1
@@ -483,6 +485,7 @@ public:
 			//waits a couple of seconds for balls
 			if (timedDrive(BLUE_1_CASE4_FWD_TIME, BLUE_1_CASE4_FWD_LEFT_SPD,
 					BLUE_1_CASE4_FWD_RIGHT_SPD)) {
+
 
 				modeState = AB1_FWD2;
 				EncoderLeft.Reset();
@@ -661,7 +664,8 @@ public:
 			//timed drive
 			//CHANGE THIS IT DOESN'T WORK BC IT DOESN'T MOVE FORWARD LIKE IT'S SUPPOSED TO :) (2/10)
 
-			if (timedDrive(BLUE_3_CASE3_TIME, BLUE_3_CASE3_LSPEED, BLUE_3_CASE3_RSPEED)) {
+			if (timedDrive(BLUE_3_CASE3_TIME, BLUE_3_CASE3_LSPEED,
+			BLUE_3_CASE3_RSPEED)) {
 				modeState = AB3_END;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -717,6 +721,7 @@ public:
 			if (timedDrive(RED_1_CASE4_FWD_TIME, RED_1_CASE4_FWD_LEFT_SPD,
 					RED_1_CASE4_FWD_RIGHT_SPD)) {
 				modeState = AR1_FWD2;
+
 			}
 			break;
 		case AR1_FWD2:
@@ -830,7 +835,7 @@ public:
 			break;
 		case AR2_FWD:
 			if (timedDrive(RED_2_CASE2_TIME, RED_2_CASE2_LSPEED,
-					RED_2_CASE2_RSPEED)) {
+			RED_2_CASE2_RSPEED)) {
 				modeState = AR2_END;
 			}
 			break;
