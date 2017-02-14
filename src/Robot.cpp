@@ -175,8 +175,8 @@ class Robot: public frc::IterativeRobot {
 public:
 	Robot() :
 			Adrive(DriveLeft0, DriveLeft1, DriveRight0, DriveRight1), Bdrive(
-					DriveLeft2, DriveRight2), chooser(), Drivestick(0), OperatorStick(
-					0), DriveLeft0(0), DriveLeft1(1), DriveLeft2(2), DriveRight0(
+					DriveLeft2, DriveRight2), chooser(), Drivestick(0), OperatorStick(1),
+					DriveLeft0(0), DriveLeft1(1), DriveLeft2(2), DriveRight0(
 					3), DriveRight1(4), DriveRight2(5), AutonTimer(), EncoderLeft(
 					0, 1), EncoderRight(2, 3),
 
@@ -377,64 +377,58 @@ public:
 
 		SmartDashboardSenser();
 
-		// Turn on the shooter, conveyer, and agitator
-//		if (OperatorStick.GetRawAxis(2) < -0.1) {
-//
-//			Shooter0.Set(1);
-//			Shooter1.Set(1);
-//			Conveyor.Set(1);
-//			Agitator.Set(1);
-//
-//		} else {
-//
-//			Shooter0.Set(0);
-//			Shooter1.Set(0);
-//			Conveyor.Set(0);
-//			Agitator.Set(0);
-//		}
-//
-//		// Turn on Metering WHeel
-//		if (OperatorStick.GetRawButton(1)) {
-//			MeterWheel.Set(1);
-//		} else {
-//			MeterWheel.Set(0);
-//		}
-//
-//		//Put out intake
-//		if (OperatorStick.GetRawAxis(3) > 0.1) {
-//			FloorIntakeRoller.Set(1);
-//			FloorIntakeArm->Set(true);
-//		} else {
-//			FloorIntakeRoller.Set(0);
-//			FloorIntakeArm->Set(false);
-//		}
-//
-//		//Button to get and release the gear
-//		GearIn->Set(OperatorStick.GetRawButton(3));
-//		GearOut->Set(OperatorStick.GetRawButton(3));
-//
-//		//turn on winch
-//		Winch0.Set(OperatorStick.GetRawAxis(1));
-//		Winch1.Set(OperatorStick.GetRawAxis(1));
-//
-//		//control deflector angle in open loop
-//		DeflectorMotor.Set(OperatorStick.GetRawAxis(4));
-//
-//		// Turn off the the sensors/reset
-//		if (OperatorStick.GetRawButton(8)) {
-//			ClosedLoop = true;
-//		}
-//		if (OperatorStick.GetRawButton(7)) {
-//			ClosedLoop = false;
-//		}
-//
-//		//Controll the angle of the deflector
-//		if (OperatorStick.GetRawButton(5)) {
-//			DeflectorTarget = 90;
-//		}
-//		if (OperatorStick.GetRawButton(6)) {
-//			DeflectorTarget = 0;
-//		}
+		 //Turn on the shooter, conveyer, and agitator
+		if (OperatorStick.GetRawAxis(3) > 0.1) {
+
+			Shooter0.Set(1);Shooter1.Set(1);Conveyor.Set(1);Agitator.Set(1);
+
+		} else {
+
+			Shooter0.Set(0);Shooter1.Set(0);Conveyor.Set(0);Agitator.Set(0);
+		}
+
+		// Turn on Metering WHeel
+		if (OperatorStick.GetRawButton(1)) {
+			MeterWheel.Set(1);
+		} else {
+			MeterWheel.Set(0);
+		}
+
+		//Put out intake
+		if (OperatorStick.GetRawAxis(2) > 0.1) {
+			FloorIntakeRoller.Set(1);
+			FloorIntakeArm->Set(true);
+		} else {
+			FloorIntakeRoller.Set(0);
+			FloorIntakeArm->Set(false);
+		}
+
+		//Button to get and release the gear
+		GearIn->Set(OperatorStick.GetRawButton(3));
+		GearOut->Set(OperatorStick.GetRawButton(3));
+
+		//turn on winch
+		Winch0.Set(OperatorStick.GetRawAxis(1));
+		Winch1.Set(OperatorStick.GetRawAxis(1));
+
+		//control deflector angle in open loop
+		DeflectorMotor.Set(OperatorStick.GetRawAxis(5));
+
+		// Turn off the the sensors/reset
+		if (OperatorStick.GetRawButton(8)) {
+			ClosedLoop = true;
+		}
+		if (OperatorStick.GetRawButton(7)) {
+			ClosedLoop = false;
+		}
+
+		//Controll the angle of the deflector
+		if (OperatorStick.GetRawButton(5)) {
+			DeflectorTarget = 90;
+		}
+		if (OperatorStick.GetRawButton(6)) {
+			DeflectorTarget = 0;
+		}
 	}
 // These are the state numbers for each part of autoBlue1
 //		These are here so we can easily add states.
