@@ -185,9 +185,9 @@ public:
 					11), Winch1(9), Shooter0(12), Shooter1(7), Conveyor(13), Agitator(
 					6), FloorIntakeRoller(14), MeterWheel(8), DeflectorMotor(
 					10), EncoderShoot(4, 5), WinchStop(6), DeflectorAnglePOT(0,
-					270, 0), ClosedLoop(false), DeflectorTarget(0), DeflectorHighLimit(
+					270, 0), useClosedLoop(false), DeflectorTarget(0), DeflectorHighLimit(
 					22), DeflectorLowLimit(23),
-					rightEncoder()
+					useRightEncoder()
    {
 		GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
 	}
@@ -220,7 +220,7 @@ public:
 		OutputX = 0, OutputY = 0;
 
 		//variable that chooses which encoder robot is reading
-		rightEncoder = true;
+		useRightEncoder = true;
 
 		//from NAVX mxp data monitor example
 		try { /////***** Let's do this differently.  We want Auton to fail gracefully, not just abort. Remember Ariane 5
@@ -434,10 +434,10 @@ public:
 
 		// Turn off the the sensors/reset
 		if (OperatorStick.GetRawButton(8)) {
-			ClosedLoop = true;
+			useClosedLoop = true;
 		}
 		if (OperatorStick.GetRawButton(7)) {
-			ClosedLoop = false;
+			useClosedLoop = false;
 		}
 
 		//Controll the angle of the deflector
@@ -921,9 +921,9 @@ public:
 
 		encoderSelected = chooseEncoder.GetSelected();
 		if(encoderSelected == RH_Encoder)
-			rightEncoder = true;
+			useRightEncoder = true;
 		else
-			rightEncoder = false;
+			useRightEncoder = false;
 
 		if (ahrs) {
 			double gyroAngle = ahrs->GetAngle();
@@ -950,7 +950,7 @@ public:
 
 		//State varible
 		SmartDashboard::PutNumber("DeflectorAngleTarget", DeflectorTarget);
-		SmartDashboard::PutBoolean("DeflectorTarget", ClosedLoop);
+		SmartDashboard::PutBoolean("DeflectorTarget", useClosedLoop);
 		//std::vector<double> arr = GRIPTable->
 
 	}
@@ -970,7 +970,7 @@ public:
 	int forward(double targetDistance) {
 		//put all encoder stuff in same place
 		double encoderDistance;
-		if(rightEncoder)
+		if(useRightEncoder)
 			encoderDistance = EncoderRight.GetDistance();
 		else
 			encoderDistance = EncoderLeft.GetDistance();
@@ -1109,11 +1109,12 @@ private:
 	Solenoid *GearOut = new Solenoid(1);
 	Encoder EncoderShoot;
 	DigitalInput WinchStop;
-	AnalogPotentiometer DeflectorAnglePOT;bool ClosedLoop;
+	AnalogPotentiometer DeflectorAnglePOT;
+	bool useClosedLoop;
 	double DeflectorTarget;
 	DigitalInput DeflectorHighLimit, DeflectorLowLimit;
 
-	bool rightEncoder;
+	bool useRightEncoder;
 
 }
 ;
