@@ -174,9 +174,9 @@ class Robot: public frc::IterativeRobot {
 
 public:
 	Robot() :
-			Adrive(DriveLeft0, DriveLeft1, DriveRight0, DriveRight1), Bdrive(
-					DriveLeft2, DriveRight2), chooser(), chooseEncoder(), Drivestick(0), OperatorStick(
-					0), DriveLeft0(0), DriveLeft1(1), DriveLeft2(2), DriveRight0(
+			Adrive(DriveLeft0, DriveLeft1, DriveRight0, DriveRight1), Bdrive(DriveLeft2, DriveRight2),
+					chooser(), chooseEncoder(), Drivestick(0), OperatorStick(
+					1), DriveLeft0(0), DriveLeft1(1), DriveLeft2(2), DriveRight0(
 					3), DriveRight1(4), DriveRight2(5), AutonTimer(), EncoderLeft(
 					0, 1), EncoderRight(2, 3),
 
@@ -187,7 +187,8 @@ public:
 					10), EncoderShoot(4, 5), WinchStop(6), DeflectorAnglePOT(0,
 					270, 0), ClosedLoop(false), DeflectorTarget(0), DeflectorHighLimit(
 					22), DeflectorLowLimit(23),
-					rightEncoder() {
+					rightEncoder()
+   {
 		GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
 	}
 
@@ -400,6 +401,7 @@ public:
 			Shooter1.Set(0);
 			Conveyor.Set(0);
 			Agitator.Set(0);
+
 		}
 
 		// Turn on Metering WHeel
@@ -410,7 +412,7 @@ public:
 		}
 
 		//Put out intake
-		if (OperatorStick.GetRawAxis(3) > 0.1) {
+		if (OperatorStick.GetRawAxis(2) > 0.1) {
 			FloorIntakeRoller.Set(1);
 			FloorIntakeArm->Set(true);
 		} else {
@@ -427,7 +429,8 @@ public:
 		Winch1.Set(OperatorStick.GetRawAxis(1));
 
 		//control deflector angle in open loop
-		DeflectorMotor.Set(OperatorStick.GetRawAxis(4));
+		DeflectorMotor.Set(OperatorStick.GetRawAxis(5));
+
 
 		// Turn off the the sensors/reset
 		if (OperatorStick.GetRawButton(8)) {
