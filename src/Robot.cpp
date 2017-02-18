@@ -174,10 +174,10 @@ class Robot: public frc::IterativeRobot {
 
 public:
 	Robot() :
-			Adrive(DriveLeft0, DriveLeft1, DriveRight0, DriveRight1), Bdrive(DriveLeft2, DriveRight2),
-					chooser(), chooseEncoder(), Drivestick(0), OperatorStick(
-					1), DriveLeft0(0), DriveLeft1(1), DriveLeft2(2), DriveRight0(
-					3), DriveRight1(4), DriveRight2(5), AutonTimer(), EncoderLeft(
+			Adrive(DriveLeft0, DriveLeft1, DriveRight0, DriveRight1), Bdrive(
+					DriveLeft2, DriveRight2), chooser(), chooseEncoder(), Drivestick(
+					0), OperatorStick(1), DriveLeft0(0), DriveLeft1(1), DriveLeft2(
+					2), DriveRight0(3), DriveRight1(4), DriveRight2(5), AutonTimer(), EncoderLeft(
 					0, 1), EncoderRight(2, 3),
 
 			table(NULL), ahrs(NULL), modeState(0), AutonOverride(), AutoSw1(), AutoSw2(), AutoSw3(), DiIn9(
@@ -186,10 +186,9 @@ public:
 					6), FloorIntakeRoller(14), MeterWheel(8), DeflectorMotor(
 					10), EncoderShoot(4, 5), WinchStop(6), DeflectorAnglePOT(0,
 					270, 0), useClosedLoop(false), DeflectorTarget(0), DeflectorHighLimit(
-					22), DeflectorLowLimit(23),
-					useRightEncoder()
-   {
-		GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
+					22), DeflectorLowLimit(23), useRightEncoder() {
+
+		//GRIPTable = NetworkTable::GetTable("GRIP/myContoursReport");
 	}
 
 	void RobotInit() {
@@ -431,7 +430,6 @@ public:
 		//control deflector angle in open loop
 		DeflectorMotor.Set(OperatorStick.GetRawAxis(5));
 
-
 		// Turn off the the sensors/reset
 		if (OperatorStick.GetRawButton(8)) {
 			useClosedLoop = true;
@@ -496,8 +494,7 @@ public:
 		case AB1_WAIT:
 			//waits a couple of seconds for balls
 			if (timedDrive(BLUE_1_CASE4_FWD_TIME, BLUE_1_CASE4_FWD_LEFT_SPD,
-					BLUE_1_CASE4_FWD_RIGHT_SPD)) {
-
+			BLUE_1_CASE4_FWD_RIGHT_SPD)) {
 
 				modeState = AB1_FWD2;
 				EncoderLeft.Reset();
@@ -731,7 +728,7 @@ public:
 		case AR1_WAIT:
 			//waits in front of hopper a couple of seconds for balls
 			if (timedDrive(RED_1_CASE4_FWD_TIME, RED_1_CASE4_FWD_LEFT_SPD,
-					RED_1_CASE4_FWD_RIGHT_SPD)) {
+			RED_1_CASE4_FWD_RIGHT_SPD)) {
 				modeState = AR1_FWD2;
 
 			}
@@ -920,7 +917,7 @@ public:
 				EncoderRight.GetDistance());
 
 		encoderSelected = chooseEncoder.GetSelected();
-		if(encoderSelected == RH_Encoder)
+		if (encoderSelected == RH_Encoder)
 			useRightEncoder = true;
 		else
 			useRightEncoder = false;
@@ -951,7 +948,22 @@ public:
 		//State varible
 		SmartDashboard::PutNumber("DeflectorAngleTarget", DeflectorTarget);
 		SmartDashboard::PutBoolean("DeflectorTarget", useClosedLoop);
-		//std::vector<double> arr = GRIPTable->
+
+		//grip table data
+		GRIPTable = NetworkTable::GetTable("GRIP/myContoursReport");
+
+		//NetworkTable* t = GRIPTable.get();
+
+		std::vector<double> arr = GRIPTable->GetNumberArray("centerX", llvm::ArrayRef<double>());
+
+		SmartDashboard::PutNumber("VisionTargetFind", arr.size());
+
+		if (arr.size() > 0) {
+			SmartDashboard::PutNumber("VisionCenterX", arr[0]);
+		}
+		else {
+			SmartDashboard::PutNumber("VisionCenterX", 0);
+		}
 
 	}
 
@@ -970,7 +982,7 @@ public:
 	int forward(double targetDistance) {
 		//put all encoder stuff in same place
 		double encoderDistance;
-		if(useRightEncoder)
+		if (useRightEncoder)
 			encoderDistance = EncoderRight.GetDistance();
 		else
 			encoderDistance = EncoderLeft.GetDistance();
@@ -1093,7 +1105,7 @@ private:
 	int AutoVal, AutoVal0, AutoVal1, AutoVal2;
 	float OutputX, OutputY;
 	std::shared_ptr<NetworkTable> GRIPTable;
-	int isWaiting = 0;					/////***** Divide this into 2 variables.
+	int isWaiting = 0;			/////***** Divide this into 2 variables.
 
 	Solenoid *driveSolenoid = new Solenoid(0);
 	//manipulator
@@ -1109,15 +1121,13 @@ private:
 	Solenoid *GearOut = new Solenoid(1);
 	Encoder EncoderShoot;
 	DigitalInput WinchStop;
-	AnalogPotentiometer DeflectorAnglePOT;
-	bool useClosedLoop;
+	AnalogPotentiometer DeflectorAnglePOT;bool useClosedLoop;
 	double DeflectorTarget;
 	DigitalInput DeflectorHighLimit, DeflectorLowLimit;
 
 	bool useRightEncoder;
 
-}
-;
+};
 
 START_ROBOT_CLASS(Robot)
 
