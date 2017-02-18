@@ -10,6 +10,9 @@
 #include <SmartDashboard/SendableChooser.h>
 #include <SmartDashboard/SmartDashboard.h>
 
+//RJ-Libraries
+//#include "MultiSpeedController.h"
+
 // vision:
 // Use x and y coordinates from "myContours report"
 // if there are no objects use dead reckoning,
@@ -183,13 +186,16 @@ public:
 			table(NULL), ahrs(NULL), modeState(0), AutonOverride(), AutoSw1(), AutoSw2(), AutoSw3(), DiIn9(
 					9), DiIn8(8), DiIn7(7), AutoVal(), AutoVal0(), AutoVal1(), AutoVal2(), OutputX(), OutputY(), Winch0(
 					11), Winch1(9), Shooter0(12), Shooter1(7), Conveyor(13), Agitator(
-					6), FloorIntakeRoller(14), MeterWheel(8), DeflectorMotor(
-					10), EncoderShoot(4, 5), WinchStop(6), DeflectorAnglePOT(0,
-					270, 0), useClosedLoop(false), DeflectorTarget(0), DeflectorHighLimit(
-					22), DeflectorLowLimit(23), useRightEncoder(), DeflectorPID(
-					0.03, 0.0, 0.0, &DeflectorAnglePOT, &DeflectorMotor) {
+					6), FloorIntakeRoller(14), KickerWheel(8), DeflectorMotor(
+					10), EncoderKicker(20, 21), EncoderShoot(4, 5), WinchStop(
+					6), DeflectorAnglePOT(0, 270, 0), useClosedLoop(false), DeflectorTarget(
+					0), DeflectorHighLimit(22), DeflectorLowLimit(23), useRightEncoder(), DeflectorPID(
+					0.03, 0.0, 0.0, &DeflectorAnglePOT, &DeflectorMotor), KickerPID(
+					0.03, 0.0, 0.0, &EncoderKicker, &KickerWheel), ShooterPID(0.03,
+					0.0, 0.0, &EncoderShoot, &Shooter0) {
+		//^^^^^^^^^^^^^adjust the kP value... right now they're just the same guess for each PID... which is wrong :)
 		//GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
-
+		//Shooter = new MultiSpeedController();
 	}
 
 	void RobotInit() {
@@ -214,19 +220,32 @@ public:
 		Adrive.SetSafetyEnabled(false);
 		Bdrive.SetSafetyEnabled(false);
 
+		EncoderRight.SetReverseDirection(true);
+		EncoderShoot.SetReverseDirection(true);
+		EncoderKicker.SetReverseDirection(true);
+
 		EncoderLeft.SetDistancePerPulse(0.0243228675 * 4);
-		EncoderRight.SetDistancePerPulse(-1 * 0.0243228675 * 4);
+		EncoderRight.SetDistancePerPulse(0.0243228675 * 4);
 		EncoderShoot.SetDistancePerPulse(1.0 / 32.0 * 4.0);
+		EncoderKicker.SetDistancePerPulse(1.0 / 32.0 * 4.0);
 		OutputX = 0, OutputY = 0;
 
 		//variable that chooses which encoder robot is reading
 		useRightEncoder = true;
 
+		//reads sensors for speed not distance
+		DeflectorAnglePOT.SetPIDSourceType(PIDSourceType::kDisplacement);
+		EncoderKicker.SetPIDSourceType(PIDSourceType::kRate);
+
 		// Turn off the the sensors/reset
 		if (useClosedLoop) {
 			DeflectorPID.Enable();
+			KickerPID.Enable();
+			ShooterPID.Enable();
 		} else {
 			DeflectorPID.Disable();
+			KickerPID.Disable();
+			ShooterPID.Disable();
 		}
 
 		//from NAVX mxp data monitor example
@@ -333,8 +352,12 @@ public:
 		OutputX = 0, OutputY = 0;
 	}
 
-	void DisabledPeriodic() {
+	void RobotPeriodic() {
+		Shooter1.Set(-Shooter0.Get());
 		SmartDashboardSenser();
+	}
+	void DisabledPeriodic() {
+		//SmartDashboardSenser();
 	}
 	void AutonomousPeriodic() {
 		if (autoSelected == autonNameRed1)
@@ -352,7 +375,7 @@ public:
 		else
 			stopMotors();
 
-		SmartDashboardSenser();
+		//SmartDashboardSenser();
 	}
 
 	void TeleopPeriodic() {
@@ -392,30 +415,28 @@ public:
 		Adrive.ArcadeDrive(OutputY, OutputX, true);
 		Bdrive.ArcadeDrive(OutputY, OutputX, true);
 
-		SmartDashboardSenser();
+		//SmartDashboardSenser();
 
 		// Turn on the shooter, conveyer, and agitator
-		if (OperatorStick.GetRawAxis(2) < -0.1) {
+		if (OperatorStick.GetRawAxis(3) > Deadband) {
 
-			Shooter0.Set(1);
-			Shooter1.Set(1);
-			Conveyor.Set(1);
-			Agitator.Set(1);
+			Shooter0.Set(-OperatorStick.GetRawAxis(3));
+			Conveyor.Set(OperatorStick.GetRawAxis(3));
+			Agitator.Set(OperatorStick.GetRawAxis(3));
 
 		} else {
 
 			Shooter0.Set(0);
-			Shooter1.Set(0);
 			Conveyor.Set(0);
 			Agitator.Set(0);
 
 		}
 
-		// Turn on Metering WHeel
+		// Turn on Kicker WHeel
 		if (OperatorStick.GetRawButton(1)) {
-			MeterWheel.Set(1);
+			KickerWheel.Set(1);
 		} else {
-			MeterWheel.Set(0);
+			KickerWheel.Set(0);
 		}
 
 		//Put out intake
@@ -432,12 +453,22 @@ public:
 		GearOut->Set(OperatorStick.GetRawButton(3));
 
 		//turn on winch
-		Winch0.Set(OperatorStick.GetRawAxis(1));
-		Winch1.Set(OperatorStick.GetRawAxis(1));
+		if (abs(OperatorStick.GetRawAxis(1)) > Deadband) {
+			Winch0.Set(OperatorStick.GetRawAxis(1));
+			Winch1.Set(-OperatorStick.GetRawAxis(1));
+		} else {
+			Winch0.Set(0.0);
+			Winch1.Set(0.0);
+		}
 
 		//control deflector angle in open loop
 		if (!useClosedLoop) {
-			DeflectorMotor.Set(OperatorStick.GetRawAxis(5));
+			if (abs(OperatorStick.GetRawAxis(5)) > Deadband) {
+				DeflectorMotor.Set(OperatorStick.GetRawAxis(5) * 0.1);
+			}
+			else{
+				DeflectorMotor.Set(0.0);
+			}
 		} else {
 			if (abs(OperatorStick.GetRawAxis(5)) < Deadband) {
 				//stops the deflector once joystick is released
@@ -963,6 +994,15 @@ public:
 		SmartDashboard::PutNumber("ShooterEncoder(raw)", EncoderShoot.GetRaw());
 		SmartDashboard::PutNumber("ShooterEncoder(RPM)",
 				EncoderShoot.GetRate());
+		SmartDashboard::PutNumber("KickerEncoder(Rev)",
+				EncoderKicker.GetDistance());
+
+		//conveyor
+		SmartDashboard::PutNumber("KickerEncoder(raw)", EncoderKicker.GetRaw());
+		SmartDashboard::PutNumber("KickerEncoder(RPM)",
+				EncoderKicker.GetRate());
+		SmartDashboard::PutNumber("KickerEncoder(Rev)",
+				EncoderKicker.GetDistance());
 
 		SmartDashboard::PutBoolean("WinchStop", WinchStop.Get());
 		SmartDashboard::PutBoolean("DeflectorHighLimit",
@@ -979,20 +1019,20 @@ public:
 		SmartDashboard::PutBoolean("DeflectorTarget", useClosedLoop);
 
 		//grip table data
-		GRIPTable = NetworkTable::GetTable("GRIP/myContoursReport");
+		//GRIPTable = NetworkTable::GetTable("GRIP/myContoursReport");
 
 		//NetworkTable* t = GRIPTable.get();
 
-		std::vector<double> arr = GRIPTable->GetNumberArray("centerX", llvm::ArrayRef<double>());
-
-		SmartDashboard::PutNumber("VisionTargetFind", arr.size());
-
-		if (arr.size() > 0) {
-			SmartDashboard::PutNumber("VisionCenterX", arr[0]);
-		}
-		else {
-			SmartDashboard::PutNumber("VisionCenterX", 0);
-		}
+//		std::vector<double> arr = GRIPTable->GetNumberArray("centerX",
+//				llvm::ArrayRef<double>());
+//
+//		SmartDashboard::PutNumber("VisionTargetFind", arr.size());
+//
+//		if (arr.size() > 0) {
+//			SmartDashboard::PutNumber("VisionCenterX", arr[0]);
+//		} else {
+//			SmartDashboard::PutNumber("VisionCenterX", 0);
+//		}
 
 	}
 
@@ -1097,14 +1137,22 @@ public:
 		return 1;
 	}
 
-//	int shootFlywheel(double targetSpeed) {		//change to define later
-//
-//	}
-
 	int setDeflectorAngle(double target) {
 		DeflectorPID.SetSetpoint(target);
 		//if the absolute value of the error is less than 1 degree return 1
 		return (abs(DeflectorPID.GetError()) < 1.0);
+	}
+
+	int kickerSpeed(double speed) {
+		KickerPID.SetSetpoint(speed);
+		//if value of the error is less than 50 rpm return 1
+		return (abs(KickerPID.GetError()) < 50.0);
+	}
+
+	int shooterSpeed(double speed) {
+		ShooterPID.SetSetpoint(speed);
+		//if value of the error is less than 50 rpm return 1
+		return (abs(ShooterPID.GetError()) < 50.0);
 	}
 
 	void TestPeriodic() {
@@ -1153,11 +1201,12 @@ private:
 	VictorSP Conveyor;
 	VictorSP Agitator;
 	VictorSP FloorIntakeRoller;
-	VictorSP MeterWheel;
+	VictorSP KickerWheel;
 	VictorSP DeflectorMotor;
 	Solenoid *FloorIntakeArm = new Solenoid(3);
 	Solenoid *GearIn = new Solenoid(2);
 	Solenoid *GearOut = new Solenoid(1);
+	Encoder EncoderKicker;
 	Encoder EncoderShoot;
 	DigitalInput WinchStop;
 	AnalogPotentiometer DeflectorAnglePOT;bool useClosedLoop;
@@ -1166,7 +1215,9 @@ private:
 
 	bool useRightEncoder;
 
-	PIDController DeflectorPID;
+	PIDController DeflectorPID, KickerPID, ShooterPID;
+
+	//MultiSpeedController *Shooter;
 
 }
 ;
