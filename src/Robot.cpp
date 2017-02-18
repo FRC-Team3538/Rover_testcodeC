@@ -224,10 +224,10 @@ public:
 		EncoderShoot.SetReverseDirection(true);
 		EncoderKicker.SetReverseDirection(true);
 
-		EncoderLeft.SetDistancePerPulse(0.0243228675 * 4);
-		EncoderRight.SetDistancePerPulse(0.0243228675 * 4);
-		EncoderShoot.SetDistancePerPulse(1.0 / 32.0 * 4.0);
-		EncoderKicker.SetDistancePerPulse(1.0 / 32.0 * 4.0);
+		EncoderLeft.SetDistancePerPulse((16.0 * 12.0 )/ 7795.0 * 4.0);
+		EncoderRight.SetDistancePerPulse((16.0 * 12.0) / 7795.0 * 4.0);
+		EncoderShoot.SetDistancePerPulse(1.0 / 3328.0 * 4.0);
+		EncoderKicker.SetDistancePerPulse(1.0 / 4122.0 * 4.0);
 		OutputX = 0, OutputY = 0;
 
 		//variable that chooses which encoder robot is reading
@@ -239,8 +239,8 @@ public:
 
 		// Turn off the the sensors/reset
 		if (useClosedLoop) {
-			DeflectorPID.Enable();
-			KickerPID.Enable();
+//			DeflectorPID.Enable();
+//			KickerPID.Enable();
 			ShooterPID.Enable();
 		} else {
 			DeflectorPID.Disable();
@@ -464,7 +464,15 @@ public:
 		//control deflector angle in open loop
 		if (!useClosedLoop) {
 			if (abs(OperatorStick.GetRawAxis(5)) > Deadband) {
-				DeflectorMotor.Set(OperatorStick.GetRawAxis(5) * 0.1);
+				if(DeflectorAnglePOT.Get() < 180.0 && OperatorStick.GetRawAxis(5) < 0){
+					DeflectorMotor.Set(OperatorStick.GetRawAxis(5) * 0.075);
+				}
+				else if(DeflectorAnglePOT.Get() > 130.0 && OperatorStick.GetRawAxis(5) > 0){
+					DeflectorMotor.Set(OperatorStick.GetRawAxis(5) * 0.1);
+				}
+				else{
+					DeflectorMotor.Set(0.0);
+				}
 			}
 			else{
 				DeflectorMotor.Set(0.0);
@@ -993,14 +1001,14 @@ public:
 		//shooter
 		SmartDashboard::PutNumber("ShooterEncoder(raw)", EncoderShoot.GetRaw());
 		SmartDashboard::PutNumber("ShooterEncoder(RPM)",
-				EncoderShoot.GetRate());
-		SmartDashboard::PutNumber("KickerEncoder(Rev)",
-				EncoderKicker.GetDistance());
+				EncoderShoot.GetRate()*60.0);
+		SmartDashboard::PutNumber("ShooterEncoder(Rev)",
+				EncoderShoot.GetDistance());
 
 		//conveyor
 		SmartDashboard::PutNumber("KickerEncoder(raw)", EncoderKicker.GetRaw());
 		SmartDashboard::PutNumber("KickerEncoder(RPM)",
-				EncoderKicker.GetRate());
+				EncoderKicker.GetRate()*60.0);
 		SmartDashboard::PutNumber("KickerEncoder(Rev)",
 				EncoderKicker.GetDistance());
 
