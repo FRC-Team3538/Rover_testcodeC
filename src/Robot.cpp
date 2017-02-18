@@ -188,7 +188,8 @@ public:
 					270, 0), useClosedLoop(false), DeflectorTarget(0), DeflectorHighLimit(
 					22), DeflectorLowLimit(23), useRightEncoder(), DeflectorPID(
 					0.03, 0.0, 0.0, &DeflectorAnglePOT, &DeflectorMotor) {
-		GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
+		//GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
+
 	}
 
 	void RobotInit() {
@@ -976,7 +977,22 @@ public:
 		//State varible
 		SmartDashboard::PutNumber("DeflectorAngleTarget", DeflectorTarget);
 		SmartDashboard::PutBoolean("DeflectorTarget", useClosedLoop);
-		//std::vector<double> arr = GRIPTable->
+
+		//grip table data
+		GRIPTable = NetworkTable::GetTable("GRIP/myContoursReport");
+
+		//NetworkTable* t = GRIPTable.get();
+
+		std::vector<double> arr = GRIPTable->GetNumberArray("centerX", llvm::ArrayRef<double>());
+
+		SmartDashboard::PutNumber("VisionTargetFind", arr.size());
+
+		if (arr.size() > 0) {
+			SmartDashboard::PutNumber("VisionCenterX", arr[0]);
+		}
+		else {
+			SmartDashboard::PutNumber("VisionCenterX", 0);
+		}
 
 	}
 
@@ -1128,7 +1144,7 @@ private:
 	int AutoVal, AutoVal0, AutoVal1, AutoVal2;
 	float OutputX, OutputY;
 	std::shared_ptr<NetworkTable> GRIPTable;
-	int isWaiting = 0;					/////***** Divide this into 2 variables.
+	int isWaiting = 0;			/////***** Divide this into 2 variables.
 
 	Solenoid *driveSolenoid = new Solenoid(0);
 	//manipulator
