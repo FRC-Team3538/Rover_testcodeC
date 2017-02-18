@@ -38,9 +38,9 @@
 #define BLUE_1_CASE1_FWD (6.5 * 12.0)
 #define BLUE_1_CASE2_TURN (90)
 #define BLUE_1_CASE3_FWD (7.6 * -1 * 12.0)
-#define BLUE_1_CASE4_FWD_TIME (3)
-#define BLUE_1_CASE4_FWD_LEFT_SPD (0.1)
-#define BLUE_1_CASE4_FWD_RIGHT_SPD (0.1)
+#define BLUE_1_CASE4_FWD_TIME (3.5)
+#define BLUE_1_CASE4_FWD_LEFT_SPD (0.2)
+#define BLUE_1_CASE4_FWD_RIGHT_SPD (0.2)
 #define BLUE_1_CASE5_FWD (2.5 * 12.0)
 #define BLUE_1_CASE6_TURN (120)
 #define BLUE_1_CASE7_FWD (8.5 * 12.0)
@@ -86,9 +86,9 @@
 #define RED_1_CASE1_FWD (6.5 * 12.0)
 #define RED_1_CASE2_TURN (-95)
 #define RED_1_CASE3_FWD (7 * -1 * 12.0)
-#define RED_1_CASE4_FWD_TIME (1)
-#define RED_1_CASE4_FWD_LEFT_SPD (0.05)
-#define RED_1_CASE4_FWD_RIGHT_SPD (0.05)
+#define RED_1_CASE4_FWD_TIME (3.5)
+#define RED_1_CASE4_FWD_LEFT_SPD (0.2)
+#define RED_1_CASE4_FWD_RIGHT_SPD (0.2)
 #define RED_1_CASE5_FWD (3 * 12.0)
 #define RED_1_CASE6_TURN (-125)
 #define RED_1_CASE7_FWD (8.5 * 12.0)
@@ -174,10 +174,10 @@ class Robot: public frc::IterativeRobot {
 
 public:
 	Robot() :
-			Adrive(DriveLeft0, DriveLeft1, DriveRight0, DriveRight1), Bdrive(DriveLeft2, DriveRight2),
-					chooser(), chooseEncoder(), Drivestick(0), OperatorStick(
-					1), DriveLeft0(0), DriveLeft1(1), DriveLeft2(2), DriveRight0(
-					3), DriveRight1(4), DriveRight2(5), AutonTimer(), EncoderLeft(
+			Adrive(DriveLeft0, DriveLeft1, DriveRight0, DriveRight1), Bdrive(
+					DriveLeft2, DriveRight2), chooser(), chooseEncoder(), Drivestick(
+					0), OperatorStick(1), DriveLeft0(0), DriveLeft1(1), DriveLeft2(
+					2), DriveRight0(3), DriveRight1(4), DriveRight2(5), AutonTimer(), EncoderLeft(
 					0, 1), EncoderRight(2, 3),
 
 			table(NULL), ahrs(NULL), modeState(0), AutonOverride(), AutoSw1(), AutoSw2(), AutoSw3(), DiIn9(
@@ -186,9 +186,8 @@ public:
 					6), FloorIntakeRoller(14), MeterWheel(8), DeflectorMotor(
 					10), EncoderShoot(4, 5), WinchStop(6), DeflectorAnglePOT(0,
 					270, 0), useClosedLoop(false), DeflectorTarget(0), DeflectorHighLimit(
-					22), DeflectorLowLimit(23),
-					useRightEncoder()
-   {
+					22), DeflectorLowLimit(23), useRightEncoder(), DeflectorPID(
+					0.03, 0.0, 0.0, &DeflectorAnglePOT, &DeflectorMotor) {
 		GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
 	}
 
@@ -221,6 +220,13 @@ public:
 
 		//variable that chooses which encoder robot is reading
 		useRightEncoder = true;
+
+		// Turn off the the sensors/reset
+		if (useClosedLoop) {
+			DeflectorPID.Enable();
+		} else {
+			DeflectorPID.Disable();
+		}
 
 		//from NAVX mxp data monitor example
 		try { /////***** Let's do this differently.  We want Auton to fail gracefully, not just abort. Remember Ariane 5
@@ -412,7 +418,7 @@ public:
 		}
 
 		//Put out intake
-		if (OperatorStick.GetRawAxis(2) > 0.1) {
+		if (OperatorStick.GetRawAxis(2) > Deadband) {
 			FloorIntakeRoller.Set(1);
 			FloorIntakeArm->Set(true);
 		} else {
@@ -429,15 +435,27 @@ public:
 		Winch1.Set(OperatorStick.GetRawAxis(1));
 
 		//control deflector angle in open loop
-		DeflectorMotor.Set(OperatorStick.GetRawAxis(5));
-
+		if (!useClosedLoop) {
+			DeflectorMotor.Set(OperatorStick.GetRawAxis(5));
+		} else {
+			if (abs(OperatorStick.GetRawAxis(5)) < Deadband) {
+				//stops the deflector once joystick is released
+				DeflectorTarget = DeflectorAnglePOT.Get();
+			} else {
+				//will increment the DeflectorTarget by value set by joysticks
+				DeflectorTarget += OperatorStick.GetRawAxis(5) * 0.1;
+			}
+			DeflectorPID.SetSetpoint(DeflectorTarget);
+		}
 
 		// Turn off the the sensors/reset
 		if (OperatorStick.GetRawButton(8)) {
 			useClosedLoop = true;
+			DeflectorPID.Enable();
 		}
 		if (OperatorStick.GetRawButton(7)) {
 			useClosedLoop = false;
+			DeflectorPID.Disable();
 		}
 
 		//Controll the angle of the deflector
@@ -453,22 +471,25 @@ public:
 //		These are here so we can easily add states.
 // 		State 1 is always the first one to run.
 //		Always have an "end" state.
-#define AB1_INIT
-#define AB1_FWD 1
-#define AB1_TURN90 2
-#define AB1_BKUP 3
-#define AB1_WAIT 4
-#define AB1_FWD2 5
-#define AB1_FACE_BOILER 6
-#define AB1_TO_BOILER 7
-#define AR1_SHOOT 8
-#define AB1_END 9
+#define AB1_INIT 1
+#define AB1_FWD 2
+#define AB1_TURN90 3
+#define AB1_BKUP 4
+#define AB1_WAIT 5
+#define AB1_FWD2 6
+#define AB1_FACE_BOILER 7
+#define AB1_TO_BOILER 8
+#define AR1_SHOOT 9
+#define AB1_END 10
 //***needs INIT case still
 	void autoBlue1(void) {
 
 		//Blue boiler side code
 		//drives turns then drives again
 		switch (modeState) {
+		case AB1_INIT:
+			modeState = AB1_FWD;
+			break;
 		case AB1_FWD:
 			// go forward 7 ft
 			if (forward(BLUE_1_CASE1_FWD)) {
@@ -479,26 +500,25 @@ public:
 		case AB1_TURN90:
 			// turn 90 degrees clockwise
 			if (autonTurn(BLUE_1_CASE2_TURN)) {
-				modeState = AB1_BKUP;
+				//modeState = AB1_BKUP;
+				modeState = AB1_WAIT;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 				ahrs->ZeroYaw();
 			}
 			break;
-		case AB1_BKUP:
-			// go forward 7 ft to hit hopper
-			//change to timed drive
-			if (forward(BLUE_1_CASE3_FWD)) {
-				modeState = AB1_WAIT;
-				AutonTimer.Reset();
-			}
-			break;
+//		case AB1_BKUP:
+//			// go forward 7 ft to hit hopper
+//			//change to timed drive
+//			if (forward(BLUE_1_CASE3_FWD)) {
+//				modeState = AB1_WAIT;
+//				AutonTimer.Reset();
+//			}
+//			break;
 		case AB1_WAIT:
 			//waits a couple of seconds for balls
 			if (timedDrive(BLUE_1_CASE4_FWD_TIME, BLUE_1_CASE4_FWD_LEFT_SPD,
-					BLUE_1_CASE4_FWD_RIGHT_SPD)) {
-
-
+			BLUE_1_CASE4_FWD_RIGHT_SPD)) {
 				modeState = AB1_FWD2;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -621,7 +641,6 @@ public:
 		case AB2_INIT:									/////***** use #define
 			// This uses state 1 for initialization.
 			// This keeps the initialization and the code all in one place.
-
 			ahrs->ZeroYaw();
 			modeState = AB2_FWD;						/////***** use #define
 			break;
@@ -689,22 +708,25 @@ public:
 		return;
 	}
 
-#define AR1_INIT
-#define AR1_FWD 1
-#define AR1_TURN90 2
-#define AR1_BKUP 3
-#define AR1_WAIT 4
-#define AR1_FWD2 5
-#define AR1_FACE_BOILER 6
-#define AR1_TO_BOILER 7
-#define AR1_SHOOT 8
-#define AR1_END 9
+#define AR1_INIT 1
+#define AR1_FWD 2
+#define AR1_TURN90 3
+#define AR1_BKUP 4
+#define AR1_WAIT 5
+#define AR1_FWD2 6
+#define AR1_FACE_BOILER 7
+#define AR1_TO_BOILER 8
+#define AR1_SHOOT 9
+#define AR1_END 10
 //***also still needs INIT case
 	void autoRed1(void) {
 		//Red center position code
 		//this version turns the robot in a right angle
 
 		switch (modeState) {
+		case AR1_INIT:
+			modeState = AR1_FWD;
+			break;
 		case AR1_FWD:
 			// go forward 7 ft
 			if (forward(RED_1_CASE1_FWD)) {
@@ -731,7 +753,7 @@ public:
 		case AR1_WAIT:
 			//waits in front of hopper a couple of seconds for balls
 			if (timedDrive(RED_1_CASE4_FWD_TIME, RED_1_CASE4_FWD_LEFT_SPD,
-					RED_1_CASE4_FWD_RIGHT_SPD)) {
+			RED_1_CASE4_FWD_RIGHT_SPD)) {
 				modeState = AR1_FWD2;
 
 			}
@@ -857,16 +879,19 @@ public:
 		return;
 	}
 
-#define AR3_INIT
-#define AR3_FWD 1
-#define AR3_TURN 2
-#define AR3_STR8 3
-#define AR3_END 4
+#define AR3_INIT 1
+#define AR3_FWD 2
+#define AR3_TURN 3
+#define AR3_STR8 4
+#define AR3_END 5
 	void autoRed3(void) {
 		//red three
 		//puts gear onto side of airship
 
 		switch (modeState) {
+		case AR3_INIT:
+			modeState = AR3_FWD;
+			break;
 		case AR3_FWD:
 			// go forward 7 ft
 			if (forward(RED_3_CASE1_FWD)) {
@@ -920,7 +945,7 @@ public:
 				EncoderRight.GetDistance());
 
 		encoderSelected = chooseEncoder.GetSelected();
-		if(encoderSelected == RH_Encoder)
+		if (encoderSelected == RH_Encoder)
 			useRightEncoder = true;
 		else
 			useRightEncoder = false;
@@ -970,7 +995,7 @@ public:
 	int forward(double targetDistance) {
 		//put all encoder stuff in same place
 		double encoderDistance;
-		if(useRightEncoder)
+		if (useRightEncoder)
 			encoderDistance = EncoderRight.GetDistance();
 		else
 			encoderDistance = EncoderLeft.GetDistance();
@@ -1056,6 +1081,16 @@ public:
 		return 1;
 	}
 
+//	int shootFlywheel(double targetSpeed) {		//change to define later
+//
+//	}
+
+	int setDeflectorAngle(double target) {
+		DeflectorPID.SetSetpoint(target);
+		//if the absolute value of the error is less than 1 degree return 1
+		return (abs(DeflectorPID.GetError()) < 1.0);
+	}
+
 	void TestPeriodic() {
 		lw->Run();
 	}
@@ -1109,12 +1144,13 @@ private:
 	Solenoid *GearOut = new Solenoid(1);
 	Encoder EncoderShoot;
 	DigitalInput WinchStop;
-	AnalogPotentiometer DeflectorAnglePOT;
-	bool useClosedLoop;
+	AnalogPotentiometer DeflectorAnglePOT;bool useClosedLoop;
 	double DeflectorTarget;
 	DigitalInput DeflectorHighLimit, DeflectorLowLimit;
 
 	bool useRightEncoder;
+
+	PIDController DeflectorPID;
 
 }
 ;
