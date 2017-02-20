@@ -189,11 +189,11 @@ public:
 					6), FloorIntakeRoller(14), KickerWheel(8), DeflectorMotor(
 					10), EncoderKicker(20, 21), EncoderShoot(4, 5), WinchStop(
 					6), DeflectorAnglePOT(0, 270, 0), useClosedLoop(false), DeflectorTarget(
-					0), DeflectorHighLimit(22), DeflectorLowLimit(23), useRightEncoder(), DeflectorPID(
+					0), ConySpeed(0.1), ShootSpeed(0.1), DeflectAngle(145), DeflectorHighLimit(22), DeflectorLowLimit(23), useRightEncoder(), DeflectorPID(
 					0.03, 0.0, 0.0, &DeflectorAnglePOT, &DeflectorMotor), KickerPID(
 					0.03, 0.0, 0.0, &EncoderKicker, &KickerWheel), ShooterPID(0.03,
 					0.0, 0.0, &EncoderShoot, &Shooter0) {
-		//^^^^^^^^^^^^^adjust the kP value... right now they're just the same guess for each PID... which is wrong :)
+		//^^^^^^^^^^^^^adjust the kP values... right now they're just the same guess for each PID... which is wrong :)
 		//GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
 		//Shooter = new MultiSpeedController();
 	}
@@ -220,10 +220,12 @@ public:
 		Adrive.SetSafetyEnabled(false);
 		Bdrive.SetSafetyEnabled(false);
 
+		//changes the original negative values to positive values
 		EncoderRight.SetReverseDirection(true);
 		EncoderShoot.SetReverseDirection(true);
 		EncoderKicker.SetReverseDirection(true);
 
+		//calibrations for encoders
 		EncoderLeft.SetDistancePerPulse((16.0 * 12.0 )/ 7795.0 * 4.0);
 		EncoderRight.SetDistancePerPulse((16.0 * 12.0) / 7795.0 * 4.0);
 		EncoderShoot.SetDistancePerPulse(1.0 / 3328.0 * 4.0);
@@ -233,14 +235,21 @@ public:
 		//variable that chooses which encoder robot is reading
 		useRightEncoder = true;
 
-		//reads sensors for speed not distance
+		//determines that a sensor is being read for either displacement or velocity
 		DeflectorAnglePOT.SetPIDSourceType(PIDSourceType::kDisplacement);
 		EncoderKicker.SetPIDSourceType(PIDSourceType::kRate);
 
+		SmartDashboard::PutNumber("Shooter Speed",
+				ShootSpeed);
+		SmartDashboard::PutNumber("Conveyor Speed",
+				ConySpeed);
+		SmartDashboard::PutNumber("Deflector Angle",
+				DeflectAngle);
+
 		// Turn off the the sensors/reset
 		if (useClosedLoop) {
-//			DeflectorPID.Enable();
-//			KickerPID.Enable();
+			DeflectorPID.Enable();
+			KickerPID.Enable();
 			ShooterPID.Enable();
 		} else {
 			DeflectorPID.Disable();
@@ -420,9 +429,14 @@ public:
 		// Turn on the shooter, conveyer, and agitator
 		if (OperatorStick.GetRawAxis(3) > Deadband) {
 
-			Shooter0.Set(-OperatorStick.GetRawAxis(3));
-			Conveyor.Set(OperatorStick.GetRawAxis(3));
+			//Shooter0.Set(-OperatorStick.GetRawAxis(3) * 0.75);
+			//Conveyor.Set(OperatorStick.GetRawAxis(3));
 			Agitator.Set(OperatorStick.GetRawAxis(3));
+
+			SmartDashboard::PutNumber("Shooter Speed Teleop",
+					ShootSpeed);
+			Shooter0.Set(-ShootSpeed);
+			Conveyor.Set(ConySpeed);
 
 		} else {
 
@@ -450,7 +464,7 @@ public:
 
 		//Button to get and release the gear
 		GearIn->Set(OperatorStick.GetRawButton(3));
-		GearOut->Set(OperatorStick.GetRawButton(3));
+		GearOut->Set(OperatorStick.GetRawButton(2));
 
 		//turn on winch
 		if (abs(OperatorStick.GetRawAxis(1)) > Deadband) {
@@ -464,9 +478,11 @@ public:
 		//control deflector angle in open loop
 		if (!useClosedLoop) {
 			if (abs(OperatorStick.GetRawAxis(5)) > Deadband) {
+				//move deflector up
 				if(DeflectorAnglePOT.Get() < 180.0 && OperatorStick.GetRawAxis(5) < 0){
-					DeflectorMotor.Set(OperatorStick.GetRawAxis(5) * 0.075);
+					DeflectorMotor.Set(OperatorStick.GetRawAxis(5) * 0.1);
 				}
+				//puts deflector down
 				else if(DeflectorAnglePOT.Get() > 130.0 && OperatorStick.GetRawAxis(5) > 0){
 					DeflectorMotor.Set(OperatorStick.GetRawAxis(5) * 0.1);
 				}
@@ -477,28 +493,66 @@ public:
 			else{
 				DeflectorMotor.Set(0.0);
 			}
-		} else {
-			if (abs(OperatorStick.GetRawAxis(5)) < Deadband) {
+		}
+		//in closed loop
+		else {
+			//if (abs(OperatorStick.GetRawAxis(5)) < Deadband) {
 				//stops the deflector once joystick is released
-				DeflectorTarget = DeflectorAnglePOT.Get();
-			} else {
+			//	DeflectorTarget = DeflectorAnglePOT.Get();
+			//} else {
 				//will increment the DeflectorTarget by value set by joysticks
-				DeflectorTarget += OperatorStick.GetRawAxis(5) * 0.1;
+			//	DeflectorTarget += OperatorStick.GetRawAxis(5) * 0.1;
+			//}
+			//DeflectorPID.SetSetpoint(DeflectorTarget);
+			SmartDashboard::PutNumber("Deflector Angle Teleop",
+							DeflectAngle);
+			SmartDashboard::PutNumber("Pot Angle Teleop",
+							DeflectorAnglePOT.Get());
+
+			if ((DeflectorAnglePOT.Get() > (1.5)+DeflectAngle) or (DeflectorAnglePOT.Get() < DeflectAngle-(1.5))) {
+				//move deflector up
+				if(DeflectorAnglePOT.Get() < 180.0 && DeflectorAnglePOT.Get() < DeflectAngle){
+					//DeflectorMotor.Set(OperatorStick.GetRawAxis(5) * 0.1);
+				DeflectorMotor.Set(0.5 * 0.1);
+				}
+				//puts deflector down
+				else if(DeflectorAnglePOT.Get() > 133.0 && DeflectorAnglePOT.Get() > DeflectAngle){
+					//DeflectorMotor.Set(OperatorStick.GetRawAxis(5) * 0.1);
+					DeflectorMotor.Set(-0.5 * 0.1);
+				}
+				else{
+					DeflectorMotor.Set(0.0);
+				}
+				SmartDashboard::PutString("Deadband",
+											"True");
+				DeflectorMotor.Set(0.0);
+
+
 			}
-			DeflectorPID.SetSetpoint(DeflectorTarget);
+			else{
+				DeflectorMotor.Set(0.0);
+				SmartDashboard::PutString("Deadband",
+											"False");
+
+			}
+
 		}
 
 		// Turn off the the sensors/reset
 		if (OperatorStick.GetRawButton(8)) {
 			useClosedLoop = true;
-			DeflectorPID.Enable();
+			DeflectorPID.Disable();
+			DeflectorMotor.Set(0.0);
 		}
 		if (OperatorStick.GetRawButton(7)) {
 			useClosedLoop = false;
 			DeflectorPID.Disable();
 		}
 
-		//Controll the angle of the deflector
+		SmartDashboard::PutBoolean("CLOSED LOOP ENABLED",useClosedLoop)
+
+
+		//Control the angle of the deflector
 		if (OperatorStick.GetRawButton(5)) {
 			DeflectorTarget = 90;
 		}
@@ -521,7 +575,7 @@ public:
 #define AB1_TO_BOILER 8
 #define AR1_SHOOT 9
 #define AB1_END 10
-//***needs INIT case still
+
 	void autoBlue1(void) {
 
 		//Blue boiler side code
@@ -581,6 +635,7 @@ public:
 				ahrs->ZeroYaw();
 			}
 			break;
+		//possibly will take out if can shoot from hopper
 		case AB1_TO_BOILER:
 			//go forward 7-ish feet to run into boiler
 			//change to timed drive
@@ -758,7 +813,7 @@ public:
 #define AR1_TO_BOILER 8
 #define AR1_SHOOT 9
 #define AR1_END 10
-//***also still needs INIT case
+
 	void autoRed1(void) {
 		//Red center position code
 		//this version turns the robot in a right angle
@@ -903,7 +958,6 @@ public:
 		case AR2_INIT:
 			// This uses state 1 for initialization.
 			// This keeps the initialization and the code all in one place.
-
 			ahrs->ZeroYaw();
 			modeState = AR2_FWD;
 			break;
@@ -1004,6 +1058,8 @@ public:
 				EncoderShoot.GetRate()*60.0);
 		SmartDashboard::PutNumber("ShooterEncoder(Rev)",
 				EncoderShoot.GetDistance());
+		ShootSpeed = SmartDashboard::GetNumber("Shooter Speed",0.5);
+
 
 		//conveyor
 		SmartDashboard::PutNumber("KickerEncoder(raw)", EncoderKicker.GetRaw());
@@ -1017,10 +1073,16 @@ public:
 				DeflectorHighLimit.Get());
 		SmartDashboard::PutBoolean("DeflectorLowLimit",
 				DeflectorLowLimit.Get());
+		ConySpeed = SmartDashboard::GetNumber("Conveyor Speed",
+				0.5);
+
 
 		//Get angle for the deflector
 		SmartDashboard::PutNumber("DeflectorAnglePOT(DEG)",
 				DeflectorAnglePOT.Get());
+		DeflectAngle = SmartDashboard::GetNumber("Deflector Angle",
+				145);
+
 
 		//State varible
 		SmartDashboard::PutNumber("DeflectorAngleTarget", DeflectorTarget);
@@ -1211,14 +1273,14 @@ private:
 	VictorSP FloorIntakeRoller;
 	VictorSP KickerWheel;
 	VictorSP DeflectorMotor;
-	Solenoid *FloorIntakeArm = new Solenoid(3);
-	Solenoid *GearIn = new Solenoid(2);
+	Solenoid *FloorIntakeArm = new Solenoid(2);
+	Solenoid *GearIn = new Solenoid(3);
 	Solenoid *GearOut = new Solenoid(1);
 	Encoder EncoderKicker;
 	Encoder EncoderShoot;
 	DigitalInput WinchStop;
 	AnalogPotentiometer DeflectorAnglePOT;bool useClosedLoop;
-	double DeflectorTarget;
+	double DeflectorTarget, ConySpeed, ShootSpeed,DeflectAngle;
 	DigitalInput DeflectorHighLimit, DeflectorLowLimit;
 
 	bool useRightEncoder;
