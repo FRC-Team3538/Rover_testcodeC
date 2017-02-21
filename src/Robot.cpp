@@ -178,7 +178,7 @@ class Robot: public frc::IterativeRobot {
 public:
 	Robot() :
 			Adrive(DriveLeft0, DriveLeft1, DriveRight0, DriveRight1), Bdrive(
-					DriveLeft2, DriveRight2), chooser(), chooseEncoder(), chooseDeflector(), chooseKicker(), chooseShooter(), Drivestick(
+					DriveLeft2, DriveRight2), chooser(), chooseDriveEncoder(), chooseDeflector(), chooseKicker(), chooseShooter(), chooseDeflectorLimit(), Drivestick(
 					0), OperatorStick(1), DriveLeft0(0), DriveLeft1(1), DriveLeft2(
 					2), DriveRight0(3), DriveRight1(4), DriveRight2(5), AutonTimer(), EncoderLeft(
 					0, 1), EncoderRight(2, 3),
@@ -188,9 +188,9 @@ public:
 					11), Winch1(9), Shooter0(12), Shooter1(7), Conveyor(13), Agitator(
 					6), FloorIntakeRoller(14), KickerWheel(8), DeflectorMotor(
 					10), EncoderKicker(20, 21), EncoderShoot(4, 5), WinchStop(
-					6), DeflectorAnglePOT(0, 270, 0), useClosedLoop(false), DeflectorTarget(
-					0), ConySpeed(0.1), ShootSpeed(0.1), DeflectAngle(145), DeflectorHighLimit(
-					22), DeflectorLowLimit(23), useRightEncoder(), DisableDeflector(), DisableKicker(), DisableShooter(), DeflectorPID(
+					6), DeflectorAnglePOT(0, 270, 0), DeflectorTarget(0), ConySpeed(
+					0.1), ShootSpeed(0.1), DeflectAngle(145), DeflectorHighLimit(
+					22), DeflectorLowLimit(23), useRightEncoder(), DeflectorClosedLoop(), KickerClosedLoop(), ShooterClosedLoop(), DeflectorPID(
 					-0.03, 0.0, 0.0, &DeflectorAnglePOT, &DeflectorMotor), KickerPID(
 					0.03, 0.0, 0.0, &EncoderKicker, &KickerWheel), ShooterPID(
 					-0.0003, -0.00001, 0.0, 0.0, &EncoderShoot, &Shooter0) {
@@ -200,37 +200,50 @@ public:
 	}
 
 	void RobotInit() {
-		AutonOverride = false;
-		if (AutonOverride) {
-			chooser.AddDefault(autonNameOFF, autonNameOFF);
-			chooser.AddObject(autonNameRed1, autonNameRed1);
-			chooser.AddObject(autonNameRed2, autonNameRed2);
-			chooser.AddObject(autonNameRed3, autonNameRed3);
-			chooser.AddObject(autonNameBlue1, autonNameBlue1);
-			chooser.AddObject(autonNameBlue2, autonNameBlue2);
-			chooser.AddObject(autonNameBlue3, autonNameBlue3);
-			frc::SmartDashboard::PutData("Auto Modes", &chooser);
-		}
+		//setup smartDashboard choosers
+		chooser.AddDefault(AutonNameSwitch, AutonNameSwitch);
+		chooser.AddObject(autonNameOFF, autonNameOFF);
+		chooser.AddObject(autonNameRed1, autonNameRed1);
+		chooser.AddObject(autonNameRed2, autonNameRed2);
+		chooser.AddObject(autonNameRed3, autonNameRed3);
+		chooser.AddObject(autonNameBlue1, autonNameBlue1);
+		chooser.AddObject(autonNameBlue2, autonNameBlue2);
+		chooser.AddObject(autonNameBlue3, autonNameBlue3);
+		frc::SmartDashboard::PutData("Auto Modes", &chooser);
 
-		chooseEncoder.AddDefault(RH_Encoder, RH_Encoder);
-		chooseEncoder.AddObject(LH_Encoder, LH_Encoder);
-		frc::SmartDashboard::PutData("Encoder", &chooseEncoder);
+		chooseDriveEncoder.AddDefault(RH_Encoder, RH_Encoder);
+		chooseDriveEncoder.AddObject(LH_Encoder, LH_Encoder);
+		frc::SmartDashboard::PutData("Encoder", &chooseDriveEncoder);
 
 		chooseDeflector.AddDefault(chooserOpenLoop, chooserOpenLoop);
 		chooseDeflector.AddObject(chooserClosedLoop, chooserClosedLoop);
+		frc::SmartDashboard::PutData("Deflector", &chooseDeflector);
 
 		chooseKicker.AddDefault(chooserOpenLoop, chooserOpenLoop);
 		chooseKicker.AddObject(chooserClosedLoop, chooserClosedLoop);
+		frc::SmartDashboard::PutData("Kicker", &chooseKicker);
 
 		chooseShooter.AddDefault(chooserOpenLoop, chooserOpenLoop);
 		chooseShooter.AddObject(chooserClosedLoop, chooserClosedLoop);
+		frc::SmartDashboard::PutData("Shooter", &chooseShooter);
 
-		driveSolenoid->Set(false);      //turn off all solenoids
+		chooseDeflectorLimit.AddDefault(Enable, Enable);
+		chooseDeflectorLimit.AddObject(Disable, Disable);
+		frc::SmartDashboard::PutData("Deflector Limits", &chooseDeflectorLimit);
 
+		chooseAutonSelector.AddDefault(autonSwitch, autonSwitch);
+		chooseAutonSelector.AddObject(autonSmartChooser, autonSmartChooser);
+		frc::SmartDashboard::PutData("Auton Selector", &chooseAutonSelector);
+
+		//turn off shifter solenoids
+		driveSolenoid->Set(false);
+
+		//disable drive watchdogs
 		Adrive.SetSafetyEnabled(false);
 		Bdrive.SetSafetyEnabled(false);
 
 		//changes these original negative values to positive values
+		EncoderLeft.SetReverseDirection(false);
 		EncoderRight.SetReverseDirection(true);
 		EncoderShoot.SetReverseDirection(true);
 		EncoderKicker.SetReverseDirection(true);
@@ -241,37 +254,37 @@ public:
 		EncoderShoot.SetDistancePerPulse(1.0 / 3328.0 * 4.0);
 		EncoderKicker.SetDistancePerPulse(1.0 / 4122.0 * 4.0);
 
+		//configure PIDs
 		DeflectorPID.SetOutputRange(-0.1, 0.1);
 
+		//drive command averaging filter
 		OutputX = 0, OutputY = 0;
 
-		//variable that chooses which encoder robot is reading
+		//variable that chooses which encoder robot is reading for autonomous mode
 		useRightEncoder = true;
 
-		//chooses which manip sensor to read
-		//defaults to don't read
-		DisableDeflector = false;
-		DisableKicker = false;
-		DisableShooter = false;
+		// Turn off the the sensors/reset
+		if (DeflectorClosedLoop) {
+			DeflectorPID.Enable();
+		} else {
+			DeflectorPID.Disable();
+		}
+
+		if (KickerClosedLoop) {
+			KickerPID.Enable();
+		} else {
+			KickerPID.Disable();
+		}
+
+		if (ShooterClosedLoop) {
+			ShooterPID.Enable();
+		} else {
+			ShooterPID.Disable();
+		}
 
 		//determines that a sensor is being read for either displacement or velocity
 		DeflectorAnglePOT.SetPIDSourceType(PIDSourceType::kDisplacement);
 		EncoderKicker.SetPIDSourceType(PIDSourceType::kRate);
-
-		SmartDashboard::PutNumber("Shooter Speed", ShootSpeed);
-		SmartDashboard::PutNumber("Conveyor Speed", ConySpeed);
-		SmartDashboard::PutNumber("Deflector Angle", DeflectAngle);
-
-		// Turn off the the sensors/reset
-		if (useClosedLoop) {
-			DeflectorPID.Enable();
-			KickerPID.Enable();
-			ShooterPID.Enable();
-		} else {
-			DeflectorPID.Disable();
-			KickerPID.Disable();
-			ShooterPID.Disable();
-		}
 
 		//from NAVX mxp data monitor example
 		try { /////***** Let's do this differently.  We want Auton to fail gracefully, not just abort. Remember Ariane 5
@@ -320,6 +333,9 @@ public:
 
 		SmartDashboard::PutString("autonMode", "Off");
 
+		//idk how to make AutonOverride choosable by choosers....
+		//AutonOverride = true;
+		//AutonOverride = (chooseAutonSelector.GetSelected() == AutonSwitchEnabled);
 		if (AutonOverride) {
 			autoSelected = chooser.GetSelected();
 			std::cout << "Auto selected: " << autoSelected << std::endl;
@@ -388,13 +404,11 @@ public:
 		// Turn off the the sensors/reset
 		//in closed loop
 		if (OperatorStick.GetRawButton(8)) {
-			useClosedLoop = true;
 			DeflectorPID.Enable();
 			//ShooterPID.Enable();
 		}
 		//in open loop
 		if (OperatorStick.GetRawButton(7)) {
-			useClosedLoop = false;
 			DeflectorPID.Disable();
 			ShooterPID.Disable();
 			KickerPID.Disable();
@@ -472,14 +486,14 @@ public:
 
 		// Turn on the shooter when right hand trigger is pushed
 		if (OperatorStick.GetRawAxis(3) > Deadband) {
-			if (useClosedLoop) {
+			if (ShooterClosedLoop) {
 				ShooterPID.SetSetpoint(ShootSpeed);
 				ShooterPID.Enable();
 			} else {
 				Shooter0.Set(-ShootSpeed);
 			}
 		} else {
-			if (useClosedLoop) {
+			if (ShooterClosedLoop) {
 				ShooterPID.SetSetpoint(0.0);
 				ShooterPID.Disable();
 			} else {
@@ -537,7 +551,7 @@ public:
 		double DeflectorLimitUpper = 200.0;
 		double DeflectorMotorOutputMax = 0.1;
 
-		if (!useClosedLoop) {
+		if (!DeflectorClosedLoop) {
 			//move deflector up
 			if (DeflectorAnglePOT.Get() < DeflectorLimitUpper
 					&& RH_YAxis < -Deadband) {
@@ -1048,7 +1062,7 @@ public:
 		SmartDashboard::PutNumber("DistanceRight(Inch)",
 				EncoderRight.GetDistance());
 
-		encoderSelected = chooseEncoder.GetSelected();
+		encoderSelected = chooseDriveEncoder.GetSelected();
 		if (encoderSelected == RH_Encoder)
 			useRightEncoder = true;
 		else
@@ -1093,8 +1107,13 @@ public:
 
 		//State varible
 		SmartDashboard::PutNumber("DeflectorAngleTarget", DeflectorTarget);
-		SmartDashboard::PutBoolean("Closed Loop", useClosedLoop);
 
+		//chooser code for manip in open/closed loop
+		ShooterClosedLoop = (chooseShooter.GetSelected() == chooserClosedLoop);
+		KickerClosedLoop = (chooseKicker.GetSelected() == chooserClosedLoop);
+		DeflectorClosedLoop = (chooseDeflector.GetSelected()
+				== chooserClosedLoop);
+		DeflectorLimitEnabled = (chooseDeflectorLimit.GetSelected() == Enable);
 
 		//grip table data
 		//GRIPTable = NetworkTable::GetTable("GRIP/myContoursReport");
@@ -1240,8 +1259,9 @@ public:
 private:
 	RobotDrive Adrive, Bdrive;
 	frc::LiveWindow* lw = LiveWindow::GetInstance();
-	frc::SendableChooser<std::string> chooser, chooseEncoder, chooseDeflector,
-			chooseKicker, chooseShooter;
+	frc::SendableChooser<std::string> chooser, chooseDriveEncoder,
+			chooseDeflector, chooseKicker, chooseShooter, chooseDeflectorLimit, chooseAutonSelector;
+	const std::string AutonNameSwitch = "Use Switch";
 	const std::string autonNameOFF = "0 OFF";
 	const std::string autonNameBlue1 = "Blue 1";
 	const std::string autonNameBlue2 = "Blue 2";
@@ -1253,11 +1273,11 @@ private:
 	const std::string LH_Encoder = "LH_Encoder";
 	const std::string chooserClosedLoop = "Closed Loop";
 	const std::string chooserOpenLoop = "Open Loop";
-//	const std::string EnabledKickerEncoder = "Closed Loop";
-//	const std::string DisabledKickerEncoder = "Open Loop";
-//	const std::string EnabledShooterEncoder = "Closed Loop";
-//	const std::string DisabledShooterEncoder = "Open Loop";
-	std::string autoSelected, encoderSelected, manipSensorSelected;
+	const std::string Disable = "Disable";
+	const std::string Enable = "Enable";
+	const std::string autonSwitch = "Switch";
+	const std::string autonSmartChooser = "SmartDash Chooser";
+	std::string autoSelected, encoderSelected;
 	Joystick Drivestick;
 	Joystick OperatorStick;
 	VictorSP DriveLeft0;
@@ -1294,11 +1314,11 @@ private:
 	Encoder EncoderKicker;
 	Encoder EncoderShoot;
 	DigitalInput WinchStop;
-	AnalogPotentiometer DeflectorAnglePOT;bool useClosedLoop;
+	AnalogPotentiometer DeflectorAnglePOT;
 	double DeflectorTarget, ConySpeed, ShootSpeed, DeflectAngle;
 	DigitalInput DeflectorHighLimit, DeflectorLowLimit;
 
-	bool useRightEncoder;bool DisableDeflector;bool DisableKicker;bool DisableShooter;
+	bool useRightEncoder;bool DeflectorClosedLoop;bool KickerClosedLoop;bool ShooterClosedLoop;bool DeflectorLimitEnabled; bool AutonSwitchEnabled;
 
 	PIDController DeflectorPID, KickerPID, ShooterPID;
 
