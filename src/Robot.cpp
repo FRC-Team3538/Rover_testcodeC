@@ -381,11 +381,37 @@ public:
 	}
 
 	void RobotPeriodic() {
+		//links two motors together
 		Shooter1.Set(-Shooter0.Get());
-		SmartDashboardSenser();
+		Winch1.Set(-Winch0.Get());
+
+		// Turn off the the sensors/reset
+		//in closed loop
+		if (OperatorStick.GetRawButton(8)) {
+			useClosedLoop = true;
+			DeflectorPID.Enable();
+			//ShooterPID.Enable();
+		}
+		//in open loop
+		if (OperatorStick.GetRawButton(7)) {
+			useClosedLoop = false;
+			DeflectorPID.Disable();
+			ShooterPID.Disable();
+			KickerPID.Disable();
+		}
+
+		//Read Auton Switch
+		AutoSw1 = DiIn7.Get();
+		AutoSw2 = DiIn8.Get();
+		AutoSw3 = DiIn9.Get();
+
+		AutoVal = !AutoSw1 * 1 + !AutoSw2 * 2 + !AutoSw3 * 4;
+
+		//displays sensor and motor info to smartDashboard
+		SmartDashboardUpdate();
 	}
 	void DisabledPeriodic() {
-		//SmartDashboardSenser();
+		//SmartDashboardUpdate();
 	}
 	void AutonomousPeriodic() {
 		if (autoSelected == autonNameRed1)
@@ -403,55 +429,49 @@ public:
 		else
 			stopMotors();
 
-		//SmartDashboardSenser();
+		//SmartDashboardUpdate();
 	}
 
 	void TeleopPeriodic() {
-		float Deadband = 0.11;
-		float MaxSpeed = 0.5;
+		double Deadband = 0.11;
+		double DriveCreepSpeed = 0.5;
 
 		//high gear & low gear controls
-		bool LHbutton = Drivestick.GetRawButton(5); // get Left Bumper
-		bool RHbutton = Drivestick.GetRawButton(6); // get Right Bumper
-
-		if (RHbutton)
+		if (Drivestick.GetRawButton(5))
 			driveSolenoid->Set(true);			// High gear press RH bumper
-		if (LHbutton)
+		if (Drivestick.GetRawButton(6))
 			driveSolenoid->Set(false);			// Low gear press LH bumper
 
+		//drive controls
 		double SpeedLinear = Drivestick.GetRawAxis(1) * -1; // get Yaxis value (forward)
 		double SpeedRotate = Drivestick.GetRawAxis(4) * -1; // get Xaxis value (turn)
 
 		// Set dead band for X and Y axis
-		if (SpeedLinear < Deadband and SpeedLinear > -Deadband)
-			SpeedLinear = 0;
-		if (SpeedRotate < Deadband and SpeedRotate > -Deadband)
-			SpeedRotate = 0;
+		if (fabs(SpeedLinear) < Deadband)
+			SpeedLinear = 0.0;
+		if (fabs(SpeedRotate) < Deadband)
+			SpeedRotate = 0.0;
 
-		//Reduce turn speed left trigger is pressed
-		float LdTrig = Drivestick.GetRawAxis(2);	//Read left drive trigger
-		// Set reduced speed
-		if (LdTrig > 0.1) {
-			SpeedLinear = SpeedLinear * MaxSpeed;  // Reduce turn speed
-			SpeedRotate = SpeedRotate * MaxSpeed;  // Reduce drive speed
+		//Reduce turn speed when left trigger is pressed
+		if (Drivestick.GetRawAxis(2) > Deadband) {
+			SpeedLinear = SpeedLinear * DriveCreepSpeed;  // Reduce turn speed
+			SpeedRotate = SpeedRotate * DriveCreepSpeed;  // Reduce drive speed
 		}
-		//slow down direction changes from 1 cycle to 5
 
+		//slow down direction changes from 1 cycle to 5
 		OutputY = (0.8 * OutputY) + (0.2 * SpeedLinear);
 		OutputX = (0.8 * OutputX) + (0.2 * SpeedRotate);
+
 		// Drive Robot Arcade style
 		Adrive.ArcadeDrive(OutputY, OutputX, true);
 		Bdrive.ArcadeDrive(OutputY, OutputX, true);
 
-		//SmartDashboardSenser();
+		/*
+		 * MANIP CODE
+		 */
 
-		// Turn on the shooter, conveyer, and agitator
+		// Turn on the shooter when right hand trigger is pushed
 		if (OperatorStick.GetRawAxis(3) > Deadband) {
-
-			//Shooter0.Set(-OperatorStick.GetRawAxis(3) * 0.75);
-			//Conveyor.Set(OperatorStick.GetRawAxis(3));
-//			Conveyor.Set(ConySpeed);
-//			Agitator.Set(OperatorStick.GetRawAxis(3));
 			if (useClosedLoop) {
 				ShooterPID.SetSetpoint(ShootSpeed);
 				ShooterPID.Enable();
@@ -459,123 +479,101 @@ public:
 				Shooter0.Set(-ShootSpeed);
 			}
 		} else {
-			if(useClosedLoop){
+			if (useClosedLoop) {
 				ShooterPID.SetSetpoint(0.0);
 				ShooterPID.Disable();
+			} else {
+				Shooter0.Set(0.0);
 			}
-			else{
-				Shooter0.Set(0);
-			}
-			Conveyor.Set(0);
-			Agitator.Set(0);
-
 		}
 
-		// Turn on Kicker WHeel
-		if (OperatorStick.GetRawButton(1)) {
-			KickerWheel.Set(1);
+		//Turn on the conveyor when right hand trigger is pushed
+		if (OperatorStick.GetRawAxis(3) > Deadband) {
+			//Conveyor.Set(OperatorStick.GetRawAxis(3));
+			//Conveyor.Set(ConySpeed);
 		} else {
-			KickerWheel.Set(0);
+			Conveyor.Set(0.0);
 		}
 
-		//Put out intake
+		//Turn on the agitators when right hand trigger is pushed
+		if (OperatorStick.GetRawAxis(3) > Deadband) {
+			//Agitator.Set(OperatorStick.GetRawAxis(3));
+			//Agitator.Set();
+		} else {
+			Agitator.Set(0.0);
+		}
+
+		// Turn on Kicker WHeel when A button is pressed
+		if (OperatorStick.GetRawButton(1)) {
+			KickerWheel.Set(1.0);
+		} else {
+			KickerWheel.Set(0.0);
+		}
+
+		//Deploy intake when left trigger is pushed
 		if (OperatorStick.GetRawAxis(2) > Deadband) {
-			FloorIntakeRoller.Set(1);
+			FloorIntakeRoller.Set(1.0);
 			FloorIntakeArm->Set(true);
 		} else {
-			FloorIntakeRoller.Set(0);
+			FloorIntakeRoller.Set(0.0);
 			FloorIntakeArm->Set(false);
 		}
 
-		//Button to get and release the gear
+		//X Button to get and B button release the gear
 		GearIn->Set(OperatorStick.GetRawButton(3));
 		GearOut->Set(OperatorStick.GetRawButton(2));
 
-		//turn on winch
-//		SmartDashboard::PutNumber( "DBG Operator Stick Value", OperatorStick.GetRawAxis(1));
-//		SmartDashboard::PutNumber( "DBG abs Operator Stick Value", abs(OperatorStick.GetRawAxis(1)));
-//		SmartDashboard::PutNumber( "DBG deadband", Deadband);
-		if (fabs(OperatorStick.GetRawAxis(1)) > Deadband) {
-			Winch0.Set(OperatorStick.GetRawAxis(1));
-			Winch1.Set(-OperatorStick.GetRawAxis(1));
-
+		//turn on winch using the left joystick
+		double LH_YAxis = OperatorStick.GetRawAxis(1);
+		if (fabs(LH_YAxis) > Deadband) {
+			Winch0.Set(LH_YAxis);
 		} else {
 			Winch0.Set(0.0);
-			Winch1.Set(0.0);
 		}
 
-		//control deflector angle in open loop
+		//control deflector angle in open loop using right hand joystick
+		double RH_YAxis = OperatorStick.GetRawAxis(5);
+		double DeflectorLimitLower = 155.0;
+		double DeflectorLimitUpper = 200.0;
+		double DeflectorMotorOutputMax = 0.1;
+
 		if (!useClosedLoop) {
-			if (fabs(OperatorStick.GetRawAxis(5)) > Deadband) {
-				//move deflector up
-				if (DeflectorAnglePOT.Get() < 200.0
-						&& OperatorStick.GetRawAxis(5) < 0) {
-					DeflectorMotor.Set(OperatorStick.GetRawAxis(5) * 0.1);
-				}
-				//puts deflector down
-				else if (DeflectorAnglePOT.Get() > 155.0
-						&& OperatorStick.GetRawAxis(5) > 0) {
-					DeflectorMotor.Set(OperatorStick.GetRawAxis(5) * 0.1);
-				} else {
-					DeflectorMotor.Set(0.0);
-				}
+			//move deflector up
+			if (DeflectorAnglePOT.Get() < DeflectorLimitUpper
+					&& RH_YAxis < -Deadband) {
+				DeflectorMotor.Set(RH_YAxis * DeflectorMotorOutputMax);
+			}
+			//move deflector down
+			else if (DeflectorAnglePOT.Get() > DeflectorLimitLower
+					&& RH_YAxis > Deadband) {
+				DeflectorMotor.Set(RH_YAxis * DeflectorMotorOutputMax);
 			} else {
 				DeflectorMotor.Set(0.0);
 			}
 		}
 		//in closed loop
 		else {
-			if (fabs(OperatorStick.GetRawAxis(5)) < Deadband) {
-				//stops the deflector once joystick is released
-				//DeflectorTarget = DeflectorAnglePOT.Get();
-			} else {
+			if (fabs(RH_YAxis) > Deadband) {
 				//will increment the DeflectorTarget by value set by joysticks
-				DeflectorTarget += OperatorStick.GetRawAxis(5) * 0.1;
+				DeflectorTarget += RH_YAxis * 0.1;
 			}
 			DeflectorPID.SetSetpoint(DeflectorTarget);
 
 			// Emergency Disable
-			if (DeflectorAnglePOT.Get() > 200.0
-					or DeflectorAnglePOT.Get() < 155.0) {
+			if (DeflectorAnglePOT.Get() > DeflectorLimitUpper
+					or DeflectorAnglePOT.Get() < DeflectorLimitLower) {
 				DeflectorPID.Disable();
 				DeflectorMotor.Set(0.0);
-
 			}
-
-//			SmartDashboard::PutNumber("Deflector Angle Teleop", DeflectAngle);
-//			SmartDashboard::PutNumber("Pot Angle Teleop",
-//					DeflectorAnglePOT.Get());
-//
-//			if ((DeflectorAnglePOT.Get() > (1.5) + DeflectAngle) or (DeflectorAnglePOT.Get() < DeflectAngle - (1.5))) {
-//				//move deflector up
-//				if (DeflectorAnglePOT.Get() < 180.0	&& DeflectorAnglePOT.Get() < DeflectAngle) {
-//					//DeflectorMotor.Set(OperatorStick.GetRawAxis(5) * 0.1);
-//					DeflectorMotor.Set(0.5 * 0.1);
-//				}
-//				//puts deflector down
-//				else if (DeflectorAnglePOT.Get() > 133.0 && DeflectorAnglePOT.Get() > DeflectAngle) {
-//					//DeflectorMotor.Set(OperatorStick.GetRawAxis(5) * 0.1);
-//					DeflectorMotor.Set(-0.5 * 0.1);
-//				} else {
-//					DeflectorMotor.Set(0.0);
-//				}
-//				SmartDashboard::PutString("Deadband", "True");
-//				DeflectorMotor.Set(0.0);
-//			} else {
-//				DeflectorMotor.Set(0.0);
-//				SmartDashboard::PutString("Deadband", "False");
-//
-//			}
-
 		}
 
-		//Control the angle of the deflector
-		if (OperatorStick.GetRawButton(5)) {
-			DeflectorTarget = 90;
-		}
-		if (OperatorStick.GetRawButton(6)) {
-			DeflectorTarget = 0;
-		}
+//		//Control the angle of the deflector
+//		if (OperatorStick.GetRawButton(5)) {
+//			DeflectorTarget = 195.0;
+//		}
+//		if (OperatorStick.GetRawButton(6)) {
+//			DeflectorTarget = 150.0;
+//		}
 	}
 
 // These are the state numbers for each part of autoBlue1
@@ -1032,13 +1030,8 @@ public:
 		}
 		return;
 	}
-	void SmartDashboardSenser() {
-		//Read Auton Switch
-		AutoSw1 = DiIn7.Get();
-		AutoSw2 = DiIn8.Get();
-		AutoSw3 = DiIn9.Get();
+	void SmartDashboardUpdate() {
 
-		AutoVal = !AutoSw1 * 1 + !AutoSw2 * 2 + !AutoSw3 * 4;
 		SmartDashboard::PutNumber("Auton Switch Value", AutoVal);
 
 		SmartDashboard::PutString("Auton Mode", autoSelected);
@@ -1102,20 +1095,6 @@ public:
 		SmartDashboard::PutNumber("DeflectorAngleTarget", DeflectorTarget);
 		SmartDashboard::PutBoolean("Closed Loop", useClosedLoop);
 
-		// Turn off the the sensors/reset
-		//in closed loop
-		if (OperatorStick.GetRawButton(8)) {
-			useClosedLoop = true;
-			DeflectorPID.Enable();
-			//ShooterPID.Enable();
-		}
-		//in open loop
-		if (OperatorStick.GetRawButton(7)) {
-			useClosedLoop = false;
-			DeflectorPID.Disable();
-			ShooterPID.Disable();
-			KickerPID.Disable();
-		}
 
 		//grip table data
 		//GRIPTable = NetworkTable::GetTable("GRIP/myContoursReport");
