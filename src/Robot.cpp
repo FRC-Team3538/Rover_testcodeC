@@ -178,7 +178,7 @@ class Robot: public frc::IterativeRobot {
 public:
 	Robot() :
 			Adrive(DriveLeft0, DriveLeft1, DriveRight0, DriveRight1), Bdrive(
-					DriveLeft2, DriveRight2), chooser(), chooseDriveEncoder(), chooseDeflector(), chooseKicker(), chooseShooter(), chooseDeflectorLimit(), Drivestick(
+					DriveLeft2, DriveRight2), chooseAutonSelector(), chooseDriveEncoder(), chooseDeflector(), chooseKicker(), chooseShooter(), chooseDeflectorLimit(), Drivestick(
 					0), OperatorStick(1), DriveLeft0(0), DriveLeft1(1), DriveLeft2(
 					2), DriveRight0(3), DriveRight1(4), DriveRight2(5), AutonTimer(), EncoderLeft(
 					0, 1), EncoderRight(2, 3),
@@ -189,7 +189,7 @@ public:
 					6), FloorIntakeRoller(14), KickerWheel(8), DeflectorMotor(
 					10), EncoderKicker(20, 21), EncoderShoot(4, 5), WinchStop(
 					6), DeflectorAnglePOT(0, 270, 0), DeflectorTarget(0), ConySpeed(
-					0.1), ShootSpeed(0.1), DeflectAngle(145), DeflectorHighLimit(
+					0.1), ShootCommandPWM(0.1), DeflectAngle(145), DeflectorHighLimit(
 					22), DeflectorLowLimit(23), useRightEncoder(), DeflectorClosedLoop(), KickerClosedLoop(), ShooterClosedLoop(), DeflectorPID(
 					-0.03, 0.0, 0.0, &DeflectorAnglePOT, &DeflectorMotor), KickerPID(
 					0.03, 0.0, 0.0, &EncoderKicker, &KickerWheel), ShooterPID(
@@ -201,15 +201,15 @@ public:
 
 	void RobotInit() {
 		//setup smartDashboard choosers
-		chooser.AddDefault(AutonNameSwitch, AutonNameSwitch);
-		chooser.AddObject(autonNameOFF, autonNameOFF);
-		chooser.AddObject(autonNameRed1, autonNameRed1);
-		chooser.AddObject(autonNameRed2, autonNameRed2);
-		chooser.AddObject(autonNameRed3, autonNameRed3);
-		chooser.AddObject(autonNameBlue1, autonNameBlue1);
-		chooser.AddObject(autonNameBlue2, autonNameBlue2);
-		chooser.AddObject(autonNameBlue3, autonNameBlue3);
-		frc::SmartDashboard::PutData("Auto Modes", &chooser);
+		chooseAutonSelector.AddDefault(AutonNameSwitch, AutonNameSwitch);
+		chooseAutonSelector.AddObject(autonNameOFF, autonNameOFF);
+		chooseAutonSelector.AddObject(autonNameRed1, autonNameRed1);
+		chooseAutonSelector.AddObject(autonNameRed2, autonNameRed2);
+		chooseAutonSelector.AddObject(autonNameRed3, autonNameRed3);
+		chooseAutonSelector.AddObject(autonNameBlue1, autonNameBlue1);
+		chooseAutonSelector.AddObject(autonNameBlue2, autonNameBlue2);
+		chooseAutonSelector.AddObject(autonNameBlue3, autonNameBlue3);
+		frc::SmartDashboard::PutData("Auto Modes", &chooseAutonSelector);
 
 		chooseDriveEncoder.AddDefault(RH_Encoder, RH_Encoder);
 		chooseDriveEncoder.AddObject(LH_Encoder, LH_Encoder);
@@ -230,10 +230,6 @@ public:
 		chooseDeflectorLimit.AddDefault(Enable, Enable);
 		chooseDeflectorLimit.AddObject(Disable, Disable);
 		frc::SmartDashboard::PutData("Deflector Limits", &chooseDeflectorLimit);
-
-		chooseAutonSelector.AddDefault(autonSwitch, autonSwitch);
-		chooseAutonSelector.AddObject(autonSmartChooser, autonSmartChooser);
-		frc::SmartDashboard::PutData("Auton Selector", &chooseAutonSelector);
 
 		//turn off shifter solenoids
 		driveSolenoid->Set(false);
@@ -333,13 +329,8 @@ public:
 
 		SmartDashboard::PutString("autonMode", "Off");
 
-		//idk how to make AutonOverride choosable by choosers....
-		//AutonOverride = true;
-		//AutonOverride = (chooseAutonSelector.GetSelected() == AutonSwitchEnabled);
-		if (AutonOverride) {
-			autoSelected = chooser.GetSelected();
-			std::cout << "Auto selected: " << autoSelected << std::endl;
-		} else {
+		autoSelected = chooseAutonSelector.GetSelected();
+		if(autoSelected == AutonNameSwitch) {
 			// This decodes all of the possible switch outputs.
 			// Only 3 bits are connected to the RoboRio, so they aren't all needed.
 			switch (AutoVal) {
@@ -487,10 +478,10 @@ public:
 		// Turn on the shooter when right hand trigger is pushed
 		if (OperatorStick.GetRawAxis(3) > Deadband) {
 			if (ShooterClosedLoop) {
-				ShooterPID.SetSetpoint(ShootSpeed);
+				ShooterPID.SetSetpoint(ShootCommandRPM);
 				ShooterPID.Enable();
 			} else {
-				Shooter0.Set(-ShootSpeed);
+				Shooter0.Set(-ShootCommandPWM);
 			}
 		} else {
 			if (ShooterClosedLoop) {
@@ -498,6 +489,23 @@ public:
 				ShooterPID.Disable();
 			} else {
 				Shooter0.Set(0.0);
+			}
+		}
+
+		// Turn on Kicker WHeel when A button is pressed
+		if (OperatorStick.GetRawButton(1)) {
+			if (KickerClosedLoop) {
+				KickerPID.SetSetpoint(KickerCommandRPM);
+				KickerPID.Enable();
+			} else {
+				KickerWheel.Set(-KickerCommandPWM);
+			}
+		} else {
+			if (KickerClosedLoop) {
+				KickerPID.SetSetpoint(0.0);
+				KickerPID.Disable();
+			} else {
+				KickerWheel.Set(0.0);
 			}
 		}
 
@@ -515,13 +523,6 @@ public:
 			//Agitator.Set();
 		} else {
 			Agitator.Set(0.0);
-		}
-
-		// Turn on Kicker WHeel when A button is pressed
-		if (OperatorStick.GetRawButton(1)) {
-			KickerWheel.Set(1.0);
-		} else {
-			KickerWheel.Set(0.0);
 		}
 
 		//Deploy intake when left trigger is pushed
@@ -602,7 +603,7 @@ public:
 #define AB1_FWD2 6
 #define AB1_FACE_BOILER 7
 #define AB1_TO_BOILER 8
-#define AR1_SHOOT 9
+#define AB1_SHOOT 9
 #define AB1_END 10
 
 	void autoBlue1(void) {
@@ -669,11 +670,11 @@ public:
 			//go forward 7-ish feet to run into boiler
 			//change to timed drive
 			if (forward(BLUE_1_CASE7_FWD)) {
-				modeState = AR1_SHOOT;
+				modeState = AB1_SHOOT;
 				ahrs->ZeroYaw();
 			}
 			break;
-		case AR1_SHOOT:
+		case AB1_SHOOT:
 			//launch
 			modeState = AB1_END;
 			break;
@@ -683,104 +684,116 @@ public:
 		return;
 	}
 
+#define AB1A_INIT 1
+#define AB1A_FWD 2
+#define AB1A_TURN90 3
+#define AB1A_BKUP 4
+#define AB1A_WAIT 5
+#define AB1A_FWD2 6
+#define AB1A_FACE_BOILER 7
+#define AB1A_SHOOT 9
+#define AB1A_END 10
+
 	void autoBlue1A(void) {
 
 		//Blue boiler side code
-		//drives diagonally toward hopper
+		//drives turns then drives again
 		switch (modeState) {
-		case 1:									/////***** Use #define
-			// go forward 8 ft diagonally towards hopper
-			if (forward(7 * 12.0)) {			/////***** Use #define
-				//rover on carpet:forward7ft(-0.8, 6.5 * 12.0)
-				//rover on tile: forward7ft(-0.8, 6.5 *12.0)
-				modeState = 2;					/////***** Use #define
-				ahrs->ZeroYaw();/////***** We need a better way to do initialization for the next state.
-								/////***** This isn't important right now, but as the software gets more complicated, it will become more of a problem.
-								/////***** I've noticed that we have too many "ahrs->ZeroYaw()"
-								/////***** You can see that this initialization is already out of line.
-								/////***** "State 2" used to use the gyroscope, but doesn't any more.
-								/////***** The initialization for the old routine is still here.
-								/////***** This isn't complicated enough to go full object-oriented,
-								/////***** but whatever-we-call-case-2.init() would work.
-								/////***** Can you think of a simpler way?
-			}
+		case AB1A_INIT:
+			modeState = AB1A_FWD;
 			break;
-		case 2:									/////***** Use #define
-			//turns into hopper
-			if (timedDrive(3, 0.2, -0.8)) {		/////***** Use #define
-				//rover on carpet: pause(1, 0.1)
-				//rover on tile: pause(1, 0.1)
-				modeState = 3;					/////***** Use #define
-			}
-			break;
-		case 3:									/////***** Use #define
-			//go backward 4-ish feet
-			if (forward(4 * 12.0)) {			/////***** Use #define
-				//rover on carpet: forward(-0.8, 4 * 12.0)
-				//rover on tile: forward7ft(-0.8, 4 * 12.0)
-				modeState = 4;					/////***** Use #define
+		case AB1A_FWD:
+			// go forward 7 ft
+			if (forward(BLUE_1_CASE1_FWD)) {
+				modeState = AB1A_TURN90;
 				ahrs->ZeroYaw();
 			}
 			break;
-		case 4:
-			// turn enough degrees to face boiler
-			if (autonTurn(120)) {				/////***** Use #define
-				//rover on carpet: autonTurn(120, 5, -0.012)
-				//rover on tile: autonTurn(105, 5, -0.012)
-				modeState = 5;					/////***** Use #define
+		case AB1A_TURN90:
+			// turn 90 degrees clockwise
+			if (autonTurn(BLUE_1_CASE2_TURN)) {
+				//modeState = AB1_BKUP;
+				modeState = AB1A_WAIT;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
-			}
-			break;
-		case 5:									/////***** Use #define
-			//go forward 7-ish feet to run into boiler
-			if (forward(8.5 * 12.0)) {			/////***** Use #define
-				//rover on carpet:forward7ft(-0.8, 8.5 * 12.0)
-				//rover on tile: forward7ft(-0.8, 8.5 * 12.0)
-				modeState = 8;						/////***** Use #define
 				ahrs->ZeroYaw();
 			}
 			break;
-		case 6:									/////***** Use #define
+//		case AB1A_BKUP:
+//			// go forward 7 ft to hit hopper
+//			//change to timed drive
+//			if (forward(BLUE_1_CASE3_FWD)) {
+//				modeState = AB1_WAIT;
+//				AutonTimer.Reset();
+//			}
+//			break;
+		case AB1A_WAIT:
+			//waits a couple of seconds for balls
+			if (timedDrive(BLUE_1_CASE4_FWD_TIME, BLUE_1_CASE4_FWD_LEFT_SPD,
+			BLUE_1_CASE4_FWD_RIGHT_SPD)) {
+				modeState = AB1A_FWD2;
+				EncoderLeft.Reset();
+				EncoderRight.Reset();
+				ahrs->ZeroYaw();
+			}
+			break;
+		case AB1A_FWD2:
+			//go backward 4-ish feet
+			if (forward(BLUE_1_CASE5_FWD)) {
+				modeState = AB1A_FACE_BOILER;
+				ahrs->ZeroYaw();
+			}
+			break;
+		case AB1A_FACE_BOILER:
+			// turn enough degrees to face boiler
+			if (autonTurn(BLUE_1_CASE6_TURN)) {
+				modeState = AB1A_SHOOT;
+				EncoderLeft.Reset();
+				EncoderRight.Reset();
+				ahrs->ZeroYaw();
+			}
+			break;
+		case AB1A_SHOOT:
 			//launch
-			modeState = 9;						/////*****use #define
+			modeState = AB1A_END;
 			break;
 		default:
 			stopMotors();
 		}
-
 		return;
-
 	}
 
 #define AB2_INIT 1
 #define AB2_FWD 2
-#define AB2_END 3
-
+#define AB2_GEAR 3
+#define AB2_END 4
 	void autoBlue2(void) {
 		//blue side code
 		//goes forward to put gear on pin
-
 		switch (modeState) {
-		case AB2_INIT:									/////***** use #define
+		case AB2_INIT:
 			// This uses state 1 for initialization.
 			// This keeps the initialization and the code all in one place.
 			ahrs->ZeroYaw();
-			modeState = AB2_FWD;						/////***** use #define
+			modeState = AB2_FWD;
 			break;
-
-		case AB2_FWD:									/////***** use #define
+		case AB2_FWD:
 			if (timedDrive(BLUE_2_CASE2_TIME, BLUE_2_CASE2_LSPEED,
 			BLUE_2_CASE2_RSPEED)) {
 				//change to timed drive
 				//if (forward7ft(-0.4, 7 * 12.0)) {
-				modeState = AB2_END;					/////***** use #define
+				modeState = AB2_GEAR;
 			}
 			break;
-
+		case AB2_GEAR:
+			if (1) {
+				//change to timed drive
+				//if (forward7ft(-0.4, 7 * 12.0)) {
+				modeState = AB2_END;
+			}
+			break;
 		default:
 			stopMotors();
-
 		}
 		return;
 	}
@@ -789,11 +802,11 @@ public:
 #define AB3_FWD 2
 #define AB3_TURN 3
 #define AB3_STR8 4
-#define AB3_END 5
+#define AB3_GEAR 5
+#define AB3_END 6
 	void autoBlue3(void) {
 		//blue side code
 		//puts gear on pin on side of airship
-
 		switch (modeState) {
 		case AB3_INIT:
 			modeState = AB3_FWD;
@@ -817,10 +830,16 @@ public:
 		case AB3_STR8:
 			// go forward
 			//timed drive
-			//CHANGE THIS IT DOESN'T WORK BC IT DOESN'T MOVE FORWARD LIKE IT'S SUPPOSED TO :) (2/10)
-
 			if (timedDrive(BLUE_3_CASE3_TIME, BLUE_3_CASE3_LSPEED,
 			BLUE_3_CASE3_RSPEED)) {
+				modeState = AB3_GEAR;
+				EncoderLeft.Reset();
+				EncoderRight.Reset();
+			}
+			break;
+		case AB3_GEAR:
+			// deploy gear
+			if (1) {
 				modeState = AB3_END;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -842,7 +861,6 @@ public:
 #define AR1_TO_BOILER 8
 #define AR1_SHOOT 9
 #define AR1_END 10
-
 	void autoRed1(void) {
 		//Red center position code
 		//this version turns the robot in a right angle
@@ -915,61 +933,73 @@ public:
 		return;
 	}
 
+#define AR1A_INIT 1
+#define AR1A_FWD 2
+#define AR1A_TURN90 3
+#define AR1A_BKUP 4
+#define AR1A_WAIT 5
+#define AR1A_FWD2 6
+#define AR1A_FACE_BOILER 7
+#define AR1A_SHOOT 9
+#define AR1A_END 10
+
 	void autoRed1A(void) {
 		//Red center position code
-		//this version drive diagonally to the hopper
+		//this version turns the robot in a right angle
 
 		switch (modeState) {
-		case 1:									/////***** use #define
+		case AR1A_INIT:
+			modeState = AR1A_FWD;
+			break;
+		case AR1A_FWD:
 			// go forward 7 ft
-			if (forward(8 * 12.0)) {			/////***** use #define
-				//rover on carpet: forward7ft(-0.8, 6.5 * 12.0)
-				//rover on tile: forward7ft(-0.8, 6.5 * 12.0)
-				modeState = 2;					/////***** use #define
-				//ahrs->Reset();
+			if (forward(RED_1_CASE1_FWD)) {
+				modeState = AR1A_TURN90;
 				ahrs->ZeroYaw();
 			}
 			break;
-		case 2:									/////***** use #define
-			//robot drives counterclockwise into hopper
-			if (timedDrive(1, 0.2, 0.1)) {		/////***** use #define
-				//rover on carpet: pause(1, 0) 		// changed from pause -> timedDrive()
-				//rover on tile: pause(1, 0)
-				modeState = 3;					/////***** use #define
-			}
-			break;
-		case 3:									/////***** use #define
-			//go backward 3-ish feet
-			if (forward(3 * 12.0)) {/////***** use #define / It is not obvious that this is correct.  Why is backing up using a positive speed?
-				//rover on carpet: forward7ft(-0.8, 3 * 12.0)
-				//rover on tile:forward7ft(-0.8, 3 * 12.0)
-				modeState = 4;					/////***** use #define
-				//ahrs->Reset();
-				ahrs->ZeroYaw();
-			}
-			break;
-		case 4:									/////***** use #define
-			// turns counterclockwise enough degrees to face boiler
-			if (autonTurn(-125)) {/////***** use #define.  Remember right and left turns may need different angles.
-				//rover on carpet: autonTurn(-125, 5, -0.012)
-				//rover on tile: autonTurn(-115, 5, -0.012)
-				modeState = 5;					/////***** use #define
+		case AR1A_TURN90:
+			// turn 90 degrees counterclockwise
+			if (autonTurn(RED_1_CASE2_TURN)) {
+				modeState = AR1A_BKUP;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 			}
 			break;
-		case 5:									/////***** use #define
-			//go forward 7-ish feet to run into boiler
-			if (forward(8.5 * 12.0)) {			/////***** use #define
-				//rover on carpet: forward7ft(-0.8, 8.5 * 12.0)
-				//rover on tile: forward7ft(-0.8, 8.5*12.0)
-				modeState = 6;					/////*****use #define
+		case AR1A_BKUP:
+			//change to timed drive
+			// go forward 7 ft to hit hopper
+			if (forward(RED_1_CASE3_FWD)) {
+				modeState = AR1A_WAIT;
+				AutonTimer.Reset();
+			}
+			break;
+		case AR1A_WAIT:
+			//waits in front of hopper a couple of seconds for balls
+			if (timedDrive(RED_1_CASE4_FWD_TIME, RED_1_CASE4_FWD_LEFT_SPD,
+			RED_1_CASE4_FWD_RIGHT_SPD)) {
+				modeState = AR1A_FWD2;
+
+			}
+			break;
+		case AR1A_FWD2:
+			//go backward 3-ish feet
+			if (forward(RED_1_CASE5_FWD)) {
+				modeState = AR1A_FACE_BOILER;
 				ahrs->ZeroYaw();
 			}
 			break;
-		case 6:									/////***** use #define
+		case AR1A_FACE_BOILER:
+			// turns counterclockwise enough degrees to face boiler
+			if (autonTurn(RED_1_CASE6_TURN)) {
+				modeState = AR1A_END;
+				EncoderLeft.Reset();
+				EncoderRight.Reset();
+			}
+			break;
+		case AR1A_SHOOT:
 			//launch
-			modeState = 9;						/////***** use #define
+			modeState = AR1A_END;
 			break;
 		default:
 			stopMotors();
@@ -979,7 +1009,8 @@ public:
 
 #define AR2_INIT 1
 #define AR2_FWD 2
-#define AR2_END 3
+#define AR2_GEAR 3
+#define AR2_END 4
 	void autoRed2(void) {
 		//change to timed drive
 		//puts gear on front of airship
@@ -993,6 +1024,11 @@ public:
 		case AR2_FWD:
 			if (timedDrive(RED_2_CASE2_TIME, RED_2_CASE2_LSPEED,
 			RED_2_CASE2_RSPEED)) {
+				modeState = AR2_GEAR;
+			}
+			break;
+		case AR2_GEAR:
+			if (1) {
 				modeState = AR2_END;
 			}
 			break;
@@ -1006,7 +1042,8 @@ public:
 #define AR3_FWD 2
 #define AR3_TURN 3
 #define AR3_STR8 4
-#define AR3_END 5
+#define AR3_GEAR 5
+#define AR3_END 6
 	void autoRed3(void) {
 		//red three
 		//puts gear onto side of airship
@@ -1034,6 +1071,15 @@ public:
 			//change to timed drive
 			// go forward
 			if (forward(RED_3_CASE3_FWD)) {
+				modeState = AR3_GEAR;
+				EncoderLeft.Reset();
+				EncoderRight.Reset();
+			}
+			break;
+		case AR3_GEAR:
+			//change to timed drive
+			// go forward
+			if (1) {
 				modeState = AR3_END;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
@@ -1082,31 +1128,56 @@ public:
 				EncoderShoot.GetRate() * 60.0);
 		SmartDashboard::PutNumber("ShooterEncoder(Rev)",
 				EncoderShoot.GetDistance());
-		ShootSpeed = SmartDashboard::GetNumber("Shooter Speed", 0.5);
-		SmartDashboard::PutNumber("Shooter Speed Teleop", ShootSpeed);
-		SmartDashboard::PutNumber("Shooter Motor Speed Output", Shooter0.Get());
+		ShootCommandPWM = SmartDashboard::GetNumber("IN: Shooter Command PWM", ShootCommandPWM);
+		ShootCommandRPM = SmartDashboard::GetNumber("IN: Shooter Command RPM", ShootCommandRPM);
+		SmartDashboard::PutNumber("Shooter Command PWM", ShootCommandPWM);
+		SmartDashboard::PutNumber("Shooter Command RPM", ShootCommandRPM);
 
-		//conveyor
+		//Kicker
 		SmartDashboard::PutNumber("KickerEncoder(raw)", EncoderKicker.GetRaw());
 		SmartDashboard::PutNumber("KickerEncoder(RPM)",
 				EncoderKicker.GetRate() * 60.0);
 		SmartDashboard::PutNumber("KickerEncoder(Rev)",
 				EncoderKicker.GetDistance());
+		KickerCommandPWM = SmartDashboard::GetNumber("IN: Kicker Command PWM", KickerCommandPWM);
+		KickerCommandRPM = SmartDashboard::GetNumber("IN: Kicker Command RPM", KickerCommandRPM);
+		SmartDashboard::PutNumber("Kicker Command PWM", KickerCommandPWM);
+		SmartDashboard::PutNumber("Kicker Command RPM", KickerCommandRPM);
 
+		//winch/climber... whatever you want to call it
 		SmartDashboard::PutBoolean("WinchStop", WinchStop.Get());
+
+		//deflector
 		SmartDashboard::PutBoolean("DeflectorHighLimit",
 				DeflectorHighLimit.Get());
 		SmartDashboard::PutBoolean("DeflectorLowLimit",
 				DeflectorLowLimit.Get());
-		ConySpeed = SmartDashboard::GetNumber("Conveyor Speed", 0.5);
-
 		//Get angle for the deflector
 		SmartDashboard::PutNumber("DeflectorAnglePOT(DEG)",
 				DeflectorAnglePOT.Get());
 		DeflectorTarget = SmartDashboard::GetNumber("Deflector Angle", 145);
-
 		//State varible
 		SmartDashboard::PutNumber("DeflectorAngleTarget", DeflectorTarget);
+
+		//Conveyor
+		ConySpeed = SmartDashboard::GetNumber("Conveyor Speed", 0.5);
+
+		//PWM displays
+		SmartDashboard::PutNumber("Motor0 Output", DriveLeft0.Get());
+		SmartDashboard::PutNumber("Motor1 Output", DriveLeft1.Get());
+		SmartDashboard::PutNumber("Motor2 Output", DriveLeft2.Get());
+		SmartDashboard::PutNumber("Motor3 Output", DriveRight0.Get());
+		SmartDashboard::PutNumber("Motor4 Output", DriveRight1.Get());
+		SmartDashboard::PutNumber("Motor5 Output", DriveRight2.Get());
+
+		SmartDashboard::PutNumber("Shooter Motor0 Output", Shooter0.Get());
+		SmartDashboard::PutNumber("Shooter Motor1 Output", Shooter1.Get());
+		SmartDashboard::PutNumber("Kicker Motor Output", KickerWheel.Get());
+		SmartDashboard::PutNumber("Winch Motor0 Output", Winch0.Get());
+		SmartDashboard::PutNumber("Winch Motor1 Output", Winch1.Get());
+		SmartDashboard::PutNumber("Agitator Motor Output", Agitator.Get());
+		SmartDashboard::PutNumber("Floor Intake Motor Output", FloorIntakeRoller.Get());
+		SmartDashboard::PutNumber("Conveyor Motor  Output", Conveyor.Get());
 
 		//chooser code for manip in open/closed loop
 		ShooterClosedLoop = (chooseShooter.GetSelected() == chooserClosedLoop);
@@ -1259,8 +1330,8 @@ public:
 private:
 	RobotDrive Adrive, Bdrive;
 	frc::LiveWindow* lw = LiveWindow::GetInstance();
-	frc::SendableChooser<std::string> chooser, chooseDriveEncoder,
-			chooseDeflector, chooseKicker, chooseShooter, chooseDeflectorLimit, chooseAutonSelector;
+	frc::SendableChooser<std::string> chooseAutonSelector, chooseDriveEncoder,
+			chooseDeflector, chooseKicker, chooseShooter, chooseDeflectorLimit;
 	const std::string AutonNameSwitch = "Use Switch";
 	const std::string autonNameOFF = "0 OFF";
 	const std::string autonNameBlue1 = "Blue 1";
@@ -1275,8 +1346,6 @@ private:
 	const std::string chooserOpenLoop = "Open Loop";
 	const std::string Disable = "Disable";
 	const std::string Enable = "Enable";
-	const std::string autonSwitch = "Switch";
-	const std::string autonSmartChooser = "SmartDash Chooser";
 	std::string autoSelected, encoderSelected;
 	Joystick Drivestick;
 	Joystick OperatorStick;
@@ -1315,10 +1384,10 @@ private:
 	Encoder EncoderShoot;
 	DigitalInput WinchStop;
 	AnalogPotentiometer DeflectorAnglePOT;
-	double DeflectorTarget, ConySpeed, ShootSpeed, DeflectAngle;
+	double DeflectorTarget, ConySpeed, ShootCommandRPM, ShootCommandPWM, DeflectAngle, KickerCommandRPM, KickerCommandPWM;
 	DigitalInput DeflectorHighLimit, DeflectorLowLimit;
 
-	bool useRightEncoder;bool DeflectorClosedLoop;bool KickerClosedLoop;bool ShooterClosedLoop;bool DeflectorLimitEnabled; bool AutonSwitchEnabled;
+	bool useRightEncoder;bool DeflectorClosedLoop;bool KickerClosedLoop;bool ShooterClosedLoop;bool DeflectorLimitEnabled;
 
 	PIDController DeflectorPID, KickerPID, ShooterPID;
 
