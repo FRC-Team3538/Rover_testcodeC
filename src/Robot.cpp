@@ -177,26 +177,24 @@ class Robot: public frc::IterativeRobot {
 
 public:
 	Robot() :
-			Adrive(DriveLeft0, DriveLeft1, DriveRight0, DriveRight1), Bdrive(
-					DriveLeft2, DriveRight2), chooseAutonSelector(), chooseDriveEncoder(), chooseDeflector(), chooseKicker(), chooseShooter(), chooseDeflectorLimit(), Drivestick(
-					0), OperatorStick(1), DriveLeft0(0), DriveLeft1(1), DriveLeft2(
-					2), DriveRight0(3), DriveRight1(4), DriveRight2(5), AutonTimer(), EncoderLeft(
-					0, 1), EncoderRight(2, 3),
-
-			table(NULL), ahrs(NULL), modeState(0), AutonOverride(), AutoSw1(), AutoSw2(), AutoSw3(), DiIn9(
-					9), DiIn8(8), DiIn7(7), AutoVal(), AutoVal0(), AutoVal1(), AutoVal2(), OutputX(), OutputY(), Winch0(
+			Adrive(DriveLeft0, DriveRight0), Drivestick(0), OperatorStick(1), DriveLeft0(
+					0), DriveLeft1(1), DriveLeft2(2), DriveRight0(3), DriveRight1(
+					4), DriveRight2(5), EncoderLeft(0, 1), EncoderRight(2, 3), table(
+			NULL), ahrs(NULL), modeState(0), DiIn9(9), DiIn8(8), DiIn7(7), Winch0(
 					11), Winch1(9), Shooter0(12), Shooter1(7), Conveyor(13), Agitator(
 					6), FloorIntakeRoller(14), KickerWheel(8), DeflectorMotor(
 					10), EncoderKicker(20, 21), EncoderShoot(4, 5), WinchStop(
-					6), DeflectorAnglePOT(0, 270, 0), DeflectorTarget(0), ConySpeed(
-					0.1), ShootCommandPWM(0.1), DeflectAngle(145), DeflectorHighLimit(
-					22), DeflectorLowLimit(23), useRightEncoder(), DeflectorClosedLoop(), KickerClosedLoop(), ShooterClosedLoop(), DeflectorPID(
-					-0.03, 0.0, 0.0, &DeflectorAnglePOT, &DeflectorMotor), KickerPID(
-					0.03, 0.0, 0.0, &EncoderKicker, &KickerWheel), ShooterPID(
-					-0.0003, -0.00001, 0.0, 0.0, &EncoderShoot, &Shooter0) {
+					6), DeflectorAnglePOT(0, 270, 0), DeflectorTarget(0), ConvCommandPWM(
+					0.1), ShootCommandPWM(0.75), DeflectAngle(145), DeflectorHighLimit(
+					22), DeflectorLowLimit(23), DeflectorPID(-0.03, 0.0, 0.0,
+					&DeflectorAnglePOT, &DeflectorMotor), KickerPID(0.03, 0.0,
+					0.0, &EncoderKicker, &KickerWheel), ShooterPID(-0.0003,
+					-0.00001, 0.0, 0.0, &EncoderShoot, &Shooter0), DrivePID(0.0,
+					0.0, 0.0, 0.0, &EncoderRight, &DriveRight0) {
 
 		//GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
 		//Shooter = new MultiSpeedController();
+
 	}
 
 	void RobotInit() {
@@ -231,12 +229,30 @@ public:
 		chooseDeflectorLimit.AddObject(Disable, Disable);
 		frc::SmartDashboard::PutData("Deflector Limits", &chooseDeflectorLimit);
 
+		// Inialize settings from Smart Dashboard
+		ShootCommandPWM    = 0.75;
+		ShootCommandRPM    = 2000;
+		KickerCommandPWM   = 0.75;
+		KickerCommandRPM   = 500;
+		DeflectorTarget    = 170;
+		ConvCommandPWM     = 0.75;
+		AgitatorCommandPWM = 0.75;
+		IntakeCommandPWM   = 0.75;
+
+		SmartDashboard::PutNumber("IN: Shooter CMD (PWM)", ShootCommandPWM);
+		SmartDashboard::PutNumber("IN: Shooter CMD (RPM)", ShootCommandRPM);
+		SmartDashboard::PutNumber("IN: Kicker CMD (PWM)", KickerCommandPWM);
+		SmartDashboard::PutNumber("IN: Kicker CMD (RPM)", KickerCommandRPM);
+		SmartDashboard::PutNumber("IN: Deflector CMD (DEG)", DeflectorTarget);
+		SmartDashboard::PutNumber("IN: Conveyor CMD (PWM)", ConvCommandPWM);
+		SmartDashboard::PutNumber("IN: Agitator CMD (PWM)", AgitatorCommandPWM);
+		SmartDashboard::PutNumber("IN: Intake CMD (PWM)", IntakeCommandPWM);
+
 		//turn off shifter solenoids
 		driveSolenoid->Set(false);
 
 		//disable drive watchdogs
 		Adrive.SetSafetyEnabled(false);
-		Bdrive.SetSafetyEnabled(false);
 
 		//changes these original negative values to positive values
 		EncoderLeft.SetReverseDirection(false);
@@ -252,6 +268,12 @@ public:
 
 		//configure PIDs
 		DeflectorPID.SetOutputRange(-0.1, 0.1);
+
+		// Drive Speed Control (TESTTING: Dereck)
+		DrivePID.SetOutputRange(-0.2, 0.2);
+		EncoderRight.SetPIDSourceType(PIDSourceType::kRate);
+		EncoderRight.SetDistancePerPulse((1.0 / 400.0) * 4.0);
+		DrivePID.Disable();
 
 		//drive command averaging filter
 		OutputX = 0, OutputY = 0;
@@ -330,7 +352,7 @@ public:
 		SmartDashboard::PutString("autonMode", "Off");
 
 		autoSelected = chooseAutonSelector.GetSelected();
-		if(autoSelected == AutonNameSwitch) {
+		if (autoSelected == AutonNameSwitch) {
 			// This decodes all of the possible switch outputs.
 			// Only 3 bits are connected to the RoboRio, so they aren't all needed.
 			switch (AutoVal) {
@@ -388,9 +410,13 @@ public:
 	}
 
 	void RobotPeriodic() {
-		//links two motors together
-		Shooter1.Set(-Shooter0.Get());
+		//links multiple motors together
 		Winch1.Set(-Winch0.Get());
+		Shooter1.Set(-Shooter0.Get());
+		DriveLeft1.Set(DriveLeft0.Get());
+		DriveLeft2.Set(DriveLeft0.Get());
+		DriveRight1.Set(DriveRight0.Get());
+		DriveRight2.Set(DriveRight0.Get());
 
 		// Turn off the the sensors/reset
 		//in closed loop
@@ -468,8 +494,14 @@ public:
 		OutputX = (0.8 * OutputX) + (0.2 * SpeedRotate);
 
 		// Drive Robot Arcade style
-		Adrive.ArcadeDrive(OutputY, OutputX, true);
-		Bdrive.ArcadeDrive(OutputY, OutputX, true);
+		if (!DrivePID.IsEnabled()) {
+			Adrive.ArcadeDrive(OutputY, OutputX, true);
+		} else {
+			// Dereck TESTING RPM Control on the test robot....
+			double DriveRPM = SmartDashboard::GetNumber(
+					"IN: Drive Command (RPM)", 0.0);
+			DrivePID.SetSetpoint(DriveRPM);
+		}
 
 		/*
 		 * MANIP CODE
@@ -493,12 +525,13 @@ public:
 		}
 
 		// Turn on Kicker WHeel when A button is pressed
+		KickerCommandPWM = 1.0;
 		if (OperatorStick.GetRawButton(1)) {
 			if (KickerClosedLoop) {
 				KickerPID.SetSetpoint(KickerCommandRPM);
 				KickerPID.Enable();
 			} else {
-				KickerWheel.Set(-KickerCommandPWM);
+				KickerWheel.Set(KickerCommandPWM);
 			}
 		} else {
 			if (KickerClosedLoop) {
@@ -511,7 +544,7 @@ public:
 
 		//Turn on the conveyor when right hand trigger is pushed
 		if (OperatorStick.GetRawAxis(3) > Deadband) {
-			//Conveyor.Set(OperatorStick.GetRawAxis(3));
+			Conveyor.Set(OperatorStick.GetRawAxis(3));
 			//Conveyor.Set(ConySpeed);
 		} else {
 			Conveyor.Set(0.0);
@@ -519,7 +552,7 @@ public:
 
 		//Turn on the agitators when right hand trigger is pushed
 		if (OperatorStick.GetRawAxis(3) > Deadband) {
-			//Agitator.Set(OperatorStick.GetRawAxis(3));
+			Agitator.Set(OperatorStick.GetRawAxis(3));
 			//Agitator.Set();
 		} else {
 			Agitator.Set(0.0);
@@ -527,10 +560,14 @@ public:
 
 		//Deploy intake when left trigger is pushed
 		if (OperatorStick.GetRawAxis(2) > Deadband) {
-			FloorIntakeRoller.Set(1.0);
+			FloorIntakeRoller.Set(OperatorStick.GetRawAxis(2));
 			FloorIntakeArm->Set(true);
 		} else {
 			FloorIntakeRoller.Set(0.0);
+		}
+
+		// LH Bumper - Retract Intake
+		if (OperatorStick.GetRawButton(5)) {
 			FloorIntakeArm->Set(false);
 		}
 
@@ -1092,92 +1129,107 @@ public:
 	}
 	void SmartDashboardUpdate() {
 
-		SmartDashboard::PutNumber("Auton Switch Value", AutoVal);
+		// Auto State
+		SmartDashboard::PutNumber("Auto Switch (#)", AutoVal);
+		SmartDashboard::PutString("Auto Program", autoSelected);
+		SmartDashboard::PutNumber("Auto State (#)", modeState);
+		SmartDashboard::PutNumber("Auto Timer (s)", AutonTimer.Get());
 
-		SmartDashboard::PutString("Auton Mode", autoSelected);
-		SmartDashboard::PutNumber("Auton State", modeState);
-		SmartDashboard::PutNumber("Auton Timer", AutonTimer.Get());
-
-		double DistanceLeft = EncoderLeft.GetRaw();
-		SmartDashboard::PutNumber("DistanceLeft(raw)", DistanceLeft);
-		SmartDashboard::PutNumber("DistanceLeft(Inch)",
+		// Drive Encoders
+		SmartDashboard::PutNumber("Drive Encoder Left (RAW)",
+				EncoderLeft.GetRaw());
+		SmartDashboard::PutNumber("Drive Encoder Left (Inches)",
 				EncoderLeft.GetDistance());
 
-		double DistanceRight = EncoderRight.GetRaw();
-		SmartDashboard::PutNumber("DistanceRight(raw)", DistanceRight);
-		SmartDashboard::PutNumber("DistanceRight(Inch)",
+		SmartDashboard::PutNumber("Drive Encoder Right (RAW)",
+				EncoderRight.GetRaw());
+		SmartDashboard::PutNumber("Drive Encoder Right (Inch)",
 				EncoderRight.GetDistance());
 
 		encoderSelected = chooseDriveEncoder.GetSelected();
-		if (encoderSelected == RH_Encoder)
-			useRightEncoder = true;
-		else
-			useRightEncoder = false;
+		useRightEncoder = (encoderSelected == RH_Encoder);
 
+		// Gyro
 		if (ahrs) {
 			double gyroAngle = ahrs->GetAngle();
 			SmartDashboard::PutNumber("Gyro Angle", gyroAngle);
 		} else {
-			SmartDashboard::PutNumber("Gyro Angle", 999); /////***** don't use sentinels / use #define
+			SmartDashboard::PutNumber("Gyro Angle", 999);
 		}
 
-		//Manipulator
+		/*
+		 * Manipulator
+		 */
+
 		//shooter
-		SmartDashboard::PutNumber("ShooterEncoder(raw)", EncoderShoot.GetRaw());
-		SmartDashboard::PutNumber("ShooterEncoder(RPM)",
+		SmartDashboard::PutNumber("Shooter Encoder (RAW)",
+				EncoderShoot.GetRaw());
+		SmartDashboard::PutNumber("Shooter Encoder (RPM)",
 				EncoderShoot.GetRate() * 60.0);
-		SmartDashboard::PutNumber("ShooterEncoder(Rev)",
+		SmartDashboard::PutNumber("Shooter Encoder (REV)",
 				EncoderShoot.GetDistance());
-		ShootCommandPWM = SmartDashboard::GetNumber("IN: Shooter Command PWM", ShootCommandPWM);
-		ShootCommandRPM = SmartDashboard::GetNumber("IN: Shooter Command RPM", ShootCommandRPM);
-		SmartDashboard::PutNumber("Shooter Command PWM", ShootCommandPWM);
-		SmartDashboard::PutNumber("Shooter Command RPM", ShootCommandRPM);
+		ShootCommandPWM = SmartDashboard::GetNumber("IN: Shooter CMD (PWM)",
+				ShootCommandPWM);
+		ShootCommandRPM = SmartDashboard::GetNumber("IN: Shooter CMD (RPM)",
+				ShootCommandRPM);
+		SmartDashboard::PutNumber("Shooter CMD (PWM)", ShootCommandPWM);
+		SmartDashboard::PutNumber("Shooter CMD (RPM)", ShootCommandRPM);
 
 		//Kicker
-		SmartDashboard::PutNumber("KickerEncoder(raw)", EncoderKicker.GetRaw());
-		SmartDashboard::PutNumber("KickerEncoder(RPM)",
+		SmartDashboard::PutNumber("Kicker Encoder (RAW)",
+				EncoderKicker.GetRaw());
+		SmartDashboard::PutNumber("Kicker Encoder (RPM)",
 				EncoderKicker.GetRate() * 60.0);
-		SmartDashboard::PutNumber("KickerEncoder(Rev)",
+		SmartDashboard::PutNumber("Kicker Encoder (REV)",
 				EncoderKicker.GetDistance());
-		KickerCommandPWM = SmartDashboard::GetNumber("IN: Kicker Command PWM", KickerCommandPWM);
-		KickerCommandRPM = SmartDashboard::GetNumber("IN: Kicker Command RPM", KickerCommandRPM);
-		SmartDashboard::PutNumber("Kicker Command PWM", KickerCommandPWM);
-		SmartDashboard::PutNumber("Kicker Command RPM", KickerCommandRPM);
+		KickerCommandPWM = SmartDashboard::GetNumber("IN: Kicker CMD (PWM)",
+				KickerCommandPWM);
+		KickerCommandRPM = SmartDashboard::GetNumber("IN: Kicker CMD (RPM)",
+				KickerCommandRPM);
+		SmartDashboard::PutNumber("Kicker CMD (PWM)", KickerCommandPWM);
+		SmartDashboard::PutNumber("Kicker CMD (RPM)", KickerCommandRPM);
 
 		//winch/climber... whatever you want to call it
-		SmartDashboard::PutBoolean("WinchStop", WinchStop.Get());
+		SmartDashboard::PutBoolean("Winch Stop Switch", !WinchStop.Get());
 
 		//deflector
-		SmartDashboard::PutBoolean("DeflectorHighLimit",
-				DeflectorHighLimit.Get());
-		SmartDashboard::PutBoolean("DeflectorLowLimit",
-				DeflectorLowLimit.Get());
-		//Get angle for the deflector
-		SmartDashboard::PutNumber("DeflectorAnglePOT(DEG)",
+		SmartDashboard::PutBoolean("Deflector Limit Low",
+				!DeflectorLowLimit.Get());
+		SmartDashboard::PutBoolean("Deflector Limit High",
+				!DeflectorHighLimit.Get());
+		SmartDashboard::PutNumber("Deflector Angle POT (DEG)",
 				DeflectorAnglePOT.Get());
-		DeflectorTarget = SmartDashboard::GetNumber("Deflector Angle", 145);
-		//State varible
-		SmartDashboard::PutNumber("DeflectorAngleTarget", DeflectorTarget);
 
-		//Conveyor
-		ConySpeed = SmartDashboard::GetNumber("Conveyor Speed", 0.5);
+		DeflectorTarget = SmartDashboard::GetNumber("IN: Deflector CMD (DEG)",
+				DeflectorTarget);
+		SmartDashboard::PutNumber("Deflector CMD (Deg)", DeflectorTarget);
 
-		//PWM displays
-		SmartDashboard::PutNumber("Motor0 Output", DriveLeft0.Get());
-		SmartDashboard::PutNumber("Motor1 Output", DriveLeft1.Get());
-		SmartDashboard::PutNumber("Motor2 Output", DriveLeft2.Get());
-		SmartDashboard::PutNumber("Motor3 Output", DriveRight0.Get());
-		SmartDashboard::PutNumber("Motor4 Output", DriveRight1.Get());
-		SmartDashboard::PutNumber("Motor5 Output", DriveRight2.Get());
+		//Conveyor, Agitator, Intake Settings
+		ConvCommandPWM = SmartDashboard::GetNumber("IN: Conveyor CMD (PWM)",
+				ConvCommandPWM);
+		AgitatorCommandPWM = SmartDashboard::GetNumber("IN: Agitator CMD (PWM)",
+				AgitatorCommandPWM);
+		IntakeCommandPWM = SmartDashboard::GetNumber("IN: Intake CMD (PWM)",
+				IntakeCommandPWM);
+
+		// PWM displays
+		SmartDashboard::PutNumber("Drive L0 Output", DriveLeft0.Get());
+		SmartDashboard::PutNumber("Drive L1 Output", DriveLeft1.Get());
+		SmartDashboard::PutNumber("Drive L2 Output", DriveLeft2.Get());
+		SmartDashboard::PutNumber("Drive R0 Output", DriveRight0.Get());
+		SmartDashboard::PutNumber("Drive R1 Output", DriveRight1.Get());
+		SmartDashboard::PutNumber("Drive R2 Output", DriveRight2.Get());
 
 		SmartDashboard::PutNumber("Shooter Motor0 Output", Shooter0.Get());
 		SmartDashboard::PutNumber("Shooter Motor1 Output", Shooter1.Get());
-		SmartDashboard::PutNumber("Kicker Motor Output", KickerWheel.Get());
 		SmartDashboard::PutNumber("Winch Motor0 Output", Winch0.Get());
 		SmartDashboard::PutNumber("Winch Motor1 Output", Winch1.Get());
+		SmartDashboard::PutNumber("Kicker Motor Output", KickerWheel.Get());
 		SmartDashboard::PutNumber("Agitator Motor Output", Agitator.Get());
-		SmartDashboard::PutNumber("Floor Intake Motor Output", FloorIntakeRoller.Get());
+		SmartDashboard::PutNumber("Floor Intake Motor Output",
+				FloorIntakeRoller.Get());
 		SmartDashboard::PutNumber("Conveyor Motor  Output", Conveyor.Get());
+		SmartDashboard::PutNumber("Deflector Motor Output", DeflectorMotor.Get());
 
 		//chooser code for manip in open/closed loop
 		ShooterClosedLoop = (chooseShooter.GetSelected() == chooserClosedLoop);
@@ -1211,9 +1263,6 @@ public:
 		DriveRight0.Set(rightMotor);
 		DriveRight1.Set(rightMotor);
 		DriveRight2.Set(rightMotor);
-
-		SmartDashboard::PutNumber("Drive Speed Left", leftMotor);
-		SmartDashboard::PutNumber("Drive Speed Right", rightMotor);
 	}
 
 	int forward(double targetDistance) {
@@ -1328,7 +1377,7 @@ public:
 	}
 
 private:
-	RobotDrive Adrive, Bdrive;
+	RobotDrive Adrive;
 	frc::LiveWindow* lw = LiveWindow::GetInstance();
 	frc::SendableChooser<std::string> chooseAutonSelector, chooseDriveEncoder,
 			chooseDeflector, chooseKicker, chooseShooter, chooseDeflectorLimit;
@@ -1384,12 +1433,14 @@ private:
 	Encoder EncoderShoot;
 	DigitalInput WinchStop;
 	AnalogPotentiometer DeflectorAnglePOT;
-	double DeflectorTarget, ConySpeed, ShootCommandRPM, ShootCommandPWM, DeflectAngle, KickerCommandRPM, KickerCommandPWM;
+	double DeflectorTarget, IntakeCommandPWM, AgitatorCommandPWM,
+			ConvCommandPWM, ShootCommandRPM, ShootCommandPWM, DeflectAngle,
+			KickerCommandRPM, KickerCommandPWM;
 	DigitalInput DeflectorHighLimit, DeflectorLowLimit;
 
 	bool useRightEncoder;bool DeflectorClosedLoop;bool KickerClosedLoop;bool ShooterClosedLoop;bool DeflectorLimitEnabled;
 
-	PIDController DeflectorPID, KickerPID, ShooterPID;
+	PIDController DeflectorPID, KickerPID, ShooterPID, DrivePID;
 
 	//MultiSpeedController *Shooter;
 
