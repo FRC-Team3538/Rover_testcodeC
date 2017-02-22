@@ -349,59 +349,6 @@ public:
 		//forces robot into low gear
 		driveSolenoid->Set(false);
 
-		SmartDashboard::PutString("autonMode", "Off");
-
-		autoSelected = chooseAutonSelector.GetSelected();
-		if (autoSelected == AutonNameSwitch) {
-			// This decodes all of the possible switch outputs.
-			// Only 3 bits are connected to the RoboRio, so they aren't all needed.
-			switch (AutoVal) {
-			case 1:
-				autoSelected = autonNameBlue1;
-				break;
-			case 2:
-				autoSelected = autonNameBlue2;
-				break;
-			case 3:
-				autoSelected = autonNameBlue3;
-				break;
-			case 4:
-				autoSelected = autonNameRed1;
-				break;
-			case 5:
-				autoSelected = autonNameRed2;
-				break;
-			case 6:
-				autoSelected = autonNameRed3;
-				break;
-			case 14:
-				autoSelected = autonNameBlue1;
-				break;
-			case 13:
-				autoSelected = autonNameBlue2;
-				break;
-			case 12:
-				autoSelected = autonNameBlue3;
-				break;
-			case 11:
-				autoSelected = autonNameRed1;
-				break;
-			case 10:
-				autoSelected = autonNameRed2;
-				break;
-			case 9:
-				autoSelected = autonNameRed3;
-				break;
-			case 8:
-				autoSelected = autonNameBlue2;
-				break;
-			case 7:
-				autoSelected = autonNameRed2;
-				break;
-			default:
-				autoSelected = autonNameOFF;
-			}
-		}
 	}
 
 	void TeleopInit() {
@@ -437,6 +384,38 @@ public:
 		AutoSw3 = DiIn9.Get();
 
 		AutoVal = !AutoSw1 * 1 + !AutoSw2 * 2 + !AutoSw3 * 4;
+
+		// Select Auto Program
+		autoSelected = chooseAutonSelector.GetSelected();
+		if (autoSelected == AutonNameSwitch) {
+			// This decodes all of the possible switch outputs.
+			// Only 3 bits are connected to the RoboRio, so they aren't all needed.
+			switch (AutoVal) {
+			case 1:
+				autoSelected = autonNameBlue1;
+				break;
+			case 2:
+				autoSelected = autonNameBlue2;
+				break;
+			case 3:
+				autoSelected = autonNameBlue3;
+				break;
+			case 4:
+				autoSelected = autonNameRed1;
+				break;
+			case 5:
+				autoSelected = autonNameRed2;
+				break;
+			case 6:
+				autoSelected = autonNameRed3;
+				break;
+			case 7:
+				autoSelected = autonNameRed2;
+				break;
+			default:
+				autoSelected = autonNameOFF;
+			}
+		}
 
 		//displays sensor and motor info to smartDashboard
 		SmartDashboardUpdate();

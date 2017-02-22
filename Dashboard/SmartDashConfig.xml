@@ -5,7 +5,7 @@
 		<property name="Background" value="255.255.0.255"/>
 	</widget>
 	<widget field="IN: Deflector CMD (DEG)" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
-		<location x="967" y="51"/>
+		<location x="968" y="41"/>
 		<property name="Background" value="0.255.204.255"/>
 	</widget>
 	<widget field="IN: Intake CMD (PWM)" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
@@ -34,7 +34,7 @@
 		<property name="Use Radio Buttons" value="false"/>
 	</widget>
 	<widget field="Deflector Limits" type="String Chooser" class="edu.wpi.first.smartdashboard.gui.elements.Chooser">
-		<location x="1135" y="6"/>
+		<location x="1001" y="2"/>
 		<property name="Use Radio Buttons" value="false"/>
 	</widget>
 	<widget field="Encoder" type="String Chooser" class="edu.wpi.first.smartdashboard.gui.elements.Chooser">
@@ -46,7 +46,7 @@
 		<property name="Use Radio Buttons" value="false"/>
 	</widget>
 	<widget field="Deflector" type="String Chooser" class="edu.wpi.first.smartdashboard.gui.elements.Chooser">
-		<location x="972" y="2"/>
+		<location x="1101" y="1"/>
 		<property name="Use Radio Buttons" value="false"/>
 	</widget>
 	<widget field="Kicker CMD (PWM)" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
@@ -133,7 +133,7 @@
 		<property name="Background" value="0.255.204.255"/>
 	</widget>
 	<widget field="Deflector CMD (Deg)" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
-		<location x="991" y="75"/>
+		<location x="991" y="67"/>
 		<property name="Background" value="204.204.204.255"/>
 	</widget>
 	<widget field="Winch Motor1 Output" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
@@ -172,6 +172,7 @@
 	</widget>
 	<widget field="Auto Program" type="String" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
 		<location x="149" y="79"/>
+		<property name="Background" value="204.204.204.255"/>
 	</widget>
 	<widget field="Drive Encoder Left (Inches)" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
 		<location x="3" y="312"/>
@@ -190,8 +191,9 @@
 		<property name="Background" value="0.255.204.255"/>
 	</widget>
 	<widget field="Auto Switch (#)" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
-		<location x="139" y="53"/>
+		<location x="138" y="53"/>
 		<width>206</width>
+		<property name="Background" value="51.255.0.255"/>
 	</widget>
 	<widget field="Shooter CMD (PWM)" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
 		<location x="1636" y="105"/>
