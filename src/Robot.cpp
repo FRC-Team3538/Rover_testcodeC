@@ -251,7 +251,7 @@ public:
 		//turn off shifter solenoids
 		driveSolenoid->Set(false);
 
-		//disable drive watchdogs
+		//disable drive watchdogs ADLAI - Is this something we should be doing?
 		Adrive.SetSafetyEnabled(false);
 
 		//changes these original negative values to positive values
@@ -269,13 +269,13 @@ public:
 		//configure PIDs
 		DeflectorPID.SetOutputRange(-0.1, 0.1);
 
-		// Drive Speed Control (TESTTING: Dereck)
+		// Drive Speed Control (TESTTING: Dereck) ADLAI - this is just for testing correct?
 		DrivePID.SetOutputRange(-0.2, 0.2);
 		EncoderRight.SetPIDSourceType(PIDSourceType::kRate);
 		EncoderRight.SetDistancePerPulse((1.0 / 400.0) * 4.0);
 		DrivePID.Disable();
 
-		//drive command averaging filter
+		//drive command averaging filter ADLAI - Does this just make sure joysticks are reading 0? Should it be both here and in teleopinit?
 		OutputX = 0, OutputY = 0;
 
 		//variable that chooses which encoder robot is reading for autonomous mode
@@ -365,7 +365,7 @@ public:
 		DriveRight1.Set(DriveRight0.Get());
 		DriveRight2.Set(DriveRight0.Get());
 
-		// Turn off the the sensors/reset
+		// Turn off the the sensors/reset ADLAI - closed vs. open loop should be a dashboard thing only.
 		//in closed loop
 		if (OperatorStick.GetRawButton(8)) {
 			DeflectorPID.Enable();
@@ -423,7 +423,7 @@ public:
 	void DisabledPeriodic() {
 		//SmartDashboardUpdate();
 	}
-	void AutonomousPeriodic() {
+	void AutonomousPeriodic() {   // ADLAI - This stuff probably shouldn't be in here, we shouldn't need to change program after autonomous begins?
 		if (autoSelected == autonNameRed1)
 			autoRed1();
 		else if (autoSelected == autonNameRed2)
@@ -452,7 +452,7 @@ public:
 		if (Drivestick.GetRawButton(6))
 			driveSolenoid->Set(false);			// Low gear press LH bumper
 
-		//drive controls
+		//drive controls ADLAI - I know this works, I just don't understand how returning only negative values works for this.
 		double SpeedLinear = Drivestick.GetRawAxis(1) * -1; // get Yaxis value (forward)
 		double SpeedRotate = Drivestick.GetRawAxis(4) * -1; // get Xaxis value (turn)
 
@@ -492,18 +492,18 @@ public:
 				ShooterPID.SetSetpoint(ShootCommandRPM);
 				ShooterPID.Enable();
 			} else {
-				Shooter0.Set(-ShootCommandPWM);
+				Shooter0.Set(-ShootCommandPWM); // negative so they turn the correct way.
 			}
 		} else {
 			if (ShooterClosedLoop) {
-				ShooterPID.SetSetpoint(0.0);
+				ShooterPID.SetSetpoint(0.0); // ADLAI - this might be redundant with the disable but I don't think it matters.
 				ShooterPID.Disable();
 			} else {
 				Shooter0.Set(0.0);
 			}
 		}
 
-		// Turn on Kicker WHeel when A button is pressed
+		// Turn on Kicker Wheel when A button is pressed
 		KickerCommandPWM = 1.0;
 		if (OperatorStick.GetRawButton(1)) {
 			if (KickerClosedLoop) {
@@ -521,7 +521,7 @@ public:
 			}
 		}
 
-		//Turn on the conveyor when right hand trigger is pushed
+		//Turn on the conveyer when right hand trigger is pushed ADLAI - Does it make sense to group functions that are on the same button? I'd suggest moving this up near the other right hand trigger thing.
 		if (OperatorStick.GetRawAxis(3) > Deadband) {
 			Conveyor.Set(OperatorStick.GetRawAxis(3));
 			//Conveyor.Set(ConySpeed);
@@ -606,6 +606,8 @@ public:
 //			DeflectorTarget = 150.0;
 //		}
 	}
+
+
 
 // These are the state numbers for each part of autoBlue1
 //		These are here so we can easily add states.
@@ -1235,7 +1237,7 @@ public:
 
 	}
 
-	void motorSpeed(double leftMotor, double rightMotor) {
+	void motorSpeed(double leftMotor, double rightMotor) { // ADLAI - Possibly redundant with the previous drive motor setup in robotperiodic
 		DriveLeft0.Set(leftMotor * -1);
 		DriveLeft1.Set(leftMotor * -1);
 		DriveLeft2.Set(leftMotor * -1);
