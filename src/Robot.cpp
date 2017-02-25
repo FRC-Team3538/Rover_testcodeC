@@ -188,8 +188,8 @@ public:
 					0.1), ShootCommandPWM(0.75), DeflectAngle(145), DeflectorHighLimit(
 					22), DeflectorLowLimit(23), DeflectorPID(-0.03, 0.0, 0.0,
 					&DeflectorAnglePOT, &DeflectorMotor), KickerPID(0.03, 0.0,
-					0.0, &EncoderKicker, &KickerWheel), ShooterPID(-0.0003,
-					-0.00001, 0.0, 0.0, &EncoderShoot, &Shooter0), DrivePID(0.0,
+					0.0, &EncoderKicker, &KickerWheel), ShooterPID(0.0,
+					0.0, 0.0, 0.0, &EncoderShoot, &Shooter0), DrivePID(0.0,
 					0.0, 0.0, 0.0, &EncoderRight, &DriveRight0) {
 
 		//GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
@@ -232,6 +232,10 @@ public:
 		// Inialize settings from Smart Dashboard
 		ShootCommandPWM = 0.75;
 		ShootCommandRPM = 2000;
+		ShootKP = 0.0;
+		ShootKI = 0.0;
+		ShootKD = 0.0;
+		ShootKF = 0.0;
 		KickerCommandPWM = 0.75;
 		KickerCommandRPM = 500;
 		DeflectorTarget = 170;
@@ -242,6 +246,10 @@ public:
 
 		SmartDashboard::PutNumber("IN: Shooter CMD (PWM)", ShootCommandPWM);
 		SmartDashboard::PutNumber("IN: Shooter CMD (RPM)", ShootCommandRPM);
+		SmartDashboard::PutNumber("IN: ShootKP", ShootKP );
+		SmartDashboard::PutNumber("IN: ShootKI", ShootKI );
+		SmartDashboard::PutNumber("IN: ShootKD", ShootKD );
+		SmartDashboard::PutNumber("IN: ShootKF", ShootKF );
 		SmartDashboard::PutNumber("IN: Kicker CMD (PWM)", KickerCommandPWM);
 		SmartDashboard::PutNumber("IN: Kicker CMD (RPM)", KickerCommandRPM);
 		SmartDashboard::PutNumber("IN: Deflector CMD (DEG)", DeflectorTarget);
@@ -1172,8 +1180,17 @@ public:
 				ShootCommandPWM);
 		ShootCommandRPM = SmartDashboard::GetNumber("IN: Shooter CMD (RPM)",
 				ShootCommandRPM);
+		ShootKP = SmartDashboard::GetNumber("IN: ShootKP", ShootKP);
+		ShootKI = SmartDashboard::GetNumber("IN: ShootKI", ShootKI);
+		ShootKD = SmartDashboard::GetNumber("IN: ShootKD", ShootKD);
+		ShootKF = SmartDashboard::GetNumber("IN: ShootKF", ShootKF);
 		SmartDashboard::PutNumber("Shooter CMD (PWM)", ShootCommandPWM);
 		SmartDashboard::PutNumber("Shooter CMD (RPM)", ShootCommandRPM);
+		SmartDashboard::PutNumber("ShootKP", ShootKP);
+		SmartDashboard::PutNumber("ShootKI", ShootKI);
+		SmartDashboard::PutNumber("ShootKD", ShootKD);
+		SmartDashboard::PutNumber("ShootKF", ShootKF);
+		ShooterPID.SetPID(ShootKP, ShootKI, ShootKD, ShootKF);
 
 		//Kicker
 		SmartDashboard::PutNumber("Kicker Encoder (RAW)",
@@ -1437,7 +1454,7 @@ private:
 	AnalogPotentiometer DeflectorAnglePOT;
 	double DeflectorTarget, IntakeCommandPWM, AgitatorCommandPWM,
 			ConvCommandPWM, ShootCommandRPM, ShootCommandPWM, DeflectAngle,
-			KickerCommandRPM, KickerCommandPWM;
+			KickerCommandRPM, KickerCommandPWM, ShootKP, ShootKI, ShootKD, ShootKF;
 	DigitalInput DeflectorHighLimit, DeflectorLowLimit;
 
 	bool useRightEncoder;bool DeflectorClosedLoop;bool KickerClosedLoop;bool ShooterClosedLoop;bool DeflectorLimitEnabled;
