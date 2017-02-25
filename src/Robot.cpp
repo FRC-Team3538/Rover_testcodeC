@@ -177,20 +177,20 @@ class Robot: public frc::IterativeRobot {
 
 public:
 	Robot() :
-			Adrive(DriveLeft0, DriveRight0), Drivestick(0), OperatorStick(1), DriveLeft0(
-					0), DriveLeft1(1), DriveLeft2(2), DriveRight0(3), DriveRight1(
-					4), DriveRight2(5), EncoderLeft(0, 1), EncoderRight(2, 3), table(
+	Adrive(DriveLeft0, DriveRight0), Drivestick(0), OperatorStick(1), DriveLeft0(
+			0), DriveLeft1(1), DriveLeft2(2), DriveRight0(3), DriveRight1(
+			4), DriveRight2(5), EncoderLeft(0, 1), EncoderRight(2, 3), table(
 			NULL), ahrs(NULL), modeState(0), DiIn9(9), DiIn8(8), DiIn7(7), Winch0(
-					11), Winch1(9), Shooter0(12), Shooter1(7), Conveyor(13), Agitator0(
-					6), Agitator1(15), FloorIntakeRoller(14), KickerWheel(8), DeflectorMotor(
-					10), EncoderKicker(20, 21), EncoderShoot(4, 5), WinchStop(
-					6), DeflectorAnglePOT(0, 270, 0), DeflectorTarget(0), ConvCommandPWM(
-					0.1), ShootCommandPWM(0.75), DeflectAngle(145), DeflectorHighLimit(
-					22), DeflectorLowLimit(23), DeflectorPID(-0.03, 0.0, 0.0,
-					&DeflectorAnglePOT, &DeflectorMotor), KickerPID(0.03, 0.0,
-					0.0, &EncoderKicker, &KickerWheel), ShooterPID(0.0,
-					0.0, 0.0, 0.0, &EncoderShoot, &Shooter0), DrivePID(0.0,
-					0.0, 0.0, 0.0, &EncoderRight, &DriveRight0) {
+			11), Winch1(9), Shooter0(12), Shooter1(7), Conveyor(13), Agitator0(
+			6), Agitator1(15), FloorIntakeRoller(14), KickerWheel(8), DeflectorMotor(
+			10), EncoderKicker(20, 21), EncoderShoot(4, 5), WinchStop(
+			6), DeflectorAnglePOT(0, 270, 0), DeflectorTarget(0), ConvCommandPWM(
+			0.1), ShootCommandPWM(0.75), DeflectAngle(145), DeflectorHighLimit(
+			22), DeflectorLowLimit(23), DeflectorPID(-0.03, 0.0, 0.0,
+			&DeflectorAnglePOT, &DeflectorMotor), KickerPID(0.03, 0.0,
+			0.0, &EncoderKicker, &KickerWheel), ShooterPID(0.0,
+			0.0, 0.0, 0.0, &EncoderShoot, &Shooter0), DrivePID(0.0,
+			0.0, 0.0, 0.0, &EncoderRight, &DriveRight0) {
 
 		//GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
 		//Shooter = new MultiSpeedController();
@@ -246,10 +246,10 @@ public:
 
 		SmartDashboard::PutNumber("IN: Shooter CMD (PWM)", ShootCommandPWM);
 		SmartDashboard::PutNumber("IN: Shooter CMD (RPM)", ShootCommandRPM);
-		SmartDashboard::PutNumber("IN: ShootKP", ShootKP );
-		SmartDashboard::PutNumber("IN: ShootKI", ShootKI );
-		SmartDashboard::PutNumber("IN: ShootKD", ShootKD );
-		SmartDashboard::PutNumber("IN: ShootKF", ShootKF );
+		SmartDashboard::PutNumber("IN: ShootKP", ShootKP);
+		SmartDashboard::PutNumber("IN: ShootKI", ShootKI);
+		SmartDashboard::PutNumber("IN: ShootKD", ShootKD);
+		SmartDashboard::PutNumber("IN: ShootKF", ShootKF);
 		SmartDashboard::PutNumber("IN: Kicker CMD (PWM)", KickerCommandPWM);
 		SmartDashboard::PutNumber("IN: Kicker CMD (RPM)", KickerCommandRPM);
 		SmartDashboard::PutNumber("IN: Deflector CMD (DEG)", DeflectorTarget);
@@ -580,10 +580,10 @@ public:
 		}
 
 		//A button for intake un-jam
-		if(OperatorStick.GetRawButton(1))
+		if (OperatorStick.GetRawButton(1))
 			FloorIntakeArm->Set(!intakeDeployed);
 		else
-			FloorIntakeArm -> Set(intakeDeployed);
+			FloorIntakeArm->Set(intakeDeployed);
 
 		//X Button to get and B button release the gear
 		GearIn->Set(OperatorStick.GetRawButton(2));
@@ -1198,12 +1198,13 @@ public:
 				ShootCommandPWM);
 		ShootCommandRPM = SmartDashboard::GetNumber("IN: Shooter CMD (RPM)",
 				ShootCommandRPM);
+		SmartDashboard::PutNumber("Shooter CMD (PWM)", ShootCommandPWM);
+		SmartDashboard::PutNumber("Shooter CMD (RPM)", ShootCommandRPM);
+		//Shooter PID
 		ShootKP = SmartDashboard::GetNumber("IN: ShootKP", ShootKP);
 		ShootKI = SmartDashboard::GetNumber("IN: ShootKI", ShootKI);
 		ShootKD = SmartDashboard::GetNumber("IN: ShootKD", ShootKD);
 		ShootKF = SmartDashboard::GetNumber("IN: ShootKF", ShootKF);
-		SmartDashboard::PutNumber("Shooter CMD (PWM)", ShootCommandPWM);
-		SmartDashboard::PutNumber("Shooter CMD (RPM)", ShootCommandRPM);
 		SmartDashboard::PutNumber("ShootKP", ShootKP);
 		SmartDashboard::PutNumber("ShootKI", ShootKI);
 		SmartDashboard::PutNumber("ShootKD", ShootKD);
@@ -1235,11 +1236,10 @@ public:
 		SmartDashboard::PutNumber("Deflector Angle POT (DEG)",
 				DeflectorAnglePOT.Get());
 
-//		DeflectorTarget = SmartDashboard::GetNumber("IN: Deflector CMD (DEG)",
-//				DeflectorTarget);
 		double deflectorTargetCommand;
-		deflectorTargetCommand = SmartDashboard::GetNumber("IN: Deflector CMD (DEG)", DeflectorTarget);
-		if(deflectorTargetCommand != deflectorTargetMemory){
+		deflectorTargetCommand = SmartDashboard::GetNumber(
+				"IN: Deflector CMD (DEG)", DeflectorTarget);
+		if (deflectorTargetCommand != deflectorTargetMemory) {
 			deflectorTargetMemory = deflectorTargetCommand;
 			DeflectorTarget = deflectorTargetCommand;
 		}
@@ -1491,7 +1491,7 @@ private:
 	PIDController DeflectorPID, KickerPID, ShooterPID, DrivePID;
 
 	bool driveRightTriggerPrev = false;bool driveButtonYPrev = false;bool operatorRightTriggerPrev =
-	false; bool intakeDeployed = false;
+	false;bool intakeDeployed = false;
 
 	double autoBackupDistance;
 	double deflectorTargetMemory;
