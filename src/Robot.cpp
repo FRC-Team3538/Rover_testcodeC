@@ -248,7 +248,8 @@ public:
 		SmartDashboard::PutNumber("IN: Conveyor CMD (PWM)", ConvCommandPWM);
 		SmartDashboard::PutNumber("IN: Agitator CMD (PWM)", AgitatorCommandPWM);
 		SmartDashboard::PutNumber("IN: Intake CMD (PWM)", IntakeCommandPWM);
-		SmartDashboard::PutNumber("IN: Auto Backup Distance (Inch)", autoBackupDistance);
+		SmartDashboard::PutNumber("IN: Auto Backup Distance (Inch)",
+				autoBackupDistance);
 
 		//turn off shifter solenoids
 		driveSolenoid->Set(false);
@@ -485,17 +486,18 @@ public:
 		OutputX = (0.8 * OutputX) + (0.2 * SpeedRotate);
 
 		//drive
-		if (Drivestick.GetRawButton(2)) {
-			//boiler auto back up
-			if (!driveButtonBPrev) {
+		if (Drivestick.GetRawButton(4)) {
+			//boiler auto back up when y button pushed
+			if (!driveButtonYPrev) {
 				EncoderRight.Reset();
 				EncoderLeft.Reset();
-				driveButtonBPrev = true;
+				ahrs->ZeroYaw();
+				driveButtonYPrev = true;
 			}
-			forward(-autoBackupDistance * 12);
+			forward(autoBackupDistance);
 		} else {
 			//manual control
-			driveButtonBPrev = false;
+			driveButtonYPrev = false;
 			Adrive.ArcadeDrive(OutputY, OutputX, true);
 		}
 
@@ -505,13 +507,20 @@ public:
 
 		// Turn on the shooter when right hand trigger is pushed
 		if (OperatorStick.GetRawAxis(3) > Deadband) {
+			if (!operatorRightTriggerPrev) {
+				ShooterDelay.Reset();
+				ShooterDelay.Start();
+				ShooterPID.Enable();
+				operatorRightTriggerPrev = true;
+			}
 			if (ShooterClosedLoop) {
 				ShooterPID.SetSetpoint(ShootCommandRPM);
-				ShooterPID.Enable();
 			} else {
 				Shooter0.Set(-ShootCommandPWM); // negative so they turn the correct way.
 			}
+
 		} else {
+			operatorRightTriggerPrev = false;
 			if (ShooterClosedLoop) {
 				ShooterPID.SetSetpoint(0.0); // ADLAI - this might be redundant with the disable but I don't think it matters.
 				ShooterPID.Disable();
@@ -520,9 +529,13 @@ public:
 			}
 		}
 
-		// Turn on Kicker Wheel when A button is pressed
-		KickerCommandPWM = 1.0;
-		if (OperatorStick.GetRawButton(1)) {
+		// Turn on Kicker Wheel, conveyor, and agitators when right trigger is pressed
+		if (OperatorStick.GetRawAxis(3) > Deadband
+				and ShooterDelay.Get() > 0.2) {
+
+			Conveyor.Set(OperatorStick.GetRawAxis(3));
+			Agitator0.Set(OperatorStick.GetRawAxis(3));
+
 			if (KickerClosedLoop) {
 				KickerPID.SetSetpoint(KickerCommandRPM);
 				KickerPID.Enable();
@@ -530,6 +543,10 @@ public:
 				KickerWheel.Set(KickerCommandPWM);
 			}
 		} else {
+
+			Conveyor.Set(0.0);
+			Agitator0.Set(0.0);
+
 			if (KickerClosedLoop) {
 				KickerPID.SetSetpoint(0.0);
 				KickerPID.Disable();
@@ -538,73 +555,81 @@ public:
 			}
 		}
 
-		//Turn on the conveyer when right hand trigger is pushed ADLAI - Does it make sense to group functions that are on the same button? I'd suggest moving this up near the other right hand trigger thing.
-		if (OperatorStick.GetRawAxis(3) > Deadband) {
-			Conveyor.Set(OperatorStick.GetRawAxis(3));
-			//Conveyor.Set(ConySpeed);
-		} else {
-			Conveyor.Set(0.0);
-		}
-
-		//Turn on the agitators when right hand trigger is pushed
-		if (OperatorStick.GetRawAxis(3) > Deadband) {
-			Agitator0.Set(OperatorStick.GetRawAxis(3));
-			//Agitator.Set();
-		} else {
-			Agitator0.Set(0.0);
-		}
-
-		//Deploy intake when left trigger is pushed
+		//Spin intake when left trigger is pushed
 		if (OperatorStick.GetRawAxis(2) > Deadband) {
 			FloorIntakeRoller.Set(OperatorStick.GetRawAxis(2));
-			FloorIntakeArm->Set(true);
 		} else {
 			FloorIntakeRoller.Set(0.0);
 		}
 
-		// LH Bumper - Retract Intake
+		// RH Bumper - Retract Intake
+		if (OperatorStick.GetRawButton(6)) {
+			intakeDeployed = false;
+		}
+		// LH Bumper - Deploy Intake
 		if (OperatorStick.GetRawButton(5)) {
-			FloorIntakeArm->Set(false);
+			intakeDeployed = true;
 		}
 
+		//A button for intake un-jam
+		if(OperatorStick.GetRawButton(1))
+			FloorIntakeArm->Set(!intakeDeployed);
+		else
+			FloorIntakeArm -> Set(intakeDeployed);
+
 		//X Button to get and B button release the gear
-		GearIn->Set(OperatorStick.GetRawButton(3));
-		GearOut->Set(OperatorStick.GetRawButton(2));
+		GearIn->Set(OperatorStick.GetRawButton(2));
+		GearOut->Set(OperatorStick.GetRawButton(3));
+
+		//Right joystick for agitator un-jam
+		if (fabs(OperatorStick.GetRawAxis(4)) > Deadband)
+			Agitator0.Set(OperatorStick.GetRawAxis(4));
 
 		//turn on winch using the left joystick
-		double LH_YAxis = OperatorStick.GetRawAxis(1);
-		if (fabs(LH_YAxis) > Deadband) {
-			Winch0.Set(LH_YAxis);
+		if (fabs(OperatorStick.GetRawAxis(1)) > Deadband) {
+			Winch0.Set(OperatorStick.GetRawAxis(1));
 		} else {
 			Winch0.Set(0.0);
 		}
 
-		//control deflector angle in open loop using right hand joystick
-		double RH_YAxis = OperatorStick.GetRawAxis(5);
-		double DeflectorLimitLower = 155.0;
-		double DeflectorLimitUpper = 200.0;
-		double DeflectorMotorOutputMax = 0.1;
+		//move deflector using d-pad(POV)
+		double DeflectorLimitLower = 155.0;	//degrees
+		double DeflectorLimitUpper = 200.0;	//degrees
+		double DeflectorMotorOutputMax = 0.1;	//PWM
+		double DeflectorIncrement = 0.05;	//degrees
 
 		if (!DeflectorClosedLoop) {
 			//move deflector up
 			if (DeflectorAnglePOT.Get() < DeflectorLimitUpper
-					&& RH_YAxis < -Deadband) {
-				DeflectorMotor.Set(RH_YAxis * DeflectorMotorOutputMax);
+					&& OperatorStick.GetPOV(0) == 0) {
+				DeflectorMotor.Set(DeflectorMotorOutputMax);
 			}
 			//move deflector down
 			else if (DeflectorAnglePOT.Get() > DeflectorLimitLower
-					&& RH_YAxis > Deadband) {
-				DeflectorMotor.Set(RH_YAxis * DeflectorMotorOutputMax);
+					&& OperatorStick.GetPOV(0) == 180) {
+				DeflectorMotor.Set(-DeflectorMotorOutputMax);
 			} else {
 				DeflectorMotor.Set(0.0);
 			}
 		}
 		//in closed loop
 		else {
-			if (fabs(RH_YAxis) > Deadband) {
+			if (OperatorStick.GetPOV(0) == 0) {
 				//will increment the DeflectorTarget by value set by joysticks
-				DeflectorTarget += RH_YAxis * 0.1;
+				DeflectorTarget += DeflectorIncrement;
+			} else if (OperatorStick.GetPOV(0) == 180) {
+				//will increment the DeflectorTarget by value set by joysticks
+				DeflectorTarget -= DeflectorIncrement;
 			}
+
+			//Control the angle of the deflector
+			if (OperatorStick.GetPOV(0) == 90) {
+				DeflectorTarget = 195.0;
+			}
+			if (OperatorStick.GetPOV(0) == 270) {
+				DeflectorTarget = 150.0;
+			}
+
 			DeflectorPID.SetSetpoint(DeflectorTarget);
 
 			// Emergency Disable
@@ -615,13 +640,6 @@ public:
 			}
 		}
 
-//		//Control the angle of the deflector
-//		if (OperatorStick.GetRawButton(5)) {
-//			DeflectorTarget = 195.0;
-//		}
-//		if (OperatorStick.GetRawButton(6)) {
-//			DeflectorTarget = 150.0;
-//		}
 	}
 
 // These are the state numbers for each part of autoBlue1
@@ -1240,6 +1258,9 @@ public:
 				== chooserClosedLoop);
 		DeflectorLimitEnabled = (chooseDeflectorLimit.GetSelected() == Enable);
 
+		//**TEST
+		SmartDashboard::PutNumber("DBG POV", OperatorStick.GetPOV(0));
+
 		//grip table data
 		//GRIPTable = NetworkTable::GetTable("GRIP/myContoursReport");
 
@@ -1337,7 +1358,7 @@ public:
 		return 0;
 	}
 
-	//need to change signs!!!
+//need to change signs!!!
 	int timedDrive(double driveTime, double leftMotorSpeed,
 			double rightMotorSpeed) {
 		float currentTime = AutonTimer.Get();
@@ -1407,11 +1428,12 @@ private:
 	VictorSP DriveRight1;
 	VictorSP DriveRight2;
 	Timer AutonTimer;
+	Timer ShooterDelay;
 	Encoder EncoderLeft;
 	Encoder EncoderRight;
 	std::shared_ptr<NetworkTable> table;
 	AHRS *ahrs;
-	//tells us what state we are in in each auto mode
+//tells us what state we are in in each auto mode
 	int modeState;bool AutonOverride, AutoSw1, AutoSw2, AutoSw3;
 	DigitalInput DiIn9, DiIn8, DiIn7;
 	int AutoVal, AutoVal0, AutoVal1, AutoVal2;
@@ -1420,7 +1442,7 @@ private:
 	int isWaiting = 0;			/////***** Divide this into 2 variables.
 
 	Solenoid *driveSolenoid = new Solenoid(0);
-	//manipulator
+//manipulator
 	VictorSP Winch0, Winch1;
 	VictorSP Shooter0, Shooter1;
 	VictorSP Conveyor;
@@ -1444,10 +1466,11 @@ private:
 
 	PIDController DeflectorPID, KickerPID, ShooterPID, DrivePID;
 
-	bool driveRightTriggerPrev = false;bool driveButtonBPrev = false;
+	bool driveRightTriggerPrev = false;bool driveButtonYPrev = false;bool operatorRightTriggerPrev =
+	false; bool intakeDeployed = false;
 
 	double autoBackupDistance;
-	//MultiSpeedController *Shooter;
+//MultiSpeedController *Shooter;
 
 }
 ;
