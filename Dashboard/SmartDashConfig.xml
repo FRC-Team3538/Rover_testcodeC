@@ -1,5 +1,14 @@
 <xml version="1.0">
 <dashboard>
+	<widget field="Agitator Motor1 Output" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="0" y="505"/>
+	</widget>
+	<widget field="Agitator Motor0 Output" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="0" y="482"/>
+	</widget>
+	<widget field="Auto Backup Distance" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="0" y="220"/>
+	</widget>
 	<widget field="Deflector Motor Output" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
 		<location x="299" y="405"/>
 		<property name="Background" value="255.255.0.255"/>

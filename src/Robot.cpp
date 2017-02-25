@@ -182,7 +182,7 @@ public:
 					4), DriveRight2(5), EncoderLeft(0, 1), EncoderRight(2, 3), table(
 			NULL), ahrs(NULL), modeState(0), DiIn9(9), DiIn8(8), DiIn7(7), Winch0(
 					11), Winch1(9), Shooter0(12), Shooter1(7), Conveyor(13), Agitator0(
-					6), Agitator1(15),FloorIntakeRoller(14), KickerWheel(8), DeflectorMotor(
+					6), Agitator1(15), FloorIntakeRoller(14), KickerWheel(8), DeflectorMotor(
 					10), EncoderKicker(20, 21), EncoderShoot(4, 5), WinchStop(
 					6), DeflectorAnglePOT(0, 270, 0), DeflectorTarget(0), ConvCommandPWM(
 					0.1), ShootCommandPWM(0.75), DeflectAngle(145), DeflectorHighLimit(
@@ -230,14 +230,15 @@ public:
 		frc::SmartDashboard::PutData("Deflector Limits", &chooseDeflectorLimit);
 
 		// Inialize settings from Smart Dashboard
-		ShootCommandPWM    = 0.75;
-		ShootCommandRPM    = 2000;
-		KickerCommandPWM   = 0.75;
-		KickerCommandRPM   = 500;
-		DeflectorTarget    = 170;
-		ConvCommandPWM     = 0.75;
+		ShootCommandPWM = 0.75;
+		ShootCommandRPM = 2000;
+		KickerCommandPWM = 0.75;
+		KickerCommandRPM = 500;
+		DeflectorTarget = 170;
+		ConvCommandPWM = 0.75;
 		AgitatorCommandPWM = 0.75;
-		IntakeCommandPWM   = 0.75;
+		IntakeCommandPWM = 0.75;
+		autoBackupDistance = -7.0;
 
 		SmartDashboard::PutNumber("IN: Shooter CMD (PWM)", ShootCommandPWM);
 		SmartDashboard::PutNumber("IN: Shooter CMD (RPM)", ShootCommandRPM);
@@ -247,6 +248,7 @@ public:
 		SmartDashboard::PutNumber("IN: Conveyor CMD (PWM)", ConvCommandPWM);
 		SmartDashboard::PutNumber("IN: Agitator CMD (PWM)", AgitatorCommandPWM);
 		SmartDashboard::PutNumber("IN: Intake CMD (PWM)", IntakeCommandPWM);
+		SmartDashboard::PutNumber("IN: Auto Backup Distance (Inch)", autoBackupDistance);
 
 		//turn off shifter solenoids
 		driveSolenoid->Set(false);
@@ -364,6 +366,7 @@ public:
 		DriveLeft2.Set(DriveLeft0.Get());
 		DriveRight1.Set(DriveRight0.Get());
 		DriveRight2.Set(DriveRight0.Get());
+		Agitator1.Set(Agitator0.Get());
 
 		// Turn off the the sensors/reset ADLAI - closed vs. open loop should be a dashboard thing only.
 		//in closed loop
@@ -423,7 +426,7 @@ public:
 	void DisabledPeriodic() {
 		//SmartDashboardUpdate();
 	}
-	void AutonomousPeriodic() {   // ADLAI - This stuff probably shouldn't be in here, we shouldn't need to change program after autonomous begins?
+	void AutonomousPeriodic() { // ADLAI - This stuff probably shouldn't be in here, we shouldn't need to change program after autonomous begins?
 		if (autoSelected == autonNameRed1)
 			autoRed1();
 		else if (autoSelected == autonNameRed2)
@@ -452,6 +455,15 @@ public:
 		if (Drivestick.GetRawButton(6))
 			driveSolenoid->Set(false);			// Low gear press LH bumper
 
+		// Temporary high gear when right trigger pushed
+		if (Drivestick.GetRawAxis(3) > Deadband) {
+			driveSolenoid->Set(true);
+			driveRightTriggerPrev = true;
+		} else if (driveRightTriggerPrev) {
+			driveSolenoid->Set(false);
+			driveRightTriggerPrev = false;
+		}
+
 		//drive controls ADLAI - I know this works, I just don't understand how returning only negative values works for this.
 		double SpeedLinear = Drivestick.GetRawAxis(1) * -1; // get Yaxis value (forward)
 		double SpeedRotate = Drivestick.GetRawAxis(4) * -1; // get Xaxis value (turn)
@@ -472,14 +484,19 @@ public:
 		OutputY = (0.8 * OutputY) + (0.2 * SpeedLinear);
 		OutputX = (0.8 * OutputX) + (0.2 * SpeedRotate);
 
-		// Drive Robot Arcade style
-		if (!DrivePID.IsEnabled()) {
-			Adrive.ArcadeDrive(OutputY, OutputX, true);
+		//drive
+		if (Drivestick.GetRawButton(2)) {
+			//boiler auto back up
+			if (!driveButtonBPrev) {
+				EncoderRight.Reset();
+				EncoderLeft.Reset();
+				driveButtonBPrev = true;
+			}
+			forward(-autoBackupDistance * 12);
 		} else {
-			// Dereck TESTING RPM Control on the test robot....
-			double DriveRPM = SmartDashboard::GetNumber(
-					"IN: Drive Command (RPM)", 0.0);
-			DrivePID.SetSetpoint(DriveRPM);
+			//manual control
+			driveButtonBPrev = false;
+			Adrive.ArcadeDrive(OutputY, OutputX, true);
 		}
 
 		/*
@@ -532,11 +549,9 @@ public:
 		//Turn on the agitators when right hand trigger is pushed
 		if (OperatorStick.GetRawAxis(3) > Deadband) {
 			Agitator0.Set(OperatorStick.GetRawAxis(3));
-			Agitator1.Set(OperatorStick.GetRawAxis(3));
 			//Agitator.Set();
 		} else {
 			Agitator0.Set(0.0);
-			Agitator1.Set(0.0);
 		}
 
 		//Deploy intake when left trigger is pushed
@@ -608,8 +623,6 @@ public:
 //			DeflectorTarget = 150.0;
 //		}
 	}
-
-
 
 // These are the state numbers for each part of autoBlue1
 //		These are here so we can easily add states.
@@ -1132,6 +1145,10 @@ public:
 		encoderSelected = chooseDriveEncoder.GetSelected();
 		useRightEncoder = (encoderSelected == RH_Encoder);
 
+		autoBackupDistance = SmartDashboard::GetNumber(
+				"IN: Auto Backup Distance (Inch)", autoBackupDistance);
+		SmartDashboard::PutNumber("Auto Backup Distance", autoBackupDistance);
+
 		// Gyro
 		if (ahrs) {
 			double gyroAngle = ahrs->GetAngle();
@@ -1213,7 +1230,8 @@ public:
 		SmartDashboard::PutNumber("Floor Intake Motor Output",
 				FloorIntakeRoller.Get());
 		SmartDashboard::PutNumber("Conveyor Motor  Output", Conveyor.Get());
-		SmartDashboard::PutNumber("Deflector Motor Output", DeflectorMotor.Get());
+		SmartDashboard::PutNumber("Deflector Motor Output",
+				DeflectorMotor.Get());
 
 		//chooser code for manip in open/closed loop
 		ShooterClosedLoop = (chooseShooter.GetSelected() == chooserClosedLoop);
@@ -1426,6 +1444,9 @@ private:
 
 	PIDController DeflectorPID, KickerPID, ShooterPID, DrivePID;
 
+	bool driveRightTriggerPrev = false;bool driveButtonBPrev = false;
+
+	double autoBackupDistance;
 	//MultiSpeedController *Shooter;
 
 }
