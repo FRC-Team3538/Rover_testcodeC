@@ -596,7 +596,7 @@ public:
 		double DeflectorLimitLower = 155.0;	//degrees
 		double DeflectorLimitUpper = 200.0;	//degrees
 		double DeflectorMotorOutputMax = 0.1;	//PWM
-		double DeflectorIncrement = 0.05;	//degrees
+		double DeflectorIncrement = 0.03;	//degrees
 
 		if (!DeflectorClosedLoop) {
 			//move deflector up
@@ -1218,8 +1218,15 @@ public:
 		SmartDashboard::PutNumber("Deflector Angle POT (DEG)",
 				DeflectorAnglePOT.Get());
 
-		DeflectorTarget = SmartDashboard::GetNumber("IN: Deflector CMD (DEG)",
-				DeflectorTarget);
+//		DeflectorTarget = SmartDashboard::GetNumber("IN: Deflector CMD (DEG)",
+//				DeflectorTarget);
+		double deflectorTargetCommand;
+		deflectorTargetCommand = SmartDashboard::GetNumber("IN: Deflector CMD (DEG)", DeflectorTarget);
+		if(deflectorTargetCommand != deflectorTargetMemory){
+			deflectorTargetMemory = deflectorTargetCommand;
+			DeflectorTarget = deflectorTargetCommand;
+		}
+
 		SmartDashboard::PutNumber("Deflector CMD (Deg)", DeflectorTarget);
 
 		//Conveyor, Agitator, Intake Settings
@@ -1470,6 +1477,7 @@ private:
 	false; bool intakeDeployed = false;
 
 	double autoBackupDistance;
+	double deflectorTargetMemory;
 //MultiSpeedController *Shooter;
 
 }
