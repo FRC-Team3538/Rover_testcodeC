@@ -280,12 +280,6 @@ public:
 		//configure PIDs
 		DeflectorPID.SetOutputRange(-0.1, 0.1);
 
-		// Drive Speed Control (TESTTING: Dereck) ADLAI - this is just for testing correct?
-		DrivePID.SetOutputRange(-0.2, 0.2);
-		EncoderRight.SetPIDSourceType(PIDSourceType::kRate);
-		EncoderRight.SetDistancePerPulse((1.0 / 400.0) * 4.0);
-		DrivePID.Disable();
-
 		//drive command averaging filter ADLAI - Does this just make sure joysticks are reading 0? Should it be both here and in teleopinit?
 		OutputX = 0, OutputY = 0;
 
@@ -314,6 +308,7 @@ public:
 		//determines that a sensor is being read for either displacement or velocity
 		DeflectorAnglePOT.SetPIDSourceType(PIDSourceType::kDisplacement);
 		EncoderKicker.SetPIDSourceType(PIDSourceType::kRate);
+		EncoderShoot.SetPIDSourceType(PIDSourceType::kRate);
 
 		//from NAVX mxp data monitor example
 		try { /////***** Let's do this differently.  We want Auton to fail gracefully, not just abort. Remember Ariane 5
@@ -375,20 +370,7 @@ public:
 		DriveLeft2.Set(DriveLeft0.Get());
 		DriveRight1.Set(DriveRight0.Get());
 		DriveRight2.Set(DriveRight0.Get());
-		Agitator1.Set(Agitator0.Get());
-
-		// Turn off the the sensors/reset ADLAI - closed vs. open loop should be a dashboard thing only.
-		//in closed loop
-		if (OperatorStick.GetRawButton(8)) {
-			DeflectorPID.Enable();
-			//ShooterPID.Enable();
-		}
-		//in open loop
-		if (OperatorStick.GetRawButton(7)) {
-			DeflectorPID.Disable();
-			ShooterPID.Disable();
-			KickerPID.Disable();
-		}
+		Agitator1.Set(-Agitator0.Get());
 
 		//Read Auton Switch
 		AutoSw1 = DiIn7.Get();
@@ -518,6 +500,7 @@ public:
 			if (!operatorRightTriggerPrev) {
 				ShooterDelay.Reset();
 				ShooterDelay.Start();
+				ShooterPID.Reset();
 				ShooterPID.Enable();
 				operatorRightTriggerPrev = true;
 			}
@@ -594,7 +577,7 @@ public:
 			Agitator0.Set(OperatorStick.GetRawAxis(4));
 
 		//turn on winch using the left joystick
-		if (fabs(OperatorStick.GetRawAxis(1)) > Deadband) {
+		if (OperatorStick.GetRawAxis(1) > Deadband) {
 			Winch0.Set(OperatorStick.GetRawAxis(1));
 		} else {
 			Winch0.Set(0.0);
