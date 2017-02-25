@@ -181,8 +181,8 @@ public:
 					0), DriveLeft1(1), DriveLeft2(2), DriveRight0(3), DriveRight1(
 					4), DriveRight2(5), EncoderLeft(0, 1), EncoderRight(2, 3), table(
 			NULL), ahrs(NULL), modeState(0), DiIn9(9), DiIn8(8), DiIn7(7), Winch0(
-					11), Winch1(9), Shooter0(12), Shooter1(7), Conveyor(13), Agitator(
-					6), FloorIntakeRoller(14), KickerWheel(8), DeflectorMotor(
+					11), Winch1(9), Shooter0(12), Shooter1(7), Conveyor(13), Agitator0(
+					6), Agitator1(15),FloorIntakeRoller(14), KickerWheel(8), DeflectorMotor(
 					10), EncoderKicker(20, 21), EncoderShoot(4, 5), WinchStop(
 					6), DeflectorAnglePOT(0, 270, 0), DeflectorTarget(0), ConvCommandPWM(
 					0.1), ShootCommandPWM(0.75), DeflectAngle(145), DeflectorHighLimit(
@@ -531,10 +531,12 @@ public:
 
 		//Turn on the agitators when right hand trigger is pushed
 		if (OperatorStick.GetRawAxis(3) > Deadband) {
-			Agitator.Set(OperatorStick.GetRawAxis(3));
+			Agitator0.Set(OperatorStick.GetRawAxis(3));
+			Agitator1.Set(OperatorStick.GetRawAxis(3));
 			//Agitator.Set();
 		} else {
-			Agitator.Set(0.0);
+			Agitator0.Set(0.0);
+			Agitator1.Set(0.0);
 		}
 
 		//Deploy intake when left trigger is pushed
@@ -1206,7 +1208,8 @@ public:
 		SmartDashboard::PutNumber("Winch Motor0 Output", Winch0.Get());
 		SmartDashboard::PutNumber("Winch Motor1 Output", Winch1.Get());
 		SmartDashboard::PutNumber("Kicker Motor Output", KickerWheel.Get());
-		SmartDashboard::PutNumber("Agitator Motor Output", Agitator.Get());
+		SmartDashboard::PutNumber("Agitator Motor0 Output", Agitator0.Get());
+		SmartDashboard::PutNumber("Agitator Motor1 Output", Agitator1.Get());
 		SmartDashboard::PutNumber("Floor Intake Motor Output",
 				FloorIntakeRoller.Get());
 		SmartDashboard::PutNumber("Conveyor Motor  Output", Conveyor.Get());
@@ -1403,7 +1406,7 @@ private:
 	VictorSP Winch0, Winch1;
 	VictorSP Shooter0, Shooter1;
 	VictorSP Conveyor;
-	VictorSP Agitator;
+	VictorSP Agitator0, Agitator1;
 	VictorSP FloorIntakeRoller;
 	VictorSP KickerWheel;
 	VictorSP DeflectorMotor;
