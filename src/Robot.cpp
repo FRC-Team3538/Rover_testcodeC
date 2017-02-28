@@ -38,22 +38,22 @@
 //    back up 7.6 ft, go slowly forward for 3 seconds [**** This sign is backwards****]
 //    turn clockwise 120 degrees, go forwards 8.5 ft
 
-#define BLUE_1_CASE1_FWD (6.5 * 12.0)
+#define BLUE_1_CASE1_FWD (7.5 * 12.0)
 #define BLUE_1_CASE2_TURN (90)
 #define BLUE_1_CASE3_FWD (7.6 * -1 * 12.0)
-#define BLUE_1_CASE4_FWD_TIME (3.5)
-#define BLUE_1_CASE4_FWD_LEFT_SPD (0.2)
-#define BLUE_1_CASE4_FWD_RIGHT_SPD (0.2)
-#define BLUE_1_CASE5_FWD (2.5 * 12.0)
+#define BLUE_1_CASE4_FWD_TIME (3.0)
+#define BLUE_1_CASE4_FWD_LEFT_SPD (0.5)
+#define BLUE_1_CASE4_FWD_RIGHT_SPD (0.5)
+#define BLUE_1_CASE5_FWD (3.5 * 12.0)
 #define BLUE_1_CASE6_TURN (120)
-#define BLUE_1_CASE7_FWD (8.5 * 12.0)
+#define BLUE_1_CASE7_FWD (7.5 * 12.0)
 
 // This will go to the gear in front of the middle start position.
 //		This is timed so that collision with the airship will put the robot in position.
 //		This can be supported with vision when it is ready.
 //
 // go forward for .75 seconds at .9 speed
-#define BLUE_2_CASE2_TIME (0.75)
+#define BLUE_2_CASE2_TIME (0.85)
 #define BLUE_2_CASE2_LSPEED (-0.9)
 #define BLUE_2_CASE2_RSPEED (-0.9)
 
@@ -124,7 +124,7 @@
 #define LINEAR_TOLERANCE (0.2)
 // This is the gain for using the encoders to set the distance
 //		while going straight.
-#define KP_LINEAR (0.3)
+#define KP_LINEAR (0.27)
 // This is the gain for using the gyroscope to go straight
 #define KP_ROTATION (0.012)
 #define LINEAR_SETTLING_TIME (0.1)
@@ -133,7 +133,7 @@
 //turning calibrations
 #define ROTATIONAL_TOLERANCE (5.0)
 // This is the gain for turning using the gyroscope
-#define ERROR_GAIN (-0.012)
+#define ERROR_GAIN (-0.05)
 #define ROTATIONAL_SETTLING_TIME (0.1)
 
 //------------------------Bob on tile calibrations END---------------------
@@ -177,20 +177,20 @@ class Robot: public frc::IterativeRobot {
 
 public:
 	Robot() :
-	Adrive(DriveLeft0, DriveRight0), Drivestick(0), OperatorStick(1), DriveLeft0(
-			0), DriveLeft1(1), DriveLeft2(2), DriveRight0(3), DriveRight1(
-			4), DriveRight2(5), EncoderLeft(0, 1), EncoderRight(2, 3), table(
+			Adrive(DriveLeft0, DriveRight0), Drivestick(0), OperatorStick(1), DriveLeft0(
+					0), DriveLeft1(1), DriveLeft2(2), DriveRight0(3), DriveRight1(
+					4), DriveRight2(5), EncoderLeft(0, 1), EncoderRight(2, 3), table(
 			NULL), ahrs(NULL), modeState(0), DiIn9(9), DiIn8(8), DiIn7(7), Winch0(
-			11), Winch1(9), Shooter0(12), Shooter1(7), Conveyor(13), Agitator0(
-			6), Agitator1(15), FloorIntakeRoller(14), KickerWheel(8), DeflectorMotor(
-			10), EncoderKicker(20, 21), EncoderShoot(4, 5), WinchStop(
-			6), DeflectorAnglePOT(0, 270, 0), DeflectorTarget(0), ConvCommandPWM(
-			0.1), ShootCommandPWM(0.75), DeflectAngle(145), DeflectorHighLimit(
-			22), DeflectorLowLimit(23), DeflectorPID(-0.03, 0.0, 0.0,
-			&DeflectorAnglePOT, &DeflectorMotor), KickerPID(0.03, 0.0,
-			0.0, &EncoderKicker, &KickerWheel), ShooterPID(0.0,
-			0.0, 0.0, 0.0, &EncoderShoot, &Shooter0), DrivePID(0.0,
-			0.0, 0.0, 0.0, &EncoderRight, &DriveRight0) {
+					11), Winch1(9), Shooter0(12), Shooter1(7), Conveyor(13), Agitator0(
+					6), Agitator1(15), FloorIntakeRoller(14), KickerWheel(8), DeflectorMotor(
+					10), EncoderKicker(20, 21), EncoderShoot(4, 5), WinchStop(
+					6), DeflectorAnglePOT(0, 270, 0), DeflectorTarget(0), ConvCommandPWM(
+					0.1), ShootCommandPWM(0.75), DeflectAngle(145), DeflectorHighLimit(
+					22), DeflectorLowLimit(23), DeflectorPID(-0.03, 0.0, 0.0,
+					&DeflectorAnglePOT, &DeflectorMotor), KickerPID(0.03, 0.0,
+					0.0, &EncoderKicker, &KickerWheel), ShooterPID(0.0, 0.0,
+					0.0, 0.0, &EncoderShoot, &Shooter0), DrivePID(0.0, 0.0, 0.0,
+					0.0, &EncoderRight, &DriveRight0) {
 
 		//GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
 		//Shooter = new MultiSpeedController();
@@ -230,8 +230,8 @@ public:
 		frc::SmartDashboard::PutData("Deflector Limits", &chooseDeflectorLimit);
 
 		// Inialize settings from Smart Dashboard
-		ShootCommandPWM = 0.75;
-		ShootCommandRPM = 2000;
+		ShootCommandPWM = 0.8;
+		ShootCommandRPM = 2800;
 		ShootKP = 0.0;
 		ShootKI = 0.0;
 		ShootKD = 0.0;
@@ -266,14 +266,14 @@ public:
 		Adrive.SetSafetyEnabled(false);
 
 		//changes these original negative values to positive values
-		EncoderLeft.SetReverseDirection(false);
-		EncoderRight.SetReverseDirection(true);
+		EncoderLeft.SetReverseDirection(true);
+		EncoderRight.SetReverseDirection(false);
 		EncoderShoot.SetReverseDirection(true);
 		EncoderKicker.SetReverseDirection(true);
 
 		//calibrations for encoders
-		EncoderLeft.SetDistancePerPulse((16.0 * 12.0) / 7795.0 * 4.0);
-		EncoderRight.SetDistancePerPulse((16.0 * 12.0) / 7795.0 * 4.0);
+		EncoderLeft.SetDistancePerPulse(98.0 / 3125.0 * 4.0);
+		EncoderRight.SetDistancePerPulse(98.0 / 3125.0 * 4.0);
 		EncoderShoot.SetDistancePerPulse(1.0 / 3328.0 * 4.0);
 		EncoderKicker.SetDistancePerPulse(1.0 / 4122.0 * 4.0);
 
@@ -355,6 +355,9 @@ public:
 		//forces robot into low gear
 		driveSolenoid->Set(false);
 
+		//makes sure gear doesn't eject
+		GearOut->Set(false);
+
 	}
 
 	void TeleopInit() {
@@ -370,7 +373,7 @@ public:
 		DriveLeft2.Set(DriveLeft0.Get());
 		DriveRight1.Set(DriveRight0.Get());
 		DriveRight2.Set(DriveRight0.Get());
-		Agitator1.Set(-Agitator0.Get());
+		Agitator1.Set(Agitator0.Get());
 
 		//Read Auton Switch
 		AutoSw1 = DiIn7.Get();
@@ -441,10 +444,10 @@ public:
 		double DriveCreepSpeed = 0.5;
 
 		//high gear & low gear controls
-		if (Drivestick.GetRawButton(5))
-			driveSolenoid->Set(true);			// High gear press RH bumper
 		if (Drivestick.GetRawButton(6))
-			driveSolenoid->Set(false);			// Low gear press LH bumper
+			driveSolenoid->Set(true);			// High gear press LH bumper
+		if (Drivestick.GetRawButton(5))
+			driveSolenoid->Set(false);			// Low gear press RH bumper
 
 		// Temporary high gear when right trigger pushed
 		if (Drivestick.GetRawAxis(3) > Deadband) {
@@ -584,8 +587,8 @@ public:
 		}
 
 		//move deflector using d-pad(POV)
-		double DeflectorLimitLower = 155.0;	//degrees
-		double DeflectorLimitUpper = 200.0;	//degrees
+		double DeflectorLimitLower = 120.0;	//degrees
+		double DeflectorLimitUpper = 183.0;	//degrees
 		double DeflectorMotorOutputMax = 0.1;	//PWM
 		double DeflectorIncrement = 0.03;	//degrees
 
@@ -605,20 +608,20 @@ public:
 		}
 		//in closed loop
 		else {
-			if (OperatorStick.GetPOV(0) == 0) {
+			if (OperatorStick.GetPOV(0) == 0 and DeflectorTarget < DeflectorLimitUpper) {
 				//will increment the DeflectorTarget by value set by joysticks
 				DeflectorTarget += DeflectorIncrement;
-			} else if (OperatorStick.GetPOV(0) == 180) {
+			} else if (OperatorStick.GetPOV(0) == 180 and DeflectorTarget > DeflectorLimitLower) {
 				//will increment the DeflectorTarget by value set by joysticks
 				DeflectorTarget -= DeflectorIncrement;
 			}
 
 			//Control the angle of the deflector
 			if (OperatorStick.GetPOV(0) == 90) {
-				DeflectorTarget = 195.0;
+				DeflectorTarget = 163.0;
 			}
 			if (OperatorStick.GetPOV(0) == 270) {
-				DeflectorTarget = 150.0;
+				DeflectorTarget = 163.0;
 			}
 
 			DeflectorPID.SetSetpoint(DeflectorTarget);
@@ -807,8 +810,11 @@ public:
 
 #define AB2_INIT 1
 #define AB2_FWD 2
-#define AB2_GEAR 3
-#define AB2_END 4
+#define	AB2_TIMED 3
+#define AB2_GEAR_WAIT 4
+#define AB2_GEAR 5
+#define AB2_BACK 6
+#define AB2_END 7
 	void autoBlue2(void) {
 		//blue side code
 		//goes forward to put gear on pin
@@ -820,10 +826,24 @@ public:
 			modeState = AB2_FWD;
 			break;
 		case AB2_FWD:
-			if (timedDrive(BLUE_2_CASE2_TIME, BLUE_2_CASE2_LSPEED,
-			BLUE_2_CASE2_RSPEED)) {
-				//change to timed drive
+			if (forward(71.0)) {
+				//timedDrive(BLUE_2_CASE2_TIME, BLUE_2_CASE2_LSPEED,
+				//BLUE_2_CASE2_RSPEED)
 				//if (forward7ft(-0.4, 7 * 12.0)) {
+				AutonTimer.Reset();
+				modeState = AB2_TIMED;
+			}
+			break;
+		case AB2_TIMED:
+			if (timedDrive(1.0, -0.2, -0.2)) {
+
+				//if (forward7ft(-0.4, 7 * 12.0)) {
+				AutonTimer.Reset();
+				modeState = AB2_GEAR_WAIT;
+			}
+			break;
+		case AB2_GEAR_WAIT:
+			if (AutonTimer.Get() > 2.5) {
 				modeState = AB2_GEAR;
 			}
 			break;
@@ -831,9 +851,19 @@ public:
 			if (1) {
 				//change to timed drive
 				//if (forward7ft(-0.4, 7 * 12.0)) {
+				GearOut->Set(true);
+				modeState = AB2_BACK;
+			}
+			break;
+		case AB2_BACK:
+			if (timedDrive(5.0, 0.3, 0.3)) {
+				//if (forward7ft(-0.4, 7 * 12.0)) {
+				GearOut->Set(false);
+				AutonTimer.Reset();
 				modeState = AB2_END;
 			}
 			break;
+
 		default:
 			stopMotors();
 		}
@@ -844,8 +874,9 @@ public:
 #define AB3_FWD 2
 #define AB3_TURN 3
 #define AB3_STR8 4
-#define AB3_GEAR 5
-#define AB3_END 6
+#define AB3_GEAR_WAIT 5
+#define AB3_GEAR 6
+#define AB3_END 7
 	void autoBlue3(void) {
 		//blue side code
 		//puts gear on pin on side of airship
@@ -874,9 +905,16 @@ public:
 			//timed drive
 			if (timedDrive(BLUE_3_CASE3_TIME, BLUE_3_CASE3_LSPEED,
 			BLUE_3_CASE3_RSPEED)) {
-				modeState = AB3_GEAR;
+				modeState = AB3_GEAR_WAIT;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
+			}
+			break;
+		case AB3_GEAR_WAIT:
+			// go forward
+			//timed drive
+			if (AutonTimer.Get() > 0.5) {
+				modeState = AB3_GEAR;
 			}
 			break;
 		case AB3_GEAR:
@@ -885,6 +923,7 @@ public:
 				modeState = AB3_END;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
+				GearOut->Set(true);
 			}
 			break;
 		default:
@@ -1466,7 +1505,8 @@ private:
 	AnalogPotentiometer DeflectorAnglePOT;
 	double DeflectorTarget, IntakeCommandPWM, AgitatorCommandPWM,
 			ConvCommandPWM, ShootCommandRPM, ShootCommandPWM, DeflectAngle,
-			KickerCommandRPM, KickerCommandPWM, ShootKP, ShootKI, ShootKD, ShootKF;
+			KickerCommandRPM, KickerCommandPWM, ShootKP, ShootKI, ShootKD,
+			ShootKF;
 	DigitalInput DeflectorHighLimit, DeflectorLowLimit;
 
 	bool useRightEncoder;bool DeflectorClosedLoop;bool KickerClosedLoop;bool ShooterClosedLoop;bool DeflectorLimitEnabled;
