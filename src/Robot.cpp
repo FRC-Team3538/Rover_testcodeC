@@ -414,6 +414,38 @@ public:
 			}
 		}
 
+		//  Read all motor current from PDP and display on drivers station
+		double driveCurrent = pdp->GetTotalCurrent();	// Get total current
+
+		// rumble if current to high
+		double LHThr = 0.0;		// Define value for rumble
+		if (driveCurrent > 125.0)// Rumble if greater than 125 amps motor current
+			LHThr = 0.5;
+		Joystick::RumbleType Vibrate;				// define Vibrate variable
+		Vibrate = Joystick::kLeftRumble;		// set Vibrate to Left
+		Drivestick.SetRumble(Vibrate, LHThr);  	// Set Left Rumble to RH Trigger
+		Vibrate = Joystick::kRightRumble;		// set vibrate to Right
+		Drivestick.SetRumble(Vibrate, LHThr);// Set Right Rumble to RH Trigger
+
+		//  Read climber motor current from PDP and display on drivers station
+		double climberCurrentLeft = pdp->GetCurrent(3);
+		double climberCurrentRight = pdp->GetCurrent(12);
+
+		// rumble if current to high
+		double LHClimb = 0.0;		// Define value for rumble
+		double climberMaxCurrent = 100.0;
+		if (climberCurrentLeft > climberMaxCurrent)	// Rumble if greater than 125 amps motor current
+			LHClimb = 0.5;
+		Joystick::RumbleType Vibrate;				// define Vibrate variable
+		Vibrate = Joystick::kLeftRumble;		// set Vibrate to Left
+		OperatorStick.SetRumble(Vibrate, LHClimb); // Set Left Rumble to LH Trigger
+
+		double RHClimb = 0.0;		// Define value for rumble
+		if (climberCurrentRight > climberMaxCurrent)	// Rumble if greater than 125 amps motor current
+			RHClimb = 0.5;
+		Vibrate = Joystick::kRightRumble;		// set vibrate to Right
+		OperatorStick.SetRumble(Vibrate, RHClimb);// Set Right Rumble to RH Trigger
+
 		//displays sensor and motor info to smartDashboard
 		SmartDashboardUpdate();
 	}
@@ -608,10 +640,12 @@ public:
 		}
 		//in closed loop
 		else {
-			if (OperatorStick.GetPOV(0) == 0 and DeflectorTarget < DeflectorLimitUpper) {
+			if (OperatorStick.GetPOV(0) == 0
+					and DeflectorTarget < DeflectorLimitUpper) {
 				//will increment the DeflectorTarget by value set by joysticks
 				DeflectorTarget += DeflectorIncrement;
-			} else if (OperatorStick.GetPOV(0) == 180 and DeflectorTarget > DeflectorLimitLower) {
+			} else if (OperatorStick.GetPOV(0) == 180
+					and DeflectorTarget > DeflectorLimitLower) {
 				//will increment the DeflectorTarget by value set by joysticks
 				DeflectorTarget -= DeflectorIncrement;
 			}
@@ -1417,6 +1451,33 @@ public:
 		return 0;
 	}
 
+	//UNTESTED UNTESTED UNTESTED UNTESTED
+	//
+	// This implements the timed drive with the direction determined
+	//		by the gyro.
+	// This points the robot to zero degrees,
+	//		so reset the gyro if you want it to go straight.
+	//
+	// The signs of the motorSpeed may be wrong.  I changed the signs on
+	//		leftMotorSpeed and rightMotorSpeed so that positive motor
+	//		speeds should send the robot forward.
+	// ---> I don't know if the signs on driveCommandRotation are correct.
+	//		These signs match the way 'forward' does it.
+	// ---> I think KP_ROTATION is correct, because this code comes from 'forward'.
+	int timedGyroDrive(double driveTime, double leftMotorSpeed,
+			double rightMotorSpeed) {
+		float currentTime = AutonTimer.Get();
+		if (currentTime < driveTime) {
+			double driveCommandRotation = ahrs->GetAngle() * KP_ROTATION;
+			motorSpeed(-leftMotorSpeed + driveCommandRotation,
+					-rightMotorSpeed - driveCommandRotation);
+		} else {
+			stopMotors();
+			return 1;
+		}
+		return 0;
+	}
+
 	int stopMotors() {
 		//sets motor speeds to zero
 		motorSpeed(0, 0);
@@ -1488,6 +1549,9 @@ private:
 	int isWaiting = 0;			/////***** Divide this into 2 variables.
 
 	Solenoid *driveSolenoid = new Solenoid(0);
+	// create pdp variable
+	PowerDistributionPanel *pdp = new PowerDistributionPanel();
+
 //manipulator
 	VictorSP Winch0, Winch1;
 	VictorSP Shooter0, Shooter1;
