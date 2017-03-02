@@ -414,37 +414,7 @@ public:
 			}
 		}
 
-		//  Read all motor current from PDP and display on drivers station
-		double driveCurrent = pdp->GetTotalCurrent();	// Get total current
 
-		// rumble if current to high
-		double LHThr = 0.0;		// Define value for rumble
-		if (driveCurrent > 125.0)// Rumble if greater than 125 amps motor current
-			LHThr = 0.5;
-		Joystick::RumbleType Vibrate;				// define Vibrate variable
-		Vibrate = Joystick::kLeftRumble;		// set Vibrate to Left
-		Drivestick.SetRumble(Vibrate, LHThr);  	// Set Left Rumble to RH Trigger
-		Vibrate = Joystick::kRightRumble;		// set vibrate to Right
-		Drivestick.SetRumble(Vibrate, LHThr);// Set Right Rumble to RH Trigger
-
-		//  Read climber motor current from PDP and display on drivers station
-		double climberCurrentLeft = pdp->GetCurrent(3);
-		double climberCurrentRight = pdp->GetCurrent(12);
-
-		// rumble if current to high
-		double LHClimb = 0.0;		// Define value for rumble
-		double climberMaxCurrent = 100.0;
-		if (climberCurrentLeft > climberMaxCurrent)	// Rumble if greater than 125 amps motor current
-			LHClimb = 0.5;
-		Joystick::RumbleType Vibrate;				// define Vibrate variable
-		Vibrate = Joystick::kLeftRumble;		// set Vibrate to Left
-		OperatorStick.SetRumble(Vibrate, LHClimb); // Set Left Rumble to LH Trigger
-
-		double RHClimb = 0.0;		// Define value for rumble
-		if (climberCurrentRight > climberMaxCurrent)	// Rumble if greater than 125 amps motor current
-			RHClimb = 0.5;
-		Vibrate = Joystick::kRightRumble;		// set vibrate to Right
-		OperatorStick.SetRumble(Vibrate, RHClimb);// Set Right Rumble to RH Trigger
 
 		//displays sensor and motor info to smartDashboard
 		SmartDashboardUpdate();
@@ -489,6 +459,37 @@ public:
 			driveSolenoid->Set(false);
 			driveRightTriggerPrev = false;
 		}
+
+		//  Read all motor current from PDP and display on drivers station
+		double driveCurrent = pdp->GetTotalCurrent();	// Get total current
+
+		// rumble if current to high
+		double LHThr = 0.0;		// Define value for rumble
+		if (driveCurrent > 125.0)// Rumble if greater than 125 amps motor current
+			LHThr = 0.5;
+		Joystick::RumbleType Vibrate;				// define Vibrate variable
+		Vibrate = Joystick::kLeftRumble;		// set Vibrate to Left
+		Drivestick.SetRumble(Vibrate, LHThr);  	// Set Left Rumble to RH Trigger
+		Vibrate = Joystick::kRightRumble;		// set vibrate to Right
+		Drivestick.SetRumble(Vibrate, LHThr);// Set Right Rumble to RH Trigger
+
+		//  Read climber motor current from PDP and display on drivers station
+		double climberCurrentLeft = pdp->GetCurrent(3);
+		double climberCurrentRight = pdp->GetCurrent(12);
+
+		// rumble if current to high
+		double LHClimb = 0.0;		// Define value for rumble
+		double climberMaxCurrent = 100.0;
+		if (climberCurrentLeft > climberMaxCurrent)	// Rumble if greater than 125 amps motor current
+			LHClimb = 0.5;
+		Vibrate = Joystick::kLeftRumble;		// set Vibrate to Left
+		OperatorStick.SetRumble(Vibrate, LHClimb); // Set Left Rumble to LH Trigger
+
+		double RHClimb = 0.0;		// Define value for rumble
+		if (climberCurrentRight > climberMaxCurrent)	// Rumble if greater than 125 amps motor current
+			RHClimb = 0.5;
+		Vibrate = Joystick::kRightRumble;		// set vibrate to Right
+		OperatorStick.SetRumble(Vibrate, RHClimb);// Set Right Rumble to RH Trigger
 
 		//drive controls ADLAI - I know this works, I just don't understand how returning only negative values works for this.
 		double SpeedLinear = Drivestick.GetRawAxis(1) * -1; // get Yaxis value (forward)
