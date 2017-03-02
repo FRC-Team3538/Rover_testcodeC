@@ -1,5 +1,8 @@
 <xml version="1.0">
 <dashboard>
+	<widget field="DBG climber current" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="1401" y="292"/>
+	</widget>
 	<widget field="Agitator Motor1 Output" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
 		<location x="0" y="505"/>
 	</widget>
@@ -35,7 +38,7 @@
 		<property name="Text" value="Encoder Selection:"/>
 	</static-widget>
 	<widget field="Auto Modes" type="String Chooser" class="edu.wpi.first.smartdashboard.gui.elements.Chooser">
-		<location x="145" y="4"/>
+		<location x="4" y="69"/>
 		<property name="Use Radio Buttons" value="false"/>
 	</widget>
 	<widget field="Kicker" type="String Chooser" class="edu.wpi.first.smartdashboard.gui.elements.Chooser">
@@ -219,6 +222,40 @@
 	<widget field="Deflector Angle POT (DEG)" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
 		<location x="278" y="320"/>
 		<property name="Background" value="102.255.0.255"/>
+	</widget>
+	<widget field="DBG POV" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="1133" y="62"/>
+	</widget>
+	<widget field="IN: Auto Backup Distance (Inch)" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="1070" y="96"/>
+	</widget>
+	<widget field="ShootKP" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="1220" y="348"/>
+		<width>140</width>
+	</widget>
+	<widget field="ShootKF" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="1350" y="51"/>
+	</widget>
+	<widget field="ShootKI" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="1423" y="89"/>
+	</widget>
+	<widget field="ShootKD" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="1109" y="29"/>
+	</widget>
+	<widget field="IN: ShootKP" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="1472" y="120"/>
+	</widget>
+	<widget field="IN: ShootKI" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="1389" y="172"/>
+	</widget>
+	<widget field="IN: ShootKD" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="1643" y="74"/>
+	</widget>
+	<widget field="IN: ShootKF" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="1578" y="44"/>
+	</widget>
+	<widget field="Auto Selector" type="String" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="23" y="20"/>
 	</widget>
 </dashboard>
 <live-window>

@@ -189,7 +189,7 @@ public:
 					22), DeflectorLowLimit(23), DeflectorPID(-0.03, 0.0, 0.0,
 					&DeflectorAnglePOT, &DeflectorMotor), KickerPID(0.03, 0.0,
 					0.0, &EncoderKicker, &KickerWheel), ShooterPID(0.0, 0.0,
-					0.0, 0.0, &EncoderShoot, &Shooter0), DrivePID(0.0, 0.0, 0.0,
+					-0.003, 0.0, &EncoderShoot, &Shooter0), DrivePID(0.0, 0.0, 0.0,
 					0.0, &EncoderRight, &DriveRight0) {
 
 		//GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
@@ -476,10 +476,11 @@ public:
 		//  Read climber motor current from PDP and display on drivers station
 		double climberCurrentLeft = pdp->GetCurrent(3);
 		double climberCurrentRight = pdp->GetCurrent(12);
+		SmartDashboard::PutNumber("DBG climber current", climberCurrentLeft);
 
 		// rumble if current to high
 		double LHClimb = 0.0;		// Define value for rumble
-		double climberMaxCurrent = 100.0;
+		double climberMaxCurrent = 30.0;	//needs to be changed... 30.0 is a guess
 		if (climberCurrentLeft > climberMaxCurrent)	// Rumble Left if greater than climberMaxCurrent
 			LHClimb = 0.5;
 		Vibrate = Joystick::kLeftRumble;		// set Vibrate to Left
@@ -541,7 +542,8 @@ public:
 				operatorRightTriggerPrev = true;
 			}
 			if (ShooterClosedLoop) {
-				ShooterPID.SetSetpoint(ShootCommandRPM);
+				//1.75 is a scaling factor to make the PID reach desired RPM
+				ShooterPID.SetSetpoint(ShootCommandRPM / 1.75);
 			} else {
 				Shooter0.Set(-ShootCommandPWM); // negative so they turn the correct way.
 			}
