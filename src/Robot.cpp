@@ -480,13 +480,13 @@ public:
 		// rumble if current to high
 		double LHClimb = 0.0;		// Define value for rumble
 		double climberMaxCurrent = 100.0;
-		if (climberCurrentLeft > climberMaxCurrent)	// Rumble if greater than 125 amps motor current
+		if (climberCurrentLeft > climberMaxCurrent)	// Rumble Left if greater than climberMaxCurrent
 			LHClimb = 0.5;
 		Vibrate = Joystick::kLeftRumble;		// set Vibrate to Left
 		OperatorStick.SetRumble(Vibrate, LHClimb); // Set Left Rumble to LH Trigger
 
 		double RHClimb = 0.0;		// Define value for rumble
-		if (climberCurrentRight > climberMaxCurrent)	// Rumble if greater than 125 amps motor current
+		if (climberCurrentRight > climberMaxCurrent)	// Rumble Right if greater than climberMaxCurrent
 			RHClimb = 0.5;
 		Vibrate = Joystick::kRightRumble;		// set vibrate to Right
 		OperatorStick.SetRumble(Vibrate, RHClimb);// Set Right Rumble to RH Trigger
