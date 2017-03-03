@@ -86,15 +86,15 @@
 // go forward 6.5 ft, turn counterclockwise 90 degrees
 //    back up 7 ft, go slowly forward for 1 second [**** is the sign backwards?****]
 //    turn counterclockwise 125 degrees, go forwards 8.5 ft
-#define RED_1_CASE1_FWD (6.5 * 12.0)
-#define RED_1_CASE2_TURN (-95)
-#define RED_1_CASE3_FWD (7 * -1 * 12.0)
-#define RED_1_CASE4_FWD_TIME (3.5)
+#define RED_1_CASE1_FWD (7.5 * 12.0)
+#define RED_1_CASE2_TURN (-90)
+#define RED_1_CASE3_FWD (7.6 * -1 * 12.0)
+#define RED_1_CASE4_FWD_TIME (3.0)
 #define RED_1_CASE4_FWD_LEFT_SPD (0.5)
 #define RED_1_CASE4_FWD_RIGHT_SPD (0.5)
-#define RED_1_CASE5_FWD (3 * 12.0)
-#define RED_1_CASE6_TURN (-125)
-#define RED_1_CASE7_FWD (8.5 * 12.0)
+#define RED_1_CASE5_FWD (3.5 * 12.0)
+#define RED_1_CASE6_TURN (-120)
+#define RED_1_CASE7_FWD (7.5 * 12.0)
 
 // This will go to the gear in front of the middle start position.
 //		This is timed so that collision with the airship will put the robot in position.
@@ -118,7 +118,10 @@
 //    go forward 2 ft
 #define RED_3_CASE1_FWD (9 * 12.0)
 #define RED_3_CASE2_TURN (60)
-#define RED_3_CASE3_FWD (2 * 12)
+//#define RED_3_CASE3_FWD (2 * 12)
+#define RED_3_CASE3_TIME (0.1)
+#define RED_3_CASE3_LSPEED (-0.75)
+#define RED_3_CASE3_RSPEED (-0.75)
 
 //linear calibrations
 #define LINEAR_TOLERANCE (0.2)
@@ -209,8 +212,8 @@ public:
 		chooseAutonSelector.AddObject(autonNameBlue3, autonNameBlue3);
 		frc::SmartDashboard::PutData("Auto Modes", &chooseAutonSelector);
 
-		chooseDriveEncoder.AddDefault(RH_Encoder, RH_Encoder);
-		chooseDriveEncoder.AddObject(LH_Encoder, LH_Encoder);
+		chooseDriveEncoder.AddDefault(LH_Encoder, LH_Encoder);
+		chooseDriveEncoder.AddObject(RH_Encoder, RH_Encoder);
 		frc::SmartDashboard::PutData("Encoder", &chooseDriveEncoder);
 
 		chooseDeflector.AddDefault(chooserOpenLoop, chooserOpenLoop);
@@ -536,8 +539,11 @@ public:
 			if (!operatorRightTriggerPrev) {
 				ShooterDelay.Reset();
 				ShooterDelay.Start();
-				ShooterPID.Reset();
-				ShooterPID.Enable();
+
+				if (ShooterClosedLoop) {
+					ShooterPID.Reset();
+					ShooterPID.Enable();
+				}
 				operatorRightTriggerPrev = true;
 			}
 			if (ShooterClosedLoop) {
@@ -1000,6 +1006,7 @@ public:
 				modeState = AR1_WAIT;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
+				ahrs->ZeroYaw();
 			}
 			break;
 //		case AR1_BKUP:
@@ -1015,7 +1022,9 @@ public:
 			if (timedDrive(RED_1_CASE4_FWD_TIME, RED_1_CASE4_FWD_LEFT_SPD,
 			RED_1_CASE4_FWD_RIGHT_SPD)) {
 				modeState = AR1_FWD2;
-
+				EncoderLeft.Reset();
+				EncoderRight.Reset();
+				ahrs->ZeroYaw();
 			}
 			break;
 		case AR1_FWD2:
@@ -1031,6 +1040,7 @@ public:
 				modeState = AR1_TO_BOILER;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
+				ahrs->ZeroYaw();
 			}
 			break;
 		case AR1_TO_BOILER:
@@ -1210,20 +1220,20 @@ public:
 		case AR3_TURN:
 			// turn 60 degrees clockwise
 			if (autonTurn(RED_3_CASE2_TURN)) {
-				modeState = AR3_STR8;
-				EncoderLeft.Reset();
-				EncoderRight.Reset();
-			}
-			break;
-		case AR3_STR8:
-			//change to timed drive
-			// go forward
-			if (forward(RED_3_CASE3_FWD)) {
 				modeState = AR3_GEAR;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 			}
 			break;
+//		case AR3_STR8:
+//			//change to timed drive
+//			// go forward
+//			if (forward(RED_3_CASE3_FWD)) {
+//				modeState = AR3_GEAR;
+//				EncoderLeft.Reset();
+//				EncoderRight.Reset();
+//			}
+//			break;
 		case AR3_GEAR:
 			//change to timed drive
 			// go forward
@@ -1564,9 +1574,15 @@ public:
 	}
 
 	int shooterSpeed(double speed) {
-		ShooterPID.SetSetpoint(speed);
-		//if value of the error is less than 50 rpm return 1
-		return (abs(ShooterPID.GetError()) < 50.0);
+
+		if (ShooterClosedLoop) {
+			ShooterPID.SetSetpoint(speed);
+			//if value of the error is less than 50 rpm return 1
+			return (abs(ShooterPID.GetError()) < 50.0);
+		}
+
+
+		return 1; // Not implemented or used anywhere...
 	}
 
 	void TestPeriodic() {
@@ -1580,12 +1596,12 @@ private:
 			chooseDeflector, chooseKicker, chooseShooter, chooseDeflectorLimit;
 	const std::string AutonNameSwitch = "Use Switch";
 	const std::string autonNameOFF = "0 OFF";
-	const std::string autonNameBlue1 = "Blue 1";
-	const std::string autonNameBlue2 = "Blue 2";
-	const std::string autonNameBlue3 = "Blue 3";
-	const std::string autonNameRed1 = "Red 1";
-	const std::string autonNameRed2 = "Red 2";
-	const std::string autonNameRed3 = "Red 3";
+	const std::string autonNameBlue1 = "Blue Boiler";
+	const std::string autonNameBlue2 = "Blue Middle Gear";
+	const std::string autonNameBlue3 = "Blue Right Side Gear";
+	const std::string autonNameRed1 = "Red Boiler";
+	const std::string autonNameRed2 = "Red Middle Gear";
+	const std::string autonNameRed3 = "Red Right Side Gear";
 	const std::string RH_Encoder = "RH_Encoder";
 	const std::string LH_Encoder = "LH_Encoder";
 	const std::string chooserClosedLoop = "Closed Loop";
