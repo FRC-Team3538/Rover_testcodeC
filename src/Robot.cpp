@@ -38,15 +38,18 @@
 //    back up 7.6 ft, go slowly forward for 3 seconds [**** This sign is backwards****]
 //    turn clockwise 120 degrees, go forwards 8.5 ft
 
-#define BLUE_1_CASE1_FWD (7.5 * 12.0)
+#define BLUE_1_CASE1_FWD (7.083 * 12.0)
 #define BLUE_1_CASE2_TURN (90)
 #define BLUE_1_CASE3_FWD (7.6 * -1 * 12.0)
-#define BLUE_1_CASE4_FWD_TIME (3.0)
+#define BLUE_1_CASE4_FWD_TIME (5.0)
 #define BLUE_1_CASE4_FWD_LEFT_SPD (0.5)
 #define BLUE_1_CASE4_FWD_RIGHT_SPD (0.5)
 #define BLUE_1_CASE5_FWD (3.5 * 12.0)
 #define BLUE_1_CASE6_TURN (120)
-#define BLUE_1_CASE7_FWD (7.5 * 12.0)
+#define BLUE_1_CASE7_FWD (6.5 * 12.0)
+#define BLUE_1_CASE8_TIME (0.3)
+#define BLUE_1_CASE8_LSPEED (-0.4)
+#define BLUE_1_CASE8_RSPEED (-0.4)
 
 // This will go to the gear in front of the middle start position.
 //		This is timed so that collision with the airship will put the robot in position.
@@ -86,15 +89,18 @@
 // go forward 6.5 ft, turn counterclockwise 90 degrees
 //    back up 7 ft, go slowly forward for 1 second [**** is the sign backwards?****]
 //    turn counterclockwise 125 degrees, go forwards 8.5 ft
-#define RED_1_CASE1_FWD (7.5 * 12.0)
+#define RED_1_CASE1_FWD (7.083 * 12.0)
 #define RED_1_CASE2_TURN (-90)
 #define RED_1_CASE3_FWD (7.6 * -1 * 12.0)
-#define RED_1_CASE4_FWD_TIME (3.0)
+#define RED_1_CASE4_FWD_TIME (5.0)
 #define RED_1_CASE4_FWD_LEFT_SPD (0.5)
 #define RED_1_CASE4_FWD_RIGHT_SPD (0.5)
 #define RED_1_CASE5_FWD (3.5 * 12.0)
 #define RED_1_CASE6_TURN (-120)
-#define RED_1_CASE7_FWD (7.5 * 12.0)
+#define RED_1_CASE7_FWD (6.5 * 12.0)
+#define RED_1_CASE8_TIME (0.3)
+#define RED_1_CASE8_LSPEED (-0.4)
+#define RED_1_CASE8_RSPEED (-0.4)
 
 // This will go to the gear in front of the middle start position.
 //		This is timed so that collision with the airship will put the robot in position.
@@ -427,13 +433,13 @@ public:
 		if (autoSelected == autonNameRed1)
 			autoRed1();
 		else if (autoSelected == autonNameRed2)
-			autoRed2();
+			autoForward();
 		else if (autoSelected == autonNameRed3)
 			autoRed3();
 		else if (autoSelected == autonNameBlue1)
 			autoBlue1();
 		else if (autoSelected == autonNameBlue2)
-			autoBlue2();
+			autoMiddleGearEject();
 		else if (autoSelected == autonNameBlue3)
 			autoBlue3();
 		else
@@ -690,8 +696,9 @@ public:
 #define AB1_FWD2 6
 #define AB1_FACE_BOILER 7
 #define AB1_TO_BOILER 8
-#define AB1_SHOOT 9
-#define AB1_END 10
+#define AB1_TIME_FWD 9
+#define AB1_SHOOT 10
+#define AB1_END 11
 
 	void autoBlue1(void) {
 
@@ -757,6 +764,14 @@ public:
 			//go forward 7-ish feet to run into boiler
 			//change to timed drive
 			if (forward(BLUE_1_CASE7_FWD)) {
+				modeState = AB1_TIME_FWD;
+				ahrs->ZeroYaw();
+			}
+			break;
+		case AB1_TIME_FWD:
+			//go forward 7-ish feet to run into boiler
+			//change to timed drive
+			if (timedDrive(BLUE_1_CASE8_TIME, BLUE_1_CASE8_LSPEED, BLUE_1_CASE8_RSPEED)) {
 				modeState = AB1_SHOOT;
 				ahrs->ZeroYaw();
 			}
@@ -858,7 +873,7 @@ public:
 #define AB2_GEAR 5
 #define AB2_BACK 6
 #define AB2_END 7
-	void autoBlue2(void) {
+	void autoMiddleGearEject(void) {
 		//blue side code
 		//goes forward to put gear on pin
 		switch (modeState) {
@@ -983,8 +998,9 @@ public:
 #define AR1_FWD2 6
 #define AR1_FACE_BOILER 7
 #define AR1_TO_BOILER 8
-#define AR1_SHOOT 9
-#define AR1_END 10
+#define	AR1_TIME_FWD 9
+#define AR1_SHOOT 10
+#define AR1_END 11
 	void autoRed1(void) {
 		//Red center position code
 		//this version turns the robot in a right angle
@@ -1027,6 +1043,7 @@ public:
 				ahrs->ZeroYaw();
 			}
 			break;
+
 		case AR1_FWD2:
 			//go backward 3-ish feet
 			if (forward(RED_1_CASE5_FWD)) {
@@ -1047,6 +1064,14 @@ public:
 			//change to timed drive
 			//go forward 7-ish feet to run into boiler
 			if (forward(RED_1_CASE7_FWD)) {
+				modeState = AR1_TIME_FWD;
+				ahrs->ZeroYaw();
+			}
+			break;
+		case AR1_TIME_FWD:
+			//change to timed drive
+			//go forward 7-ish feet to run into boiler
+			if (timedDrive(RED_1_CASE8_TIME, RED_1_CASE8_LSPEED, RED_1_CASE8_RSPEED)) {
 				modeState = AR1_SHOOT;
 				ahrs->ZeroYaw();
 			}
@@ -1139,11 +1164,8 @@ public:
 #define AR2_INIT 1
 #define AR2_FWD 2
 #define AR2_TIMED 3
-#define AR2_GEAR_WAIT 4
-#define AR2_GEAR 5
-#define AR2_BACK 6
-#define AR2_END 7
-	void autoRed2(void) {
+#define AR2_END 4
+	void autoForward (void) {
 		//change to timed drive
 		//puts gear on front of airship
 		switch (modeState) {
@@ -1165,27 +1187,6 @@ public:
 		case AR2_TIMED:
 			if (timedDrive(1.0, -0.2, -0.2)) {
 				//if (forward7ft(-0.4, 7 * 12.0)) {
-				AutonTimer.Reset();
-				modeState = AR2_GEAR_WAIT;
-			}
-			break;
-		case AR2_GEAR_WAIT:
-			if (AutonTimer.Get() > 2.5) {
-				modeState = AR2_GEAR;
-			}
-			break;
-		case AR2_GEAR:
-			if (1) {
-				//change to timed drive
-				//if (forward7ft(-0.4, 7 * 12.0)) {
-				GearOut->Set(true);
-				modeState = AR2_BACK;
-			}
-			break;
-		case AR2_BACK:
-			if (timedDrive(5.0, 0.3, 0.3)) {
-				//if (forward7ft(-0.4, 7 * 12.0)) {
-				GearOut->Set(false);
 				AutonTimer.Reset();
 				modeState = AR2_END;
 			}
@@ -1581,7 +1582,6 @@ public:
 			return (abs(ShooterPID.GetError()) < 50.0);
 		}
 
-
 		return 1; // Not implemented or used anywhere...
 	}
 
@@ -1597,10 +1597,10 @@ private:
 	const std::string AutonNameSwitch = "Use Switch";
 	const std::string autonNameOFF = "0 OFF";
 	const std::string autonNameBlue1 = "Blue Boiler";
-	const std::string autonNameBlue2 = "Blue Middle Gear";
+	const std::string autonNameBlue2 = "Middle Gear Eject";
 	const std::string autonNameBlue3 = "Blue Right Side Gear";
 	const std::string autonNameRed1 = "Red Boiler";
-	const std::string autonNameRed2 = "Red Middle Gear";
+	const std::string autonNameRed2 = "Go Forward Only";
 	const std::string autonNameRed3 = "Red Right Side Gear";
 	const std::string RH_Encoder = "RH_Encoder";
 	const std::string LH_Encoder = "LH_Encoder";
