@@ -90,8 +90,8 @@
 #define RED_1_CASE2_TURN (-95)
 #define RED_1_CASE3_FWD (7 * -1 * 12.0)
 #define RED_1_CASE4_FWD_TIME (3.5)
-#define RED_1_CASE4_FWD_LEFT_SPD (0.2)
-#define RED_1_CASE4_FWD_RIGHT_SPD (0.2)
+#define RED_1_CASE4_FWD_LEFT_SPD (0.5)
+#define RED_1_CASE4_FWD_RIGHT_SPD (0.5)
 #define RED_1_CASE5_FWD (3 * 12.0)
 #define RED_1_CASE6_TURN (-125)
 #define RED_1_CASE7_FWD (8.5 * 12.0)
@@ -187,10 +187,10 @@ public:
 					6), DeflectorAnglePOT(0, 270, 0), DeflectorTarget(0), ConvCommandPWM(
 					0.1), ShootCommandPWM(0.75), DeflectAngle(145), DeflectorHighLimit(
 					22), DeflectorLowLimit(23), DeflectorPID(-0.03, 0.0, 0.0,
-					&DeflectorAnglePOT, &DeflectorMotor), KickerPID(0.03, 0.0,
+					&DeflectorAnglePOT, &DeflectorMotor), KickerPID(0.003, 0.0,
 					0.0, &EncoderKicker, &KickerWheel), ShooterPID(0.0, 0.0,
-					-0.003, 0.0, &EncoderShoot, &Shooter0), DrivePID(0.0, 0.0, 0.0,
-					0.0, &EncoderRight, &DriveRight0) {
+					-0.003, 0.0, &EncoderShoot, &Shooter0), DrivePID(0.0, 0.0,
+					0.0, 0.0, &EncoderRight, &DriveRight0) {
 
 		//GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
 		//Shooter = new MultiSpeedController();
@@ -232,10 +232,10 @@ public:
 		// Inialize settings from Smart Dashboard
 		ShootCommandPWM = 0.8;
 		ShootCommandRPM = 2800;
-		ShootKP = 0.0;
+		ShootKP = 0.003;
 		ShootKI = 0.0;
 		ShootKD = 0.0;
-		ShootKF = 0.0;
+		ShootKF = 1.0 / 3200.0; //   1 / MAX RPM
 		KickerCommandPWM = 0.75;
 		KickerCommandRPM = 500;
 		DeflectorTarget = 170;
@@ -414,8 +414,6 @@ public:
 			}
 		}
 
-
-
 		//displays sensor and motor info to smartDashboard
 		SmartDashboardUpdate();
 	}
@@ -460,6 +458,7 @@ public:
 			driveRightTriggerPrev = false;
 		}
 
+		//  Rumble code
 		//  Read all motor current from PDP and display on drivers station
 		double driveCurrent = pdp->GetTotalCurrent();	// Get total current
 
@@ -480,14 +479,14 @@ public:
 
 		// rumble if current to high
 		double LHClimb = 0.0;		// Define value for rumble
-		double climberMaxCurrent = 30.0;	//needs to be changed... 30.0 is a guess
+		double climberMaxCurrent = 30.0;//needs to be changed... 30.0 is a guess
 		if (climberCurrentLeft > climberMaxCurrent)	// Rumble Left if greater than climberMaxCurrent
 			LHClimb = 0.5;
 		Vibrate = Joystick::kLeftRumble;		// set Vibrate to Left
 		OperatorStick.SetRumble(Vibrate, LHClimb); // Set Left Rumble to LH Trigger
 
 		double RHClimb = 0.0;		// Define value for rumble
-		if (climberCurrentRight > climberMaxCurrent)	// Rumble Right if greater than climberMaxCurrent
+		if (climberCurrentRight > climberMaxCurrent)// Rumble Right if greater than climberMaxCurrent
 			RHClimb = 0.5;
 		Vibrate = Joystick::kRightRumble;		// set vibrate to Right
 		OperatorStick.SetRumble(Vibrate, RHClimb);// Set Right Rumble to RH Trigger
@@ -543,7 +542,7 @@ public:
 			}
 			if (ShooterClosedLoop) {
 				//1.75 is a scaling factor to make the PID reach desired RPM
-				ShooterPID.SetSetpoint(ShootCommandRPM / 1.75);
+				ShooterPID.SetSetpoint(ShootCommandRPM / 60.0);
 			} else {
 				Shooter0.Set(-ShootCommandPWM); // negative so they turn the correct way.
 			}
@@ -566,7 +565,7 @@ public:
 			Agitator0.Set(OperatorStick.GetRawAxis(3));
 
 			if (KickerClosedLoop) {
-				KickerPID.SetSetpoint(KickerCommandRPM);
+				KickerPID.SetSetpoint(KickerCommandRPM / 60.0);
 				KickerPID.Enable();
 			} else {
 				KickerWheel.Set(KickerCommandPWM);
@@ -757,8 +756,9 @@ public:
 			}
 			break;
 		case AB1_SHOOT:
-			//launch
-			modeState = AB1_END;
+			if (shoot()) {
+				modeState = AB1_END;
+			}
 			break;
 		default:
 			stopMotors();
@@ -997,19 +997,19 @@ public:
 		case AR1_TURN90:
 			// turn 90 degrees counterclockwise
 			if (autonTurn(RED_1_CASE2_TURN)) {
-				modeState = AR1_BKUP;
+				modeState = AR1_WAIT;
 				EncoderLeft.Reset();
 				EncoderRight.Reset();
 			}
 			break;
-		case AR1_BKUP:
-			//change to timed drive
-			// go forward 7 ft to hit hopper
-			if (forward(RED_1_CASE3_FWD)) {
-				modeState = AR1_WAIT;
-				AutonTimer.Reset();
-			}
-			break;
+//		case AR1_BKUP:
+//			//change to timed drive
+//			// go forward 7 ft to hit hopper
+//			if (forward(RED_1_CASE3_FWD)) {
+//				modeState = AR1_WAIT;
+//				AutonTimer.Reset();
+//			}
+//			break;
 		case AR1_WAIT:
 			//waits in front of hopper a couple of seconds for balls
 			if (timedDrive(RED_1_CASE4_FWD_TIME, RED_1_CASE4_FWD_LEFT_SPD,
@@ -1042,8 +1042,9 @@ public:
 			}
 			break;
 		case AR1_SHOOT:
-			//launch
-			modeState = AR1_END;
+			if (shoot()) {
+				modeState = AR1_END;
+			}
 			break;
 		default:
 			stopMotors();
@@ -1127,8 +1128,11 @@ public:
 
 #define AR2_INIT 1
 #define AR2_FWD 2
-#define AR2_GEAR 3
-#define AR2_END 4
+#define AR2_TIMED 3
+#define AR2_GEAR_WAIT 4
+#define AR2_GEAR 5
+#define AR2_BACK 6
+#define AR2_END 7
 	void autoRed2(void) {
 		//change to timed drive
 		//puts gear on front of airship
@@ -1140,13 +1144,39 @@ public:
 			modeState = AR2_FWD;
 			break;
 		case AR2_FWD:
-			if (timedDrive(RED_2_CASE2_TIME, RED_2_CASE2_LSPEED,
-			RED_2_CASE2_RSPEED)) {
+			if (forward(71.0)) {
+				//timedDrive(BLUE_2_CASE2_TIME, BLUE_2_CASE2_LSPEED,
+				//BLUE_2_CASE2_RSPEED)
+				//if (forward7ft(-0.4, 7 * 12.0)) {
+				AutonTimer.Reset();
+				modeState = AR2_TIMED;
+			}
+			break;
+		case AR2_TIMED:
+			if (timedDrive(1.0, -0.2, -0.2)) {
+				//if (forward7ft(-0.4, 7 * 12.0)) {
+				AutonTimer.Reset();
+				modeState = AR2_GEAR_WAIT;
+			}
+			break;
+		case AR2_GEAR_WAIT:
+			if (AutonTimer.Get() > 2.5) {
 				modeState = AR2_GEAR;
 			}
 			break;
 		case AR2_GEAR:
 			if (1) {
+				//change to timed drive
+				//if (forward7ft(-0.4, 7 * 12.0)) {
+				GearOut->Set(true);
+				modeState = AR2_BACK;
+			}
+			break;
+		case AR2_BACK:
+			if (timedDrive(5.0, 0.3, 0.3)) {
+				//if (forward7ft(-0.4, 7 * 12.0)) {
+				GearOut->Set(false);
+				AutonTimer.Reset();
 				modeState = AR2_END;
 			}
 			break;
@@ -1283,6 +1313,7 @@ public:
 				KickerCommandRPM);
 		SmartDashboard::PutNumber("Kicker CMD (PWM)", KickerCommandPWM);
 		SmartDashboard::PutNumber("Kicker CMD (RPM)", KickerCommandRPM);
+		KickerPID.SetPID(ShootKP, ShootKI, ShootKD, ShootKF);
 
 		//winch/climber... whatever you want to call it
 		SmartDashboard::PutBoolean("Winch Stop Switch", !WinchStop.Get());
@@ -1484,6 +1515,39 @@ public:
 	int stopMotors() {
 		//sets motor speeds to zero
 		motorSpeed(0, 0);
+		return 1;
+	}
+
+	int shoot() {
+		//resets shooter and kicker encoders
+		if (ShooterClosedLoop) {
+			ShooterPID.Reset();
+			ShooterPID.Enable();
+		}
+		if (KickerClosedLoop) {
+			KickerPID.Reset();
+			KickerPID.Enable();
+		}
+
+		//turn on conveyor, agitators, and kicker
+		Conveyor.Set(0.8);
+		Agitator0.Set(0.8);
+
+		if (KickerClosedLoop) {
+			KickerPID.SetSetpoint(KickerCommandRPM / 60.0);
+			KickerPID.Enable();
+		} else {
+			KickerWheel.Set(KickerCommandPWM);
+		}
+
+		//launch
+		if (ShooterClosedLoop) {
+			//1.75 is a scaling factor to make the PID reach desired RPM
+			ShooterPID.SetSetpoint(ShootCommandRPM / 60.0);
+		} else {
+			Shooter0.Set(-ShootCommandPWM); // negative so they turn the correct way.
+		}
+
 		return 1;
 	}
 
