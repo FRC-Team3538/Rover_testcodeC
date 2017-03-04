@@ -921,7 +921,7 @@ public:
 			}
 			break;
 		case AB2_GEAR_WAIT:
-			if (AutonTimer.Get() > 2.5) {
+			if (AutonTimer.Get() > 0.5) {
 				modeState = AB2_GEAR;
 			}
 			break;
