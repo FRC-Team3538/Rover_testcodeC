@@ -240,16 +240,16 @@ public:
 
 		// Inialize settings from Smart Dashboard
 		ShootCommandPWM = 0.85;
-		ShootCommandRPM = 3000;
+		ShootCommandRPM = 2600;
 		ShootKP = -0.003;
 		ShootKI = 0.0;
 		ShootKD = 0.0;
 		ShootKF = -1.0 / 3200.0; //   1 / MAX RPM
 		KickerCommandPWM = 0.5;
 		KickerCommandRPM = 500;
-		DeflectorTarget = 163;  // Default Angle (Degrees)
-		ConvCommandPWM = 0.5;
-		AgitatorCommandPWM = 0.75;
+		DeflectorTarget = 164.0;  // Default Angle (Degrees)
+		ConvCommandPWM = 0.2;
+		AgitatorCommandPWM = 0.2;
 		IntakeCommandPWM = 0.75;
 		autoBackupDistance = -2.0;
 
@@ -285,6 +285,10 @@ public:
 		EncoderRight.SetDistancePerPulse(98.0 / 3125.0 * 4.0);
 		EncoderShoot.SetDistancePerPulse(1.0 / 3328.0 * 4.0);
 		EncoderKicker.SetDistancePerPulse(1.0 / 4122.0 * 4.0);
+
+
+		EncoderShoot.SetSamplesToAverage(50);
+
 
 		//configure PIDs
 		DeflectorPID.SetOutputRange(-0.1, 0.2);
@@ -344,6 +348,8 @@ public:
 
 		AutonTimer.Reset();
 		AutonTimer.Start();
+		EncoderCheckTimer.Reset();
+		EncoderCheckTimer.Start();
 		// Encoder based auton
 		EncoderLeft.Reset();
 		EncoderRight.Reset();
@@ -590,7 +596,7 @@ public:
 
 		// Turn on Kicker Wheel, conveyor, and agitators when right trigger is pressed
 		if (OperatorStick.GetRawAxis(3) > Deadband
-				and ShooterDelay.Get() > 0.2) {
+				and ShooterDelay.Get() > 0.5) {
 
 			Conveyor.Set(OperatorStick.GetRawAxis(3));
 			Agitator0.Set(OperatorStick.GetRawAxis(3));
@@ -1449,11 +1455,22 @@ public:
 			driveCommandLinear = -1 * LINEAR_MAX_DRIVE_SPEED; /////***** same as above.
 		}
 
+		//gyro values that make the robot drive straight
 		double gyroAngle = ahrs->GetAngle();
 		double driveCommandRotation = gyroAngle * KP_ROTATION;
-		//calculates and sets motor speeds
-		motorSpeed(driveCommandLinear + driveCommandRotation,
-				driveCommandLinear - driveCommandRotation);
+
+		//encdoer check TODO: NOT QUITE THERE YET
+		double maxDriveTime = 5.0;
+		EncoderCheckTimer.Reset();
+		if(EncoderCheckTimer.Get() > maxDriveTime){
+			motorSpeed(0.0, 0.0);
+			DriverStation::ReportError("(forward) Encoder Max Drive Time Exceeded");
+		}
+		else{
+			//calculates and sets motor speeds
+			motorSpeed(driveCommandLinear + driveCommandRotation,
+					driveCommandLinear - driveCommandRotation);
+		}
 
 		//routine helps prevent the robot from overshooting the distance
 		if (isWaiting == 0) { /////***** Rename "isWaiting."  This isWaiting overlaps with the autonTurn() isWaiting.  There is nothing like 2 globals that are used for different things, but have the same name.
@@ -1472,6 +1489,7 @@ public:
 				return 1;
 			}
 		}
+
 		return 0;
 	}
 
@@ -1636,6 +1654,7 @@ private:
 	VictorSP DriveRight1;
 	VictorSP DriveRight2;
 	Timer AutonTimer;
+	Timer EncoderCheckTimer;
 	Timer ShooterDelay;
 	Encoder EncoderLeft;
 	Encoder EncoderRight;
