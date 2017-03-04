@@ -223,10 +223,10 @@ public:
 		frc::SmartDashboard::PutData("Encoder", &chooseDriveEncoder);
 
 		chooseDeflector.AddDefault(chooserClosedLoop, chooserClosedLoop);
-		chooseDeflector.AddDefault(chooserOpenLoop, chooserOpenLoop);
+		chooseDeflector.AddObject(chooserOpenLoop, chooserOpenLoop);
 		frc::SmartDashboard::PutData("Deflector", &chooseDeflector);
 
-		chooseKicker.AddObject(chooserOpenLoop, chooserOpenLoop);
+		chooseKicker.AddDefault(chooserOpenLoop, chooserOpenLoop);
 		chooseKicker.AddObject(chooserClosedLoop, chooserClosedLoop);
 		frc::SmartDashboard::PutData("Kicker", &chooseKicker);
 
@@ -239,16 +239,16 @@ public:
 		frc::SmartDashboard::PutData("Deflector Limits", &chooseDeflectorLimit);
 
 		// Inialize settings from Smart Dashboard
-		ShootCommandPWM = 0.8;
-		ShootCommandRPM = 2800;
+		ShootCommandPWM = 0.85;
+		ShootCommandRPM = 3000;
 		ShootKP = -0.003;
 		ShootKI = 0.0;
 		ShootKD = 0.0;
 		ShootKF = -1.0 / 3200.0; //   1 / MAX RPM
-		KickerCommandPWM = 0.75;
+		KickerCommandPWM = 0.5;
 		KickerCommandRPM = 500;
 		DeflectorTarget = 163;  // Default Angle (Degrees)
-		ConvCommandPWM = 0.75;
+		ConvCommandPWM = 0.5;
 		AgitatorCommandPWM = 0.75;
 		IntakeCommandPWM = 0.75;
 		autoBackupDistance = -2.0;
@@ -427,7 +427,6 @@ public:
 			}
 		}
 
-
 		//enables deflector PID
 		if (DeflectorClosedLoop) {
 			DeflectorPID.Enable();
@@ -436,7 +435,15 @@ public:
 		}
 
 		//displays sensor and motor info to smartDashboard
-		SmartDashboardUpdate();
+
+		try {
+			SmartDashboardUpdate();
+		} catch (std::exception ex) {
+			std::string err_string = "Smart Dash Errorz! :  ";
+			err_string += ex.what();
+			DriverStation::ReportError(err_string.c_str());
+		}
+
 	}
 	void DisabledPeriodic() {
 		//SmartDashboardUpdate();
@@ -547,7 +554,6 @@ public:
 			driveButtonYPrev = false;
 			Adrive.ArcadeDrive(OutputY, OutputX, true);
 		}
-
 
 		/*
 		 * MANIP CODE
@@ -785,7 +791,7 @@ public:
 			//go forward 7-ish feet to run into boiler
 			//change to timed drive
 			if (timedDrive(BLUE_1_CASE8_TIME, BLUE_1_CASE8_LSPEED,
-					BLUE_1_CASE8_RSPEED)) {
+			BLUE_1_CASE8_RSPEED)) {
 				modeState = AB1_SHOOT;
 				ahrs->ZeroYaw();
 			}
@@ -1086,7 +1092,7 @@ public:
 			//change to timed drive
 			//go forward 7-ish feet to run into boiler
 			if (timedDrive(RED_1_CASE8_TIME, RED_1_CASE8_LSPEED,
-					RED_1_CASE8_RSPEED)) {
+			RED_1_CASE8_RSPEED)) {
 				modeState = AR1_SHOOT;
 				ahrs->ZeroYaw();
 			}
@@ -1266,6 +1272,8 @@ public:
 	}
 	void SmartDashboardUpdate() {
 
+
+
 		// Auto State
 		SmartDashboard::PutNumber("Auto Switch (#)", AutoVal);
 		SmartDashboard::PutString("Auto Program", autoSelected);
@@ -1274,7 +1282,7 @@ public:
 
 		// Drive Encoders
 		SmartDashboard::PutNumber("Drive Encoder Left (RAW)",
-				EncoderLeft.GetRaw());
+				EncoderLeft.GetRaw() );
 		SmartDashboard::PutNumber("Drive Encoder Left (Inches)",
 				EncoderLeft.GetDistance());
 
@@ -1282,7 +1290,6 @@ public:
 				EncoderRight.GetRaw());
 		SmartDashboard::PutNumber("Drive Encoder Right (Inch)",
 				EncoderRight.GetDistance());
-
 
 		autoBackupDistance = SmartDashboard::GetNumber(
 				"IN: Auto Backup Distance (Inch)", autoBackupDistance);
@@ -1388,16 +1395,14 @@ public:
 		SmartDashboard::PutNumber("Conveyor Motor  Output", Conveyor.Get());
 		SmartDashboard::PutNumber("Deflector Motor Output",
 				DeflectorMotor.Get());
+//
+//		//chooser code for manip in open/closed loop
 
-		//chooser code for manip in open/closed loop
 		ShooterClosedLoop = (chooseShooter.GetSelected() == chooserClosedLoop);
 		KickerClosedLoop = (chooseKicker.GetSelected() == chooserClosedLoop);
 		DeflectorClosedLoop = (chooseDeflector.GetSelected()
 				== chooserClosedLoop);
 		DeflectorLimitEnabled = (chooseDeflectorLimit.GetSelected() == Enable);
-
-		//**TEST
-		SmartDashboard::PutNumber("DBG POV", OperatorStick.GetPOV(0));
 
 		//grip table data
 		//GRIPTable = NetworkTable::GetTable("GRIP/myContoursReport");
