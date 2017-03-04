@@ -38,7 +38,7 @@
 //    back up 7.6 ft, go slowly forward for 3 seconds [**** This sign is backwards****]
 //    turn clockwise 120 degrees, go forwards 8.5 ft
 
-#define BLUE_1_CASE1_FWD (7.083 * 12.0)
+#define BLUE_1_CASE1_FWD (6.8 * 12.0)
 #define BLUE_1_CASE2_TURN (90)
 #define BLUE_1_CASE3_FWD (7.6 * -1 * 12.0)
 #define BLUE_1_CASE4_FWD_TIME (5.0)
@@ -89,7 +89,7 @@
 // go forward 6.5 ft, turn counterclockwise 90 degrees
 //    back up 7 ft, go slowly forward for 1 second [**** is the sign backwards?****]
 //    turn counterclockwise 125 degrees, go forwards 8.5 ft
-#define RED_1_CASE1_FWD (7.083 * 12.0)
+#define RED_1_CASE1_FWD (6.8 * 12.0)
 #define RED_1_CASE2_TURN (-90)
 #define RED_1_CASE3_FWD (7.6 * -1 * 12.0)
 #define RED_1_CASE4_FWD_TIME (5.0)
@@ -195,7 +195,7 @@ public:
 					10), EncoderKicker(20, 21), EncoderShoot(4, 5), WinchStop(
 					6), DeflectorAnglePOT(0, 270, 0), DeflectorTarget(0), ConvCommandPWM(
 					0.1), ShootCommandPWM(0.75), DeflectAngle(145), DeflectorHighLimit(
-					22), DeflectorLowLimit(23), DeflectorPID(-0.03, 0.0, 0.0,
+					22), DeflectorLowLimit(23), DeflectorPID(-0.08, 0.0, 0.0,
 					&DeflectorAnglePOT, &DeflectorMotor), KickerPID(0.003, 0.0,
 					0.0, &EncoderKicker, &KickerWheel), ShooterPID(0.0, 0.0,
 					-0.003, 0.0, &EncoderShoot, &Shooter0), DrivePID(0.0, 0.0,
@@ -222,11 +222,11 @@ public:
 		chooseDriveEncoder.AddObject(RH_Encoder, RH_Encoder);
 		frc::SmartDashboard::PutData("Encoder", &chooseDriveEncoder);
 
+		chooseDeflector.AddDefault(chooserClosedLoop, chooserClosedLoop);
 		chooseDeflector.AddDefault(chooserOpenLoop, chooserOpenLoop);
-		chooseDeflector.AddObject(chooserClosedLoop, chooserClosedLoop);
 		frc::SmartDashboard::PutData("Deflector", &chooseDeflector);
 
-		chooseKicker.AddDefault(chooserOpenLoop, chooserOpenLoop);
+		chooseKicker.AddObject(chooserOpenLoop, chooserOpenLoop);
 		chooseKicker.AddObject(chooserClosedLoop, chooserClosedLoop);
 		frc::SmartDashboard::PutData("Kicker", &chooseKicker);
 
@@ -241,17 +241,17 @@ public:
 		// Inialize settings from Smart Dashboard
 		ShootCommandPWM = 0.8;
 		ShootCommandRPM = 2800;
-		ShootKP = 0.003;
+		ShootKP = -0.003;
 		ShootKI = 0.0;
 		ShootKD = 0.0;
-		ShootKF = 1.0 / 3200.0; //   1 / MAX RPM
+		ShootKF = -1.0 / 3200.0; //   1 / MAX RPM
 		KickerCommandPWM = 0.75;
 		KickerCommandRPM = 500;
-		DeflectorTarget = 170;
+		DeflectorTarget = 163;  // Default Angle (Degrees)
 		ConvCommandPWM = 0.75;
 		AgitatorCommandPWM = 0.75;
 		IntakeCommandPWM = 0.75;
-		autoBackupDistance = -7.0;
+		autoBackupDistance = -2.0;
 
 		SmartDashboard::PutNumber("IN: Shooter CMD (PWM)", ShootCommandPWM);
 		SmartDashboard::PutNumber("IN: Shooter CMD (RPM)", ShootCommandRPM);
@@ -287,7 +287,7 @@ public:
 		EncoderKicker.SetDistancePerPulse(1.0 / 4122.0 * 4.0);
 
 		//configure PIDs
-		DeflectorPID.SetOutputRange(-0.1, 0.1);
+		DeflectorPID.SetOutputRange(-0.1, 0.2);
 
 		//drive command averaging filter ADLAI - Does this just make sure joysticks are reading 0? Should it be both here and in teleopinit?
 		OutputX = 0, OutputY = 0;
@@ -423,6 +423,14 @@ public:
 			}
 		}
 
+
+		//enables deflector PID
+		if (DeflectorClosedLoop) {
+			DeflectorPID.Enable();
+		} else {
+			DeflectorPID.Disable();
+		}
+
 		//displays sensor and motor info to smartDashboard
 		SmartDashboardUpdate();
 	}
@@ -535,6 +543,7 @@ public:
 			driveButtonYPrev = false;
 			Adrive.ArcadeDrive(OutputY, OutputX, true);
 		}
+
 
 		/*
 		 * MANIP CODE
@@ -669,7 +678,7 @@ public:
 				DeflectorTarget = 163.0;
 			}
 			if (OperatorStick.GetPOV(0) == 270) {
-				DeflectorTarget = 163.0;
+				DeflectorTarget = 135.0;
 			}
 
 			DeflectorPID.SetSetpoint(DeflectorTarget);
@@ -771,7 +780,8 @@ public:
 		case AB1_TIME_FWD:
 			//go forward 7-ish feet to run into boiler
 			//change to timed drive
-			if (timedDrive(BLUE_1_CASE8_TIME, BLUE_1_CASE8_LSPEED, BLUE_1_CASE8_RSPEED)) {
+			if (timedDrive(BLUE_1_CASE8_TIME, BLUE_1_CASE8_LSPEED,
+					BLUE_1_CASE8_RSPEED)) {
 				modeState = AB1_SHOOT;
 				ahrs->ZeroYaw();
 			}
@@ -1071,7 +1081,8 @@ public:
 		case AR1_TIME_FWD:
 			//change to timed drive
 			//go forward 7-ish feet to run into boiler
-			if (timedDrive(RED_1_CASE8_TIME, RED_1_CASE8_LSPEED, RED_1_CASE8_RSPEED)) {
+			if (timedDrive(RED_1_CASE8_TIME, RED_1_CASE8_LSPEED,
+					RED_1_CASE8_RSPEED)) {
 				modeState = AR1_SHOOT;
 				ahrs->ZeroYaw();
 			}
@@ -1165,7 +1176,7 @@ public:
 #define AR2_FWD 2
 #define AR2_TIMED 3
 #define AR2_END 4
-	void autoForward (void) {
+	void autoForward(void) {
 		//change to timed drive
 		//puts gear on front of airship
 		switch (modeState) {
