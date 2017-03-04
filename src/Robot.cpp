@@ -384,6 +384,10 @@ public:
 		DriveRight2.Set(DriveRight0.Get());
 		Agitator1.Set(Agitator0.Get());
 
+		// Encoder Selection for autotools
+		encoderSelected = chooseDriveEncoder.GetSelected();
+		useRightEncoder = (encoderSelected == RH_Encoder);
+
 		//Read Auton Switch
 		AutoSw1 = DiIn7.Get();
 		AutoSw2 = DiIn8.Get();
@@ -1279,8 +1283,6 @@ public:
 		SmartDashboard::PutNumber("Drive Encoder Right (Inch)",
 				EncoderRight.GetDistance());
 
-		encoderSelected = chooseDriveEncoder.GetSelected();
-		useRightEncoder = (encoderSelected == RH_Encoder);
 
 		autoBackupDistance = SmartDashboard::GetNumber(
 				"IN: Auto Backup Distance (Inch)", autoBackupDistance);
