@@ -246,9 +246,15 @@ public:
 		ShootCommandRPM = 2600;
 		ShootKP = -0.003;
 		ShootKI = 0.0;
+<<<<<<< HEAD
 		ShootKD = 0.0;
 		ShootKF = -1.0 / 3200.0; //   1 / MAX RPM
 		KickerCommandPWM = 0.5;
+=======
+		ShootKD = -0.003;
+		ShootKF = 0.0;
+		KickerCommandPWM = 0.75;
+>>>>>>> origin/master
 		KickerCommandRPM = 500;
 		DeflectorTarget = 164.0;  // Default Angle (Degrees)
 		ConvCommandPWM = 0.2;
@@ -316,7 +322,7 @@ public:
 		}
 
 		if (ShooterClosedLoop) {
-			ShooterPID.Enable();
+			// ShooterPID.Enable();  // enabled when trigger is depressed
 		} else {
 			ShooterPID.Disable();
 		}
@@ -569,7 +575,7 @@ public:
 
 		// Turn on the shooter when right hand trigger is pushed
 		if (OperatorStick.GetRawAxis(3) > Deadband) {
-			if (!operatorRightTriggerPrev) {
+			if (!operatorRightTriggerPrev and ShooterClosedLoop) { //Start timer and enable PID if closed loop
 				ShooterDelay.Reset();
 				ShooterDelay.Start();
 
@@ -578,10 +584,20 @@ public:
 					ShooterPID.Enable();
 				}
 				operatorRightTriggerPrev = true;
+			} else if (!operatorRightTriggerPrev) { //Start timer if not closed loop
+				ShooterDelay.Reset();
+				ShooterDelay.Start();
+				operatorRightTriggerPrev = true;
 			}
+
 			if (ShooterClosedLoop) {
+<<<<<<< HEAD
 				//1.75 is a scaling factor to make the PID reach desired RPM
 				ShooterPID.SetSetpoint(ShootCommandRPM / 60.0);
+=======
+				//0.225 is a scaling factor to make the PID reach desired RPM
+				ShooterPID.SetSetpoint(ShootCommandRPM * .225);
+>>>>>>> origin/master
 			} else {
 				Shooter0.Set(-ShootCommandPWM); // negative so they turn the correct way.
 			}
