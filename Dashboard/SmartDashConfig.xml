@@ -1,5 +1,22 @@
 <xml version="1.0">
 <dashboard>
+	<widget field="CLOSED LOOP ENABLED" type="Boolean" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="261" y="205"/>
+	</widget>
+	<widget field="Deflector Angle" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="261" y="182"/>
+	</widget>
+	<widget field="Conveyor Speed" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="261" y="159"/>
+	</widget>
+	<widget field="Shooter Speed" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="261" y="136"/>
+	</widget>
+	<widget field="Shooter Encoder (RPM)" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.LinePlot">
+		<location x="14" y="488"/>
+		<width>1845</width>
+		<height>205</height>
+	</widget>
 	<widget field="DBG climber current" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
 		<location x="1131" y="13"/>
 	</widget>
@@ -42,7 +59,7 @@
 		<property name="Use Radio Buttons" value="false"/>
 	</widget>
 	<widget field="Kicker" type="String Chooser" class="edu.wpi.first.smartdashboard.gui.elements.Chooser">
-		<location x="646" y="223"/>
+		<location x="646" y="224"/>
 		<property name="Use Radio Buttons" value="false"/>
 	</widget>
 	<widget field="Deflector Limits" type="String Chooser" class="edu.wpi.first.smartdashboard.gui.elements.Chooser">
@@ -114,10 +131,6 @@
 	<widget field="Drive L0 Output" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
 		<location x="350" y="66"/>
 		<property name="Background" value="255.255.0.255"/>
-	</widget>
-	<widget field="Shooter Encoder (RPM)" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
-		<location x="861" y="393"/>
-		<property name="Background" value="51.255.0.255"/>
 	</widget>
 	<widget field="Shooter Encoder (RAW)" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
 		<location x="858" y="343"/>

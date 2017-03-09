@@ -145,6 +145,9 @@
 #define ERROR_GAIN (-0.05)
 #define ROTATIONAL_SETTLING_TIME (0.1)
 
+//encoder max drive time
+#define MAX_DRIVE_TIME (3.0)
+
 //------------------------Bob on tile calibrations END---------------------
 
 //------------------------Rover calibrations START-------------------------
@@ -351,8 +354,7 @@ public:
 		EncoderCheckTimer.Reset();
 		EncoderCheckTimer.Start();
 		// Encoder based auton
-		EncoderLeft.Reset();
-		EncoderRight.Reset();
+		resetEncoder();
 		// Turn off drive motors
 		DriveLeft0.Set(0);
 		DriveLeft1.Set(0);
@@ -731,6 +733,7 @@ public:
 		//drives turns then drives again
 		switch (modeState) {
 		case AB1_INIT:
+			EncoderCheckTimer.Reset();
 			modeState = AB1_FWD;
 			break;
 		case AB1_FWD:
@@ -745,8 +748,7 @@ public:
 			if (autonTurn(BLUE_1_CASE2_TURN)) {
 				//modeState = AB1_BKUP;
 				modeState = AB1_WAIT;
-				EncoderLeft.Reset();
-				EncoderRight.Reset();
+				resetEncoder();
 				ahrs->ZeroYaw();
 			}
 			break;
@@ -763,9 +765,9 @@ public:
 			if (timedDrive(BLUE_1_CASE4_FWD_TIME, BLUE_1_CASE4_FWD_LEFT_SPD,
 			BLUE_1_CASE4_FWD_RIGHT_SPD)) {
 				modeState = AB1_FWD2;
-				EncoderLeft.Reset();
-				EncoderRight.Reset();
+				resetEncoder();
 				ahrs->ZeroYaw();
+				EncoderCheckTimer.Reset();
 			}
 			break;
 		case AB1_FWD2:
@@ -779,9 +781,9 @@ public:
 			// turn enough degrees to face boiler
 			if (autonTurn(BLUE_1_CASE6_TURN)) {
 				modeState = AB1_TO_BOILER;
-				EncoderLeft.Reset();
-				EncoderRight.Reset();
+				resetEncoder();
 				ahrs->ZeroYaw();
+				EncoderCheckTimer.Reset();
 			}
 			break;
 			//possibly will take out if can shoot from hopper
@@ -843,8 +845,7 @@ public:
 			if (autonTurn(BLUE_1_CASE2_TURN)) {
 				//modeState = AB1_BKUP;
 				modeState = AB1A_WAIT;
-				EncoderLeft.Reset();
-				EncoderRight.Reset();
+				resetEncoder();
 				ahrs->ZeroYaw();
 			}
 			break;
@@ -861,8 +862,7 @@ public:
 			if (timedDrive(BLUE_1_CASE4_FWD_TIME, BLUE_1_CASE4_FWD_LEFT_SPD,
 			BLUE_1_CASE4_FWD_RIGHT_SPD)) {
 				modeState = AB1A_FWD2;
-				EncoderLeft.Reset();
-				EncoderRight.Reset();
+				resetEncoder();
 				ahrs->ZeroYaw();
 			}
 			break;
@@ -877,8 +877,7 @@ public:
 			// turn enough degrees to face boiler
 			if (autonTurn(BLUE_1_CASE6_TURN)) {
 				modeState = AB1A_SHOOT;
-				EncoderLeft.Reset();
-				EncoderRight.Reset();
+				resetEncoder();
 				ahrs->ZeroYaw();
 			}
 			break;
@@ -979,8 +978,7 @@ public:
 			// turn 90 degrees counterclockwise
 			if (autonTurn(BLUE_3_CASE2_TURN)) {
 				modeState = AB3_STR8;
-				EncoderLeft.Reset();
-				EncoderRight.Reset();
+				resetEncoder();
 				ahrs->ZeroYaw();
 			}
 			break;
@@ -990,8 +988,7 @@ public:
 			if (timedDrive(BLUE_3_CASE3_TIME, BLUE_3_CASE3_LSPEED,
 			BLUE_3_CASE3_RSPEED)) {
 				modeState = AB3_GEAR_WAIT;
-				EncoderLeft.Reset();
-				EncoderRight.Reset();
+				resetEncoder();
 			}
 			break;
 		case AB3_GEAR_WAIT:
@@ -1005,8 +1002,7 @@ public:
 			// deploy gear
 			if (1) {
 				modeState = AB3_END;
-				EncoderLeft.Reset();
-				EncoderRight.Reset();
+				resetEncoder();
 				GearOut->Set(true);
 			}
 			break;
@@ -1046,8 +1042,7 @@ public:
 			// turn 90 degrees counterclockwise
 			if (autonTurn(RED_1_CASE2_TURN)) {
 				modeState = AR1_WAIT;
-				EncoderLeft.Reset();
-				EncoderRight.Reset();
+				resetEncoder();
 				ahrs->ZeroYaw();
 			}
 			break;
@@ -1064,8 +1059,7 @@ public:
 			if (timedDrive(RED_1_CASE4_FWD_TIME, RED_1_CASE4_FWD_LEFT_SPD,
 			RED_1_CASE4_FWD_RIGHT_SPD)) {
 				modeState = AR1_FWD2;
-				EncoderLeft.Reset();
-				EncoderRight.Reset();
+				resetEncoder();
 				ahrs->ZeroYaw();
 			}
 			break;
@@ -1081,8 +1075,7 @@ public:
 			// turns counterclockwise enough degrees to face boiler
 			if (autonTurn(RED_1_CASE6_TURN)) {
 				modeState = AR1_TO_BOILER;
-				EncoderLeft.Reset();
-				EncoderRight.Reset();
+				resetEncoder();
 				ahrs->ZeroYaw();
 			}
 			break;
@@ -1143,8 +1136,7 @@ public:
 			// turn 90 degrees counterclockwise
 			if (autonTurn(RED_1_CASE2_TURN)) {
 				modeState = AR1A_BKUP;
-				EncoderLeft.Reset();
-				EncoderRight.Reset();
+				resetEncoder();
 			}
 			break;
 		case AR1A_BKUP:
@@ -1174,8 +1166,7 @@ public:
 			// turns counterclockwise enough degrees to face boiler
 			if (autonTurn(RED_1_CASE6_TURN)) {
 				modeState = AR1A_END;
-				EncoderLeft.Reset();
-				EncoderRight.Reset();
+				resetEncoder();
 			}
 			break;
 		case AR1A_SHOOT:
@@ -1200,6 +1191,7 @@ public:
 			// This uses state 1 for initialization.
 			// This keeps the initialization and the code all in one place.
 			ahrs->ZeroYaw();
+			resetEncoder();
 			modeState = AR2_FWD;
 			break;
 		case AR2_FWD:
@@ -1249,8 +1241,7 @@ public:
 			// turn 60 degrees clockwise
 			if (autonTurn(RED_3_CASE2_TURN)) {
 				modeState = AR3_GEAR;
-				EncoderLeft.Reset();
-				EncoderRight.Reset();
+				resetEncoder();
 			}
 			break;
 //		case AR3_STR8:
@@ -1258,8 +1249,7 @@ public:
 //			// go forward
 //			if (forward(RED_3_CASE3_FWD)) {
 //				modeState = AR3_GEAR;
-//				EncoderLeft.Reset();
-//				EncoderRight.Reset();
+//				resetEncoder();
 //			}
 //			break;
 		case AR3_GEAR:
@@ -1267,8 +1257,7 @@ public:
 			// go forward
 			if (1) {
 				modeState = AR3_END;
-				EncoderLeft.Reset();
-				EncoderRight.Reset();
+				resetEncoder();
 			}
 			break;
 		default:
@@ -1437,14 +1426,10 @@ public:
 		DriveRight2.Set(rightMotor);
 	}
 
+	//simplify later
 	int forward(double targetDistance) {
 		//put all encoder stuff in same place
-		double encoderDistance;
-		if (useRightEncoder)
-			encoderDistance = EncoderRight.GetDistance();
-		else
-			encoderDistance = EncoderLeft.GetDistance();
-
+		double encoderDistance = readEncoder();
 		double encoderError = encoderDistance - targetDistance;
 		double driveCommandLinear = encoderError * KP_LINEAR;
 
@@ -1460,9 +1445,7 @@ public:
 		double driveCommandRotation = gyroAngle * KP_ROTATION;
 
 		//encdoer check TODO: NOT QUITE THERE YET
-		double maxDriveTime = 5.0;
-		EncoderCheckTimer.Reset();
-		if(EncoderCheckTimer.Get() > maxDriveTime){
+		if(EncoderCheckTimer.Get() > MAX_DRIVE_TIME){
 			motorSpeed(0.0, 0.0);
 			DriverStation::ReportError("(forward) Encoder Max Drive Time Exceeded");
 		}
@@ -1564,6 +1547,25 @@ public:
 		motorSpeed(0, 0);
 		return 1;
 	}
+
+	//------------- Start Code for Running Encoders --------------
+	double readEncoder() {
+		double usableEncoderData;
+		double r = EncoderRight.GetDistance();
+		double l = EncoderLeft.GetDistance();
+		if(r > 0){
+			usableEncoderData = fmax(r, l);
+		}else {
+			usableEncoderData = fmin(r, l);
+		}
+		return usableEncoderData;
+	}
+
+	void resetEncoder() {
+		EncoderLeft.Reset();
+		EncoderRight.Reset();
+	}
+	//------------- End Code for Running Encoders --------------------
 
 	int shoot() {
 		//resets shooter and kicker encoders
