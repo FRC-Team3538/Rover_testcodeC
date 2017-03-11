@@ -246,15 +246,9 @@ public:
 		ShootCommandRPM = 2600;
 		ShootKP = -0.003;
 		ShootKI = 0.0;
-<<<<<<< HEAD
 		ShootKD = 0.0;
 		ShootKF = -1.0 / 3200.0; //   1 / MAX RPM
 		KickerCommandPWM = 0.5;
-=======
-		ShootKD = -0.003;
-		ShootKF = 0.0;
-		KickerCommandPWM = 0.75;
->>>>>>> origin/master
 		KickerCommandRPM = 500;
 		DeflectorTarget = 164.0;  // Default Angle (Degrees)
 		ConvCommandPWM = 0.2;
@@ -591,13 +585,8 @@ public:
 			}
 
 			if (ShooterClosedLoop) {
-<<<<<<< HEAD
 				//1.75 is a scaling factor to make the PID reach desired RPM
 				ShooterPID.SetSetpoint(ShootCommandRPM / 60.0);
-=======
-				//0.225 is a scaling factor to make the PID reach desired RPM
-				ShooterPID.SetSetpoint(ShootCommandRPM * .225);
->>>>>>> origin/master
 			} else {
 				Shooter0.Set(-ShootCommandPWM); // negative so they turn the correct way.
 			}
