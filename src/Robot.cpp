@@ -195,7 +195,7 @@ public:
 			NULL), ahrs(NULL), modeState(0), DiIn9(9), DiIn8(8), DiIn7(7), Winch0(
 					11), Winch1(9), Shooter0(12), Shooter1(7), Conveyor(13), Agitator0(
 					6), Agitator1(15), FloorIntakeRoller(14), KickerWheel(8), DeflectorMotor(
-					10), EncoderKicker(20, 21), EncoderShoot(4, 5), WinchStop(
+					10), EncoderKicker(20, 21), EncoderShoot(4, 5, false, CounterBase::k1X), WinchStop(
 					6), DeflectorAnglePOT(0, 270, 0), DeflectorTarget(0), ConvCommandPWM(
 					0.1), ShootCommandPWM(0.75), DeflectAngle(145), DeflectorHighLimit(
 					22), DeflectorLowLimit(23), DeflectorPID(-0.08, 0.0, 0.0,
@@ -244,17 +244,11 @@ public:
 		// Inialize settings from Smart Dashboard
 		ShootCommandPWM = 0.85;
 		ShootCommandRPM = 2600;
-		ShootKP = -0.003;
+		ShootKP = -0.02;
 		ShootKI = 0.0;
-<<<<<<< HEAD
-		ShootKD = 0.0;
-		ShootKF = -1.0 / 3200.0; //   1 / MAX RPM
-		KickerCommandPWM = 0.5;
-=======
 		ShootKD = -0.003;
-		ShootKF = 0.0;
-		KickerCommandPWM = 0.75;
->>>>>>> origin/master
+		//ShootKF = -1.0 / 3200.0; //   1 / MAX RPM
+		KickerCommandPWM = 0.5;
 		KickerCommandRPM = 500;
 		DeflectorTarget = 164.0;  // Default Angle (Degrees)
 		ConvCommandPWM = 0.2;
@@ -292,12 +286,11 @@ public:
 		//calibrations for encoders
 		EncoderLeft.SetDistancePerPulse(98.0 / 3125.0 * 4.0);
 		EncoderRight.SetDistancePerPulse(98.0 / 3125.0 * 4.0);
-		EncoderShoot.SetDistancePerPulse(1.0 / 3328.0 * 4.0);
+		//EncoderShoot.SetDistancePerPulse(1.0 / 3328.0 * 4.0);
+		EncoderShoot.SetDistancePerPulse(1.0 / 1024.0);
 		EncoderKicker.SetDistancePerPulse(1.0 / 4122.0 * 4.0);
 
-
-		EncoderShoot.SetSamplesToAverage(50);
-
+		EncoderShoot.SetSamplesToAverage(120);
 
 		//configure PIDs
 		DeflectorPID.SetOutputRange(-0.1, 0.2);
@@ -591,13 +584,8 @@ public:
 			}
 
 			if (ShooterClosedLoop) {
-<<<<<<< HEAD
 				//1.75 is a scaling factor to make the PID reach desired RPM
 				ShooterPID.SetSetpoint(ShootCommandRPM / 60.0);
-=======
-				//0.225 is a scaling factor to make the PID reach desired RPM
-				ShooterPID.SetSetpoint(ShootCommandRPM * .225);
->>>>>>> origin/master
 			} else {
 				Shooter0.Set(-ShootCommandPWM); // negative so they turn the correct way.
 			}
@@ -659,6 +647,12 @@ public:
 			FloorIntakeArm->Set(!intakeDeployed);
 		else
 			FloorIntakeArm->Set(intakeDeployed);
+
+		//Back Button - Intake Second Joint
+		if (OperatorStick.GetRawButton(7))
+			IntakeSecondJoint->Set(!intakeSecondJointDeployed);
+		else
+			IntakeSecondJoint->Set(intakeSecondJointDeployed);
 
 		//X Button to get and B button release the gear
 		GearIn->Set(OperatorStick.GetRawButton(2));
@@ -1283,8 +1277,6 @@ public:
 	}
 	void SmartDashboardUpdate() {
 
-
-
 		// Auto State
 		SmartDashboard::PutNumber("Auto Switch (#)", AutoVal);
 		SmartDashboard::PutString("Auto Program", autoSelected);
@@ -1293,7 +1285,7 @@ public:
 
 		// Drive Encoders
 		SmartDashboard::PutNumber("Drive Encoder Left (RAW)",
-				EncoderLeft.GetRaw() );
+				EncoderLeft.GetRaw());
 		SmartDashboard::PutNumber("Drive Encoder Left (Inches)",
 				EncoderLeft.GetDistance());
 
@@ -1461,11 +1453,11 @@ public:
 		double driveCommandRotation = gyroAngle * KP_ROTATION;
 
 		//encdoer check TODO: NOT QUITE THERE YET
-		if(EncoderCheckTimer.Get() > MAX_DRIVE_TIME){
+		if (EncoderCheckTimer.Get() > MAX_DRIVE_TIME) {
 			motorSpeed(0.0, 0.0);
-			DriverStation::ReportError("(forward) Encoder Max Drive Time Exceeded");
-		}
-		else{
+			DriverStation::ReportError(
+					"(forward) Encoder Max Drive Time Exceeded");
+		} else {
 			//calculates and sets motor speeds
 			motorSpeed(driveCommandLinear + driveCommandRotation,
 					driveCommandLinear - driveCommandRotation);
@@ -1569,9 +1561,9 @@ public:
 		double usableEncoderData;
 		double r = EncoderRight.GetDistance();
 		double l = EncoderLeft.GetDistance();
-		if(r > 0){
+		if (r > 0) {
 			usableEncoderData = fmax(r, l);
-		}else {
+		} else {
 			usableEncoderData = fmin(r, l);
 		}
 		return usableEncoderData;
@@ -1701,6 +1693,7 @@ private:
 	Solenoid *FloorIntakeArm = new Solenoid(2);
 	Solenoid *GearIn = new Solenoid(3);
 	Solenoid *GearOut = new Solenoid(1);
+	Solenoid *IntakeSecondJoint = new Solenoid(4);
 	Encoder EncoderKicker;
 	Encoder EncoderShoot;
 	DigitalInput WinchStop;
@@ -1715,8 +1708,8 @@ private:
 
 	PIDController DeflectorPID, KickerPID, ShooterPID, DrivePID;
 
-	bool driveRightTriggerPrev = false;bool driveButtonYPrev = false;bool operatorRightTriggerPrev =
-	false;bool intakeDeployed = false;
+	bool driveRightTriggerPrev = false; bool driveButtonYPrev = false; bool operatorRightTriggerPrev =
+	false; bool intakeDeployed = false; bool intakeSecondJointDeployed = false;
 
 	double autoBackupDistance;
 	double deflectorTargetMemory;

@@ -1,5 +1,15 @@
 <xml version="1.0">
 <dashboard>
+	<widget field="Shooter Motor1 Output" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="905" y="425"/>
+	</widget>
+	<widget field="Shooter Motor0 Output" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.LinePlot">
+		<location x="307" y="31"/>
+	</widget>
+	<widget field="Shooter Encoder (RPM)" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.LinePlot">
+		<location x="152" y="461"/>
+		<width>1608</width>
+	</widget>
 	<widget field="CLOSED LOOP ENABLED" type="Boolean" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
 		<location x="261" y="205"/>
 	</widget>
@@ -11,11 +21,6 @@
 	</widget>
 	<widget field="Shooter Speed" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
 		<location x="261" y="136"/>
-	</widget>
-	<widget field="Shooter Encoder (RPM)" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.LinePlot">
-		<location x="14" y="488"/>
-		<width>1845</width>
-		<height>205</height>
 	</widget>
 	<widget field="DBG climber current" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
 		<location x="1131" y="13"/>
@@ -105,10 +110,6 @@
 	</widget>
 	<widget field="Conveyor Motor  Output" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
 		<location x="14" y="272"/>
-		<property name="Background" value="255.255.0.255"/>
-	</widget>
-	<widget field="Shooter Motor1 Output" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
-		<location x="862" y="447"/>
 		<property name="Background" value="255.255.0.255"/>
 	</widget>
 	<widget field="Deflector Limit High" type="Boolean" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
@@ -228,10 +229,6 @@
 		<location x="880" y="318"/>
 		<property name="Background" value="204.204.204.255"/>
 	</widget>
-	<widget field="Shooter Motor0 Output" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
-		<location x="864" y="420"/>
-		<property name="Background" value="255.255.0.255"/>
-	</widget>
 	<widget field="Deflector Angle POT (DEG)" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
 		<location x="278" y="320"/>
 		<property name="Background" value="102.255.0.255"/>
@@ -243,30 +240,30 @@
 		<location x="484" y="141"/>
 	</widget>
 	<widget field="ShootKP" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
-		<location x="1170" y="88"/>
+		<location x="1385" y="252"/>
 		<width>140</width>
 	</widget>
 	<widget field="ShootKF" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
-		<location x="959" y="14"/>
+		<location x="1383" y="331"/>
 	</widget>
 	<widget field="ShootKI" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
-		<location x="975" y="90"/>
+		<location x="1385" y="278"/>
 	</widget>
 	<widget field="ShootKD" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
-		<location x="956" y="40"/>
+		<location x="1381" y="305"/>
 	</widget>
 	<widget field="IN: ShootKP" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
-		<location x="958" y="142"/>
+		<location x="1180" y="257"/>
 	</widget>
 	<widget field="IN: ShootKI" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
-		<location x="954" y="116"/>
+		<location x="1186" y="280"/>
 		<height>23</height>
 	</widget>
 	<widget field="IN: ShootKD" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
-		<location x="1162" y="62"/>
+		<location x="1180" y="304"/>
 	</widget>
 	<widget field="IN: ShootKF" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
-		<location x="1167" y="36"/>
+		<location x="1182" y="328"/>
 	</widget>
 	<widget field="Auto Selector" type="String" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
 		<location x="23" y="20"/>
