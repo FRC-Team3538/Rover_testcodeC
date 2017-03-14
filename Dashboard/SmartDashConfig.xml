@@ -1,14 +1,14 @@
 <xml version="1.0">
 <dashboard>
-	<widget field="Shooter Motor1 Output" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
-		<location x="905" y="425"/>
-	</widget>
-	<widget field="Shooter Motor0 Output" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.LinePlot">
-		<location x="307" y="31"/>
+	<widget field="Shooter Motor0 Output" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="1444" y="432"/>
 	</widget>
 	<widget field="Shooter Encoder (RPM)" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.LinePlot">
-		<location x="152" y="461"/>
-		<width>1608</width>
+		<location x="249" y="514"/>
+		<width>1624</width>
+	</widget>
+	<widget field="Shooter Motor1 Output" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="905" y="425"/>
 	</widget>
 	<widget field="CLOSED LOOP ENABLED" type="Boolean" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
 		<location x="261" y="205"/>

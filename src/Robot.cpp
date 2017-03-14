@@ -51,6 +51,15 @@
 #define BLUE_1_CASE8_LSPEED (-0.4)
 #define BLUE_1_CASE8_RSPEED (-0.4)
 
+//drives along the key line into the hopper, backs up, turns, runs into the boiler and shoots
+#define BLUE_1A_CASE1_FWD (-8.0 * 12.0)
+#define BLUE_1A_CASE2_HOPPER_TIME (1.5)
+#define BLUE_1A_CASE2_LSPEED (-0.3)
+#define BLUE_1A_CASE2_RSPEED (0.2)
+#define BLUE_1A_CASE3_BACK (3.5 * 12.0)
+#define BLUE_1A_CASE4_TURN (120)
+#define BLUE_1A_CASE5_TO_BOILER (6.5 * 12.0)
+
 // This will go to the gear in front of the middle start position.
 //		This is timed so that collision with the airship will put the robot in position.
 //		This can be supported with vision when it is ready.
@@ -101,6 +110,15 @@
 #define RED_1_CASE8_TIME (0.3)
 #define RED_1_CASE8_LSPEED (-0.4)
 #define RED_1_CASE8_RSPEED (-0.4)
+
+//drives along the key line into the hopper, backs up, turns, runs into the boiler and shoots
+#define RED_1A_CASE1_FWD (-8.0 * 12.0)
+#define RED_1A_CASE2_HOPPER_TIME (1.5)
+#define RED_1A_CASE2_LSPEED (0.2)
+#define RED_1A_CASE2_RSPEED (-0.3)
+#define RED_1A_CASE3_BACK (3.5 * 12.0)
+#define RED_1A_CASE4_TURN (-120)
+#define RED_1A_CASE5_TO_BOILER (6.5 * 12.0)
 
 // This will go to the gear in front of the middle start position.
 //		This is timed so that collision with the airship will put the robot in position.
@@ -195,14 +213,15 @@ public:
 			NULL), ahrs(NULL), modeState(0), DiIn9(9), DiIn8(8), DiIn7(7), Winch0(
 					11), Winch1(9), Shooter0(12), Shooter1(7), Conveyor(13), Agitator0(
 					6), Agitator1(15), FloorIntakeRoller(14), KickerWheel(8), DeflectorMotor(
-					10), EncoderKicker(20, 21), EncoderShoot(4, 5, false, CounterBase::k1X), WinchStop(
-					6), DeflectorAnglePOT(0, 270, 0), DeflectorTarget(0), ConvCommandPWM(
-					0.1), ShootCommandPWM(0.75), DeflectAngle(145), DeflectorHighLimit(
-					22), DeflectorLowLimit(23), DeflectorPID(-0.08, 0.0, 0.0,
-					&DeflectorAnglePOT, &DeflectorMotor), KickerPID(0.003, 0.0,
-					0.0, &EncoderKicker, &KickerWheel), ShooterPID(0.0, 0.0,
-					-0.003, 0.0, &EncoderShoot, &Shooter0), DrivePID(0.0, 0.0,
-					0.0, 0.0, &EncoderRight, &DriveRight0) {
+					10), EncoderKicker(20, 21), EncoderShoot(4, 5, false,
+					CounterBase::k1X), WinchStop(6), DeflectorAnglePOT(0, 270,
+					0), DeflectorTarget(0), ConvCommandPWM(0.1), ShootCommandPWM(
+					0.75), DeflectAngle(145), DeflectorHighLimit(22), DeflectorLowLimit(
+					23), DeflectorPID(-0.08, 0.0, 0.0, &DeflectorAnglePOT,
+					&DeflectorMotor), KickerPID(0.003, 0.0, 0.0, &EncoderKicker,
+					&KickerWheel), ShooterPID(0.0, 0.0, -0.003, 0.0,
+					&EncoderShoot, &Shooter0), DrivePID(0.0, 0.0, 0.0, 0.0,
+					&EncoderRight, &DriveRight0) {
 
 		//GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
 		//Shooter = new MultiSpeedController();
@@ -214,9 +233,11 @@ public:
 		chooseAutonSelector.AddDefault(AutonNameSwitch, AutonNameSwitch);
 		chooseAutonSelector.AddObject(autonNameOFF, autonNameOFF);
 		chooseAutonSelector.AddObject(autonNameRed1, autonNameRed1);
+		chooseAutonSelector.AddObject(autonNameRed1A, autonNameRed1A);
 		chooseAutonSelector.AddObject(autonNameRed2, autonNameRed2);
 		chooseAutonSelector.AddObject(autonNameRed3, autonNameRed3);
 		chooseAutonSelector.AddObject(autonNameBlue1, autonNameBlue1);
+		chooseAutonSelector.AddObject(autonNameBlue1A, autonNameBlue1A);
 		chooseAutonSelector.AddObject(autonNameBlue2, autonNameBlue2);
 		chooseAutonSelector.AddObject(autonNameBlue3, autonNameBlue3);
 		frc::SmartDashboard::PutData("Auto Modes", &chooseAutonSelector);
@@ -429,6 +450,13 @@ public:
 			case 7:
 				autoSelected = autonNameRed2;
 				break;
+			case 8:
+				autoSelected = autonNameBlue1A;
+				break;
+			case 9:
+				autoSelected = autonNameRed1A;
+				break;
+
 			default:
 				autoSelected = autonNameOFF;
 			}
@@ -458,12 +486,16 @@ public:
 	void AutonomousPeriodic() { // ADLAI - This stuff probably shouldn't be in here, we shouldn't need to change program after autonomous begins?
 		if (autoSelected == autonNameRed1)
 			autoRed1();
+		else if (autoSelected == autonNameRed1A)
+			autoRed1A();
 		else if (autoSelected == autonNameRed2)
 			autoForward();
 		else if (autoSelected == autonNameRed3)
 			autoRed3();
 		else if (autoSelected == autonNameBlue1)
 			autoBlue1();
+		else if (autoSelected == autonNameBlue1A)
+			autoBlue1A();
 		else if (autoSelected == autonNameBlue2)
 			autoMiddleGearEject();
 		else if (autoSelected == autonNameBlue3)
@@ -627,36 +659,34 @@ public:
 		}
 
 		//Spin intake when left trigger is pushed
-		if (OperatorStick.GetRawAxis(2) > Deadband) {
+		if (OperatorStick.GetRawAxis(2) > Deadband and !OperatorStick.GetRawButton(4)) {
 			FloorIntakeRoller.Set(OperatorStick.GetRawAxis(2));
-		} else {
+		}
+		//spin intake in reverse direction when y button is pushed
+		else if(OperatorStick.GetRawButton(4) && OperatorStick.GetRawAxis(2) < Deadband){
+			FloorIntakeRoller.Set(-0.8);
+		}
+		else{
 			FloorIntakeRoller.Set(0.0);
 		}
 
 		// RH Bumper - Retract Intake
 		if (OperatorStick.GetRawButton(6)) {
 			intakeDeployed = false;
+			FloorIntakeArm->Set(intakeDeployed);
+
 		}
 		// LH Bumper - Deploy Intake
 		if (OperatorStick.GetRawButton(5)) {
 			intakeDeployed = true;
-		}
-
-		//A button for intake un-jam
-		if (OperatorStick.GetRawButton(1))
-			FloorIntakeArm->Set(!intakeDeployed);
-		else
 			FloorIntakeArm->Set(intakeDeployed);
-
-		//Back Button - Intake Second Joint
-		if (OperatorStick.GetRawButton(7))
-			IntakeSecondJoint->Set(!intakeSecondJointDeployed);
-		else
-			IntakeSecondJoint->Set(intakeSecondJointDeployed);
+		}
 
 		//X Button to get and B button release the gear
 		GearIn->Set(OperatorStick.GetRawButton(2));
 		GearOut->Set(OperatorStick.GetRawButton(3));
+		//Y Button - Gear Deflector
+		GearDeflector->Set(OperatorStick.GetRawButton(1));
 
 		//Right joystick for agitator un-jam
 		if (fabs(OperatorStick.GetRawAxis(4)) > Deadband)
@@ -827,65 +857,53 @@ public:
 
 #define AB1A_INIT 1
 #define AB1A_FWD 2
-#define AB1A_TURN90 3
-#define AB1A_BKUP 4
-#define AB1A_WAIT 5
-#define AB1A_FWD2 6
-#define AB1A_FACE_BOILER 7
-#define AB1A_SHOOT 9
-#define AB1A_END 10
+#define AB1A_HOPPER_TIMED_DRIVE 3
+#define AB1A_BACK 4
+#define AB1A_TURN 5
+#define AB1A_TO_BOILER 6
+#define AB1A_SHOOT 7
+#define AB1A_END 8
 
 	void autoBlue1A(void) {
-
-		//Blue boiler side code
-		//drives turns then drives again
+		//drives along the key line and hits hopper
 		switch (modeState) {
 		case AB1A_INIT:
 			modeState = AB1A_FWD;
 			break;
 		case AB1A_FWD:
-			// go forward 7 ft
-			if (forward(BLUE_1_CASE1_FWD)) {
-				modeState = AB1A_TURN90;
+			// go forward 8 ft
+			if (forward(BLUE_1A_CASE1_FWD)) {
+				modeState = AB1A_HOPPER_TIMED_DRIVE;
 				ahrs->ZeroYaw();
 			}
 			break;
-		case AB1A_TURN90:
-			// turn 90 degrees clockwise
-			if (autonTurn(BLUE_1_CASE2_TURN)) {
-				//modeState = AB1_BKUP;
-				modeState = AB1A_WAIT;
+		case AB1A_HOPPER_TIMED_DRIVE:
+			// makes sure robot drives into hopper and collects balls
+			if (timedDrive(BLUE_1A_CASE2_HOPPER_TIME, BLUE_1A_CASE2_LSPEED,
+					BLUE_1A_CASE2_RSPEED)) {
+				modeState = AB1A_BACK;
 				resetEncoder();
 				ahrs->ZeroYaw();
 			}
 			break;
-//		case AB1A_BKUP:
-//			// go forward 7 ft to hit hopper
-//			//change to timed drive
-//			if (forward(BLUE_1_CASE3_FWD)) {
-//				modeState = AB1_WAIT;
-//				AutonTimer.Reset();
-//			}
-//			break;
-		case AB1A_WAIT:
-			//waits a couple of seconds for balls
-			if (timedDrive(BLUE_1_CASE4_FWD_TIME, BLUE_1_CASE4_FWD_LEFT_SPD,
-			BLUE_1_CASE4_FWD_RIGHT_SPD)) {
-				modeState = AB1A_FWD2;
+		case AB1A_BACK:
+			//backs up from hopper
+			if (forward(BLUE_1A_CASE3_BACK)) {
+				modeState = AB1A_TURN;
 				resetEncoder();
 				ahrs->ZeroYaw();
 			}
 			break;
-		case AB1A_FWD2:
-			//go backward 4-ish feet
-			if (forward(BLUE_1_CASE5_FWD)) {
-				modeState = AB1A_FACE_BOILER;
+		case AB1A_TURN:
+			//turns toward hopper
+			if (autonTurn(BLUE_1A_CASE4_TURN)) {
+				modeState = AB1A_TO_BOILER;
 				ahrs->ZeroYaw();
 			}
 			break;
-		case AB1A_FACE_BOILER:
-			// turn enough degrees to face boiler
-			if (autonTurn(BLUE_1_CASE6_TURN)) {
+		case AB1A_TO_BOILER:
+			// drives to boiler
+			if (forward(BLUE_1A_CASE5_TO_BOILER)) {
 				modeState = AB1A_SHOOT;
 				resetEncoder();
 				ahrs->ZeroYaw();
@@ -1119,64 +1137,56 @@ public:
 
 #define AR1A_INIT 1
 #define AR1A_FWD 2
-#define AR1A_TURN90 3
-#define AR1A_BKUP 4
-#define AR1A_WAIT 5
-#define AR1A_FWD2 6
-#define AR1A_FACE_BOILER 7
-#define AR1A_SHOOT 9
-#define AR1A_END 10
+#define AR1A_HOPPER_TIMED_DRIVE 3
+#define AR1A_BACK 4
+#define AR1A_TURN 5
+#define AR1A_TO_BOILER 6
+#define AR1A_SHOOT 7
+#define AR1A_END 8
 
 	void autoRed1A(void) {
-		//Red center position code
-		//this version turns the robot in a right angle
-
+		//drives along the key line and hits hopper
 		switch (modeState) {
 		case AR1A_INIT:
 			modeState = AR1A_FWD;
 			break;
 		case AR1A_FWD:
-			// go forward 7 ft
-			if (forward(RED_1_CASE1_FWD)) {
-				modeState = AR1A_TURN90;
+			// go forward 8 ft
+			if (forward(RED_1A_CASE1_FWD)) {
+				modeState = AR1A_HOPPER_TIMED_DRIVE;
 				ahrs->ZeroYaw();
 			}
 			break;
-		case AR1A_TURN90:
-			// turn 90 degrees counterclockwise
-			if (autonTurn(RED_1_CASE2_TURN)) {
-				modeState = AR1A_BKUP;
+		case AR1A_HOPPER_TIMED_DRIVE:
+			// makes sure robot drives into hopper and collects balls
+			if (timedDrive(RED_1A_CASE2_HOPPER_TIME, RED_1A_CASE2_LSPEED,
+					RED_1A_CASE2_RSPEED)) {
+				modeState = AR1A_BACK;
 				resetEncoder();
-			}
-			break;
-		case AR1A_BKUP:
-			//change to timed drive
-			// go forward 7 ft to hit hopper
-			if (forward(RED_1_CASE3_FWD)) {
-				modeState = AR1A_WAIT;
-				AutonTimer.Reset();
-			}
-			break;
-		case AR1A_WAIT:
-			//waits in front of hopper a couple of seconds for balls
-			if (timedDrive(RED_1_CASE4_FWD_TIME, RED_1_CASE4_FWD_LEFT_SPD,
-			RED_1_CASE4_FWD_RIGHT_SPD)) {
-				modeState = AR1A_FWD2;
-
-			}
-			break;
-		case AR1A_FWD2:
-			//go backward 3-ish feet
-			if (forward(RED_1_CASE5_FWD)) {
-				modeState = AR1A_FACE_BOILER;
 				ahrs->ZeroYaw();
 			}
 			break;
-		case AR1A_FACE_BOILER:
-			// turns counterclockwise enough degrees to face boiler
-			if (autonTurn(RED_1_CASE6_TURN)) {
-				modeState = AR1A_END;
+		case AR1A_BACK:
+			//backs up from hopper
+			if (forward(RED_1A_CASE3_BACK)) {
+				modeState = AR1A_TURN;
 				resetEncoder();
+				ahrs->ZeroYaw();
+			}
+			break;
+		case AR1A_TURN:
+			//turns toward hopper
+			if (autonTurn(RED_1A_CASE4_TURN)) {
+				modeState = AR1A_TO_BOILER;
+				ahrs->ZeroYaw();
+			}
+			break;
+		case AR1A_TO_BOILER:
+			// drives to boiler
+			if (forward(RED_1A_CASE5_TO_BOILER)) {
+				modeState = AR1A_SHOOT;
+				resetEncoder();
+				ahrs->ZeroYaw();
 			}
 			break;
 		case AR1A_SHOOT:
@@ -1188,6 +1198,7 @@ public:
 		}
 		return;
 	}
+
 
 #define AR2_INIT 1
 #define AR2_FWD 2
@@ -1643,9 +1654,11 @@ private:
 	const std::string AutonNameSwitch = "Use Switch";
 	const std::string autonNameOFF = "0 OFF";
 	const std::string autonNameBlue1 = "Blue Boiler";
+	const std::string autonNameBlue1A = "Blue Key Line To Boiler";
 	const std::string autonNameBlue2 = "Middle Gear Eject";
 	const std::string autonNameBlue3 = "Blue Right Side Gear";
 	const std::string autonNameRed1 = "Red Boiler";
+	const std::string autonNameRed1A = "Red Key Line To Boiler";
 	const std::string autonNameRed2 = "Go Forward Only";
 	const std::string autonNameRed3 = "Red Right Side Gear";
 	const std::string RH_Encoder = "RH_Encoder";
@@ -1690,10 +1703,10 @@ private:
 	VictorSP FloorIntakeRoller;
 	VictorSP KickerWheel;
 	VictorSP DeflectorMotor;
-	Solenoid *FloorIntakeArm = new Solenoid(2);
-	Solenoid *GearIn = new Solenoid(3);
 	Solenoid *GearOut = new Solenoid(1);
-	Solenoid *IntakeSecondJoint = new Solenoid(4);
+	Solenoid *GearIn = new Solenoid(3);
+	Solenoid *GearDeflector = new Solenoid(5);
+	Solenoid *FloorIntakeArm = new Solenoid(2);
 	Encoder EncoderKicker;
 	Encoder EncoderShoot;
 	DigitalInput WinchStop;
@@ -1708,8 +1721,8 @@ private:
 
 	PIDController DeflectorPID, KickerPID, ShooterPID, DrivePID;
 
-	bool driveRightTriggerPrev = false; bool driveButtonYPrev = false; bool operatorRightTriggerPrev =
-	false; bool intakeDeployed = false; bool intakeSecondJointDeployed = false;
+	bool driveRightTriggerPrev = false;bool driveButtonYPrev = false;bool operatorRightTriggerPrev =
+	false;bool intakeDeployed = false;bool intakeSecondJointDeployed = false;
 
 	double autoBackupDistance;
 	double deflectorTargetMemory;
