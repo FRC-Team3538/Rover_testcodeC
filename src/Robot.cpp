@@ -34,31 +34,21 @@
 //			(This can be supported with vision when it is ready.)
 //		launch the "fuel."
 //
-// go forward 6.5 ft, turn clockwise 90 degrees
-//    back up 7.6 ft, go slowly forward for 3 seconds [**** This sign is backwards****]
-//    turn clockwise 120 degrees, go forwards 8.5 ft
 
-#define BLUE_1_CASE1_FWD (6.8 * 12.0)
-#define BLUE_1_CASE2_TURN (90)
-#define BLUE_1_CASE3_FWD (7.6 * -1 * 12.0)
-#define BLUE_1_CASE4_FWD_TIME (5.0)
-#define BLUE_1_CASE4_FWD_LEFT_SPD (0.5)
-#define BLUE_1_CASE4_FWD_RIGHT_SPD (0.5)
-#define BLUE_1_CASE5_FWD (3.5 * 12.0)
-#define BLUE_1_CASE6_TURN (120)
-#define BLUE_1_CASE7_FWD (6.5 * 12.0)
-#define BLUE_1_CASE8_TIME (0.3)
-#define BLUE_1_CASE8_LSPEED (-0.4)
-#define BLUE_1_CASE8_RSPEED (-0.4)
+//Blue 1
+#define BLUE_1_CASE1_FWD (71.0)
+#define BLUE_1_CASE2_FWD_TIME (0.5)
+#define BLUE_1_CASE2_FWD_LEFT_SPD (-0.2)
+#define BLUE_1_CASE2_FWD_RIGHT_SPD (-0.2)
+#define BLUE_1_CASE5_BACK (-48.0)
+#define BLUE_1_CASE6_TURN (100.0)
+#define BLUE_1_CASE7_FWD (-60.0)
 
 //drives along the key line into the hopper, backs up, turns, runs into the boiler and shoots
 #define BLUE_1A_CASE1_FWD (-4.0 * 12.0)
-#define BLUE_1A_CASE2_HOPPER_TIME (1.5)
-#define BLUE_1A_CASE2_LSPEED (-0.3)
-#define BLUE_1A_CASE2_RSPEED (0.2)
-#define BLUE_1A_CASE3_BACK (3.5 * 12.0)
-#define BLUE_1A_CASE4_TURN (120)
-#define BLUE_1A_CASE5_TO_BOILER (6.5 * 12.0)
+#define BLUE_1A_CASE2_HOPPER_TIME (2.2)
+#define BLUE_1A_CASE2_LSPEED (0.5)
+#define BLUE_1A_CASE2_RSPEED (0.6)
 
 // This will go to the gear in front of the middle start position.
 //		This is timed so that collision with the airship will put the robot in position.
@@ -79,10 +69,10 @@
 // go forward 7 ft, turn counter-clockwise 60 degrees
 //    go forward 2 ft
 #define BLUE_3_CASE1_FWD (7 * 12.0)
-#define BLUE_3_CASE2_TURN (-60)
-#define BLUE_3_CASE3_TIME (1.5)
-#define BLUE_3_CASE3_LSPEED (-0.3)
-#define BLUE_3_CASE3_RSPEED (-0.3)
+#define BLUE_3_CASE2_TURN (60.0)
+#define BLUE_3_CASE3_STR8 (36.0)
+#define BLUE_3_CASE6_BACK (-48.0)
+#define BLUE_3_CASE7_TURN (-190.0)
 
 // This will go to the middle of the field,
 //		turn away from the hopper,
@@ -98,27 +88,25 @@
 // go forward 6.5 ft, turn counterclockwise 90 degrees
 //    back up 7 ft, go slowly forward for 1 second [**** is the sign backwards?****]
 //    turn counterclockwise 125 degrees, go forwards 8.5 ft
-#define RED_1_CASE1_FWD (6.8 * 12.0)
-#define RED_1_CASE2_TURN (-90)
+#define RED_1_CASE1_FWD (71.0)
+#define RED_1_CASE2_FWD_TIME (0.5)
+#define RED_1_CASE2_FWD_LEFT_SPD (-0.2)
+#define RED_1_CASE2_FWD_RIGHT_SPD (-0.2)
+#define RED_1_CASE5_BACK (-48.0)
+#define RED_1_CASE6_TURN (-100.0)
+#define RED_1_CASE7_FWD (-60.0)
+
 #define RED_1_CASE3_FWD (7.6 * -1 * 12.0)
-#define RED_1_CASE4_FWD_TIME (5.0)
-#define RED_1_CASE4_FWD_LEFT_SPD (0.5)
-#define RED_1_CASE4_FWD_RIGHT_SPD (0.5)
 #define RED_1_CASE5_FWD (3.5 * 12.0)
-#define RED_1_CASE6_TURN (-120)
-#define RED_1_CASE7_FWD (6.5 * 12.0)
 #define RED_1_CASE8_TIME (0.3)
 #define RED_1_CASE8_LSPEED (-0.4)
 #define RED_1_CASE8_RSPEED (-0.4)
 
 //drives along the key line into the hopper, backs up, turns, runs into the boiler and shoots
 #define RED_1A_CASE1_FWD (-4.0 * 12.0)
-#define RED_1A_CASE2_HOPPER_TIME (1.5)
-#define RED_1A_CASE2_LSPEED (0.2)
-#define RED_1A_CASE2_RSPEED (-0.3)
-#define RED_1A_CASE3_BACK (3.5 * 12.0)
-#define RED_1A_CASE4_TURN (-120)
-#define RED_1A_CASE5_TO_BOILER (6.5 * 12.0)
+#define RED_1A_CASE2_HOPPER_TIME (2.2)
+#define RED_1A_CASE2_LSPEED (0.6)
+#define RED_1A_CASE2_RSPEED (0.5)
 
 // This will go to the gear in front of the middle start position.
 //		This is timed so that collision with the airship will put the robot in position.
@@ -141,11 +129,10 @@
 // go forward 9 ft, turn clockwise 60 degrees
 //    go forward 2 ft
 #define RED_3_CASE1_FWD (9 * 12.0)
-#define RED_3_CASE2_TURN (60)
-//#define RED_3_CASE3_FWD (2 * 12)
-#define RED_3_CASE3_TIME (1.5)
-#define RED_3_CASE3_LSPEED (-0.75)
-#define RED_3_CASE3_RSPEED (-0.75)
+#define RED_3_CASE2_TURN (-60)
+#define RED_3_CASE3_STR8 (36.0)
+#define RED_3_CASE6_BACK (-48.0)
+#define RED_3_CASE7_TURN (190.0)
 
 //linear calibrations
 #define LINEAR_TOLERANCE (0.2)
@@ -490,7 +477,7 @@ public:
 	}
 	void AutonomousPeriodic() { // ADLAI - This stuff probably shouldn't be in here, we shouldn't need to change program after autonomous begins?
 		if (autoSelected == autonNameRed1)
-			stopMotors();
+			autoRedMiddleShoot();
 		else if (autoSelected == autonNameRed1A)
 			autoRedKeyShoot();
 		else if (autoSelected == autonNameRed2)
@@ -498,7 +485,7 @@ public:
 		else if (autoSelected == autonNameRed3)
 			autoRed3();
 		else if (autoSelected == autonNameBlue1)
-			stopMotors();
+			autoBlueMiddleShoot();
 		else if (autoSelected == autonNameBlue1A)
 			autoBlueKeyShoot();
 		else if (autoSelected == autonNameBlue2)
@@ -665,14 +652,15 @@ public:
 		}
 
 		//Spin intake when left trigger is pushed
-		if (OperatorStick.GetRawAxis(2) > Deadband and !OperatorStick.GetRawButton(4)) {
+		if (OperatorStick.GetRawAxis(2) > Deadband
+				and !OperatorStick.GetRawButton(4)) {
 			FloorIntakeRoller.Set(OperatorStick.GetRawAxis(2));
 		}
 		//spin intake in reverse direction when y button is pushed
-		else if(OperatorStick.GetRawButton(4) && OperatorStick.GetRawAxis(2) < Deadband){
+		else if (OperatorStick.GetRawButton(4)
+				&& OperatorStick.GetRawAxis(2) < Deadband) {
 			FloorIntakeRoller.Set(-0.8);
-		}
-		else{
+		} else {
 			FloorIntakeRoller.Set(0.0);
 		}
 
@@ -763,12 +751,94 @@ public:
 // 		State 1 is always the first one to run.
 //		Always have an "end" state.
 
+#define AB1_INIT 1
+#define AB1_FWD 2
+#define AB1_TIMED 3
+#define AB1_WAIT 4
+#define AB1_GEAR 5
+#define AB1_BACK 6
+#define AB1_TURN 7
+#define AB1_FWD2 8
+#define AB1_SHOOT 9
+#define AB1_END 10
+
+	void autoBlueMiddleShoot(void) {
+		//Blue middle gear then shoot auto
+		switch (modeState) {
+		case AB1_INIT:
+			GearDeflector->Set(true);
+			FloorIntakeArm->Set(true);
+			modeState = AB1_FWD;
+			break;
+		case AB1_FWD:
+			// go forward toward airship
+			if (forward(BLUE_1_CASE1_FWD)) {
+				modeState = AB1_TIMED;
+				AutonTimer.Reset();
+			}
+			break;
+		case AB1_TIMED:
+			//timed drive to get gear on peg
+			if (timedDrive(BLUE_1_CASE2_FWD_TIME, BLUE_1_CASE2_FWD_LEFT_SPD, BLUE_1_CASE2_FWD_RIGHT_SPD)) {
+				modeState = AB1_WAIT;
+				AutonTimer.Reset();
+			}
+			break;
+		case AB1_WAIT:
+			//waits to make sure robot is in place
+			if (AutonTimer.Get() > 0.5) {
+				modeState = AB1_GEAR;
+			}
+			break;
+		case AB1_GEAR:
+			//deploys gear
+			if (1) {
+				GearOut->Set(true);
+				modeState = AB1_BACK;
+				resetEncoder();
+				ahrs->ZeroYaw();
+			}
+			break;
+		case AB1_BACK:
+			//move backwards
+			if (forward(BLUE_1_CASE5_BACK)) {
+				modeState = AB1_TURN;
+				ahrs->ZeroYaw();
+			}
+			break;
+		case AB1_TURN:
+			//turn to face boiler
+			//not entirely sure if angle is right sign (3/25/17)
+			if (autonTurn(BLUE_1_CASE6_TURN)) {
+				modeState = AB1_FWD2;
+				resetEncoder();
+				ahrs->ZeroYaw();
+			}
+			break;
+		case AB1_FWD2:
+			//go forward 7-ish feet to get itno position to shoot
+			if (forward(BLUE_1_CASE7_FWD)) {
+				modeState = AB1_SHOOT;
+				ahrs->ZeroYaw();
+			}
+			break;
+		case AB1_SHOOT:
+			if (shoot()) {
+				modeState = AB1_END;
+			}
+			break;
+		default:
+			stopMotors();
+		}
+		return;
+	}
 
 #define AB1A_INIT 1
 #define AB1A_FWD 2
-#define AB1A_HOPPER_TIMED_DRIVE 3
-#define AB1A_SHOOT 4
-#define AB1A_END 5
+#define AB1A_HOPPER_TURN 3
+#define AB1A_WAIT 4
+#define AB1A_SHOOT 5
+#define AB1A_END 6
 
 	void autoBlueKeyShoot(void) {
 		//drives along the key line and hits hopper
@@ -781,23 +851,29 @@ public:
 		case AB1A_FWD:
 			// go forward 8 ft
 			if (forward(BLUE_1A_CASE1_FWD)) {
-				modeState = AB1A_HOPPER_TIMED_DRIVE;
-				ahrs->ZeroYaw();
+				modeState = AB1A_HOPPER_TURN;
+				AutonTimer.Reset();
 			}
 			break;
-		case AB1A_HOPPER_TIMED_DRIVE:
-			// makes sure robot drives into hopper and collects balls
-			//don't know if l_speed and r_speed are fast/slow enough
+		case AB1A_HOPPER_TURN:
+			// robot drives into hopper and collects balls
 			if (timedDrive(BLUE_1A_CASE2_HOPPER_TIME, BLUE_1A_CASE2_LSPEED,
-					BLUE_1A_CASE2_RSPEED)) {
+			BLUE_1A_CASE2_RSPEED)) {
+				modeState = AB1A_WAIT;
+				AutonTimer.Reset();
+			}
+			break;
+		case AB1A_WAIT:
+			//waits for robot to collect balls
+			if (AutonTimer.Get() < 0.5) {
 				modeState = AB1A_SHOOT;
-				resetEncoder();
-				ahrs->ZeroYaw();
 			}
 			break;
 		case AB1A_SHOOT:
 			//launch
-			modeState = AB1A_END;
+			if(shoot()){
+				modeState = AB1A_END;
+			}
 			break;
 		default:
 			stopMotors();
@@ -874,12 +950,16 @@ public:
 #define AB3_GEAR_WAIT 5
 #define AB3_GEAR 6
 #define AB3_BACK 7
-#define AB3_END 8
+#define AB3_TURN2 8
+#define AB3_SHOOT 9
+#define AB3_END 10
 	void autoBlue3(void) {
 		//blue side code
 		//puts gear on pin on side of airship
 		switch (modeState) {
 		case AB3_INIT:
+			GearDeflector->Set(true);
+			FloorIntakeArm->Set(true);
 			modeState = AB3_FWD;
 			break;
 		case AB3_FWD:
@@ -900,8 +980,7 @@ public:
 		case AB3_STR8:
 			// go forward
 			//timed drive
-			if (timedDrive(BLUE_3_CASE3_TIME, BLUE_3_CASE3_LSPEED,
-			BLUE_3_CASE3_RSPEED)) {
+			if (forward(BLUE_3_CASE3_STR8)) {
 				modeState = AB3_GEAR_WAIT;
 				resetEncoder();
 			}
@@ -922,10 +1001,22 @@ public:
 			}
 			break;
 		case AB3_BACK:
-			if (timedDrive(2.0, 0.3, 0.3)) {
-				//if (forward7ft(-0.4, 7 * 12.0)) {
+			//back up to the shooting radius
+			if (forward(BLUE_3_CASE6_BACK)) {
 				GearOut->Set(false);
-				AutonTimer.Reset();
+				ahrs->ZeroYaw();
+				modeState = AB3_TURN2;
+			}
+			break;
+		case AB3_TURN2:
+			//turn to face boiler
+			if (autonTurn(BLUE_3_CASE7_TURN)) {
+				modeState = AB3_SHOOT;
+			}
+			break;
+		case AB3_SHOOT:
+			//turn to face boiler
+			if (shoot()) {
 				modeState = AB2_END;
 			}
 			break;
@@ -935,12 +1026,92 @@ public:
 		return;
 	}
 
+#define AR1_INIT 1
+#define AR1_FWD 2
+#define AR1_TIMED 3
+#define AR1_WAIT 4
+#define AR1_GEAR 5
+#define AR1_BACK 6
+#define AR1_TURN 7
+#define AR1_FWD2 8
+#define AR1_SHOOT 9
+#define AR1_END 10
+	void autoRedMiddleShoot(void) {
+		switch (modeState) {
+		case AR1_INIT:
+			GearDeflector->Set(true);
+			FloorIntakeArm->Set(true);
+			modeState = AR1_FWD;
+			break;
+		case AR1_FWD:
+			// go forward 7 ft
+			if (forward(RED_1_CASE1_FWD)) {
+				modeState = AR1_TIMED;
+				AutonTimer.Reset();
+			}
+			break;
+		case AR1_TIMED:
+			// turn 90 degrees counterclockwise
+			if (timedDrive(RED_1_CASE2_FWD_TIME, RED_1_CASE2_FWD_LEFT_SPD , RED_1_CASE2_FWD_RIGHT_SPD)) {
+				modeState = AR1_WAIT;
+				AutonTimer.Reset();
+			}
+			break;
+		case AR1_WAIT:
+			//waits in front of hopper a couple of seconds for balls
+			if (AutonTimer.Get() > 0.5) {
+				modeState = AR1_GEAR;
+			}
+			break;
+		case AR1_GEAR:
+			//go backward 3-ish feet
+			if (1) {
+				GearOut->Set(true);
+				resetEncoder();
+				ahrs->ZeroYaw();
+				modeState = AR1_BACK;
+			}
+			break;
+		case AR1_BACK:
+			// turns counterclockwise enough degrees to face boiler
+			if (forward(RED_1_CASE5_BACK)) {
+				modeState = AR1_TURN;
+				ahrs->ZeroYaw();
+			}
+			break;
+		case AR1_TURN:
+			//change to timed drive
+			//go forward 7-ish feet to run into boiler
+			if (autonTurn(RED_1_CASE6_TURN)) {
+				modeState = AR1_FWD2;
+				resetEncoder();
+				ahrs->ZeroYaw();
+			}
+			break;
+		case AR1_FWD2:
+			//change to timed drive
+			//go forward 7-ish feet to run into boiler
+			if (forward(RED_1_CASE7_FWD)) {
+				modeState = AR1_SHOOT;
+			}
+			break;
+		case AR1_SHOOT:
+			if (shoot()) {
+				modeState = AR1_END;
+			}
+			break;
+		default:
+			stopMotors();
+		}
+		return;
+	}
 
 #define AR1A_INIT 1
 #define AR1A_FWD 2
-#define AR1A_HOPPER_TIMED_DRIVE 3
-#define AR1A_SHOOT 4
-#define AR1A_END 5
+#define AR1A_HOPPER_TURN 3
+#define	AR1A_WAIT 4
+#define AR1A_SHOOT 5
+#define AR1A_END 6
 
 	void autoRedKeyShoot(void) {
 		//drives along the key line and hits hopper
@@ -953,29 +1124,35 @@ public:
 		case AR1A_FWD:
 			// go forward 8 ft
 			if (forward(RED_1A_CASE1_FWD)) {
-				modeState = AR1A_HOPPER_TIMED_DRIVE;
-				ahrs->ZeroYaw();
+				modeState = AR1A_HOPPER_TURN;
+				AutonTimer.Reset();
 			}
 			break;
-		case AR1A_HOPPER_TIMED_DRIVE:
+		case AR1A_HOPPER_TURN:
 			// makes sure robot drives into hopper and collects balls
 			if (timedDrive(RED_1A_CASE2_HOPPER_TIME, RED_1A_CASE2_LSPEED,
-					RED_1A_CASE2_RSPEED)) {
+			RED_1A_CASE2_RSPEED)) {
+				modeState = AR1A_WAIT;
+				AutonTimer.Reset();
+			}
+			break;
+		case AR1A_WAIT:
+			// makes sure robot drives into hopper and collects balls
+			if (AutonTimer.Get() < 0.5) {
 				modeState = AR1A_SHOOT;
-				resetEncoder();
-				ahrs->ZeroYaw();
 			}
 			break;
 		case AR1A_SHOOT:
 			//launch
-			modeState = AR1A_END;
+			if(shoot()){
+				modeState = AR1A_END;
+			}
 			break;
 		default:
 			stopMotors();
 		}
 		return;
 	}
-
 
 #define AR2_INIT 1
 #define AR2_FWD 2
@@ -1018,14 +1195,19 @@ public:
 #define AR3_FWD 2
 #define AR3_TURN 3
 #define AR3_STR8 4
-#define AR3_GEAR 5
-#define AR3_END 6
+#define AR3_GEAR_WAIT 5
+#define AR3_GEAR 6
+#define AR3_BACK 7
+#define AR3_TURN2 8
+#define AR3_SHOOT 9
+#define AR3_END 10
 	void autoRed3(void) {
 		//red three
-		//puts gear onto side of airship
-
+		//puts gear onto side of airship and shoots
 		switch (modeState) {
 		case AR3_INIT:
+			GearDeflector->Set(true);
+			FloorIntakeArm->Set(true);
 			modeState = AR3_FWD;
 			break;
 		case AR3_FWD:
@@ -1038,24 +1220,49 @@ public:
 		case AR3_TURN:
 			// turn 60 degrees clockwise
 			if (autonTurn(RED_3_CASE2_TURN)) {
+				modeState = AR3_STR8;
+				resetEncoder();
+				ahrs->ZeroYaw();
+			}
+			break;
+		case AR3_STR8:
+			// go forward to put gear on peg
+			if (forward (RED_3_CASE3_STR8)) {
+				modeState = AR3_GEAR_WAIT;
+				AutonTimer.Reset();
+			}
+			break;
+		case AR3_GEAR_WAIT:
+			// wait for gear to be lined up
+			if (AutonTimer.Get() > 0.5) {
 				modeState = AR3_GEAR;
+			}
+			break;
+		case AR3_GEAR:
+			//deploy gear
+			if (1) {
+				modeState = AR3_BACK;
+				ahrs->ZeroYaw();
 				resetEncoder();
 			}
 			break;
-//		case AR3_STR8:
-//			//change to timed drive
-//			// go forward
-//			if (forward(RED_3_CASE3_FWD)) {
-//				modeState = AR3_GEAR;
-//				resetEncoder();
-//			}
-//			break;
-		case AR3_GEAR:
-			//change to timed drive
-			// go forward
-			if (1) {
+		case AR3_BACK:
+			//back up to radius
+			if (forward(RED_3_CASE6_BACK)) {
+				modeState = AR3_TURN2;
+				ahrs->ZeroYaw();
+			}
+			break;
+		case AR3_TURN2:
+			//turn to face boiler
+			if (autonTurn(RED_3_CASE7_TURN)) {
+				modeState = AR3_SHOOT;
+			}
+			break;
+		case AR3_SHOOT:
+			//shoot
+			if (shoot()) {
 				modeState = AR3_END;
-				resetEncoder();
 			}
 			break;
 		default:
@@ -1193,7 +1400,8 @@ public:
 		KickerClosedLoop = (chooseKicker.GetSelected() == chooserClosedLoop);
 		DeflectorClosedLoop = (chooseDeflector.GetSelected()
 				== chooserClosedLoop);
-		SmartDashboard::PutNumber("DBG: Deflector Closed Loop Value", DeflectorClosedLoop);
+		SmartDashboard::PutNumber("DBG: Deflector Closed Loop Value",
+				DeflectorClosedLoop);
 		DeflectorLimitEnabled = (chooseDeflectorLimit.GetSelected() == Enable);
 
 		//grip table data
@@ -1351,9 +1559,13 @@ public:
 		double r = EncoderRight.GetDistance();
 		double l = EncoderLeft.GetDistance();
 		//If a encoder is disabled switch l or r to each other.
-		if (l > 0) 		{	usableEncoderData = fmax(r, l);	}
-		else if (l == 0){	usableEncoderData = r;	}
-		else 			{	usableEncoderData = fmin(r, l);	}
+		if (l > 0) {
+			usableEncoderData = fmax(r, l);
+		} else if (l == 0) {
+			usableEncoderData = r;
+		} else {
+			usableEncoderData = fmin(r, l);
+		}
 		return usableEncoderData;
 	}
 
@@ -1431,11 +1643,11 @@ private:
 			chooseDeflector, chooseKicker, chooseShooter, chooseDeflectorLimit;
 	const std::string AutonNameSwitch = "Use Switch";
 	const std::string autonNameOFF = "0 OFF";
-	const std::string autonNameBlue1 = "Blue Boiler";
+	const std::string autonNameBlue1 = "Blue Middle Gear Shoot";
 	const std::string autonNameBlue1A = "Blue Key Shoot";
 	const std::string autonNameBlue2 = "Middle Gear Eject";
 	const std::string autonNameBlue3 = "Blue Right Side Gear";
-	const std::string autonNameRed1 = "Red Boiler";
+	const std::string autonNameRed1 = "Red Middle Gear Shoot";
 	const std::string autonNameRed1A = "Red Key Shoot";
 	const std::string autonNameRed2 = "Go Forward Only";
 	const std::string autonNameRed3 = "Red Right Side Gear";
@@ -1510,203 +1722,3 @@ private:
 ;
 
 START_ROBOT_CLASS(Robot)
-
-
-//************************** code graveyard *********************************
-//#define AB1_INIT 1
-//#define AB1_FWD 2
-//#define AB1_TURN90 3
-//#define AB1_BKUP 4
-//#define AB1_WAIT 5
-//#define AB1_FWD2 6
-//#define AB1_FACE_BOILER 7
-//#define AB1_TO_BOILER 8
-//#define AB1_TIME_FWD 9
-//#define AB1_SHOOT 10
-//#define AB1_END 11
-//
-//	void autoBlue1(void) {
-//
-//		//Blue boiler side code
-//		//drives turns then drives again
-//		switch (modeState) {
-//		case AB1_INIT:
-//			GearDeflector->Set(true);
-//			FloorIntakeArm->Set(true);
-//			modeState = AB1_FWD;
-//			break;
-//		case AB1_FWD:
-//			// go forward 7 ft
-//			if (forward(BLUE_1_CASE1_FWD)) {
-//				modeState = AB1_TURN90;
-//				ahrs->ZeroYaw();
-//			}
-//			break;
-//		case AB1_TURN90:
-//			// turn 90 degrees clockwise
-//			if (autonTurn(BLUE_1_CASE2_TURN)) {
-//				//modeState = AB1_BKUP;
-//				modeState = AB1_WAIT;
-//				resetEncoder();
-//				ahrs->ZeroYaw();
-//			}
-//			break;
-////		case AB1_BKUP:
-////			// go forward 7 ft to hit hopper
-////			//change to timed drive
-////			if (forward(BLUE_1_CASE3_FWD)) {
-////				modeState = AB1_WAIT;
-////				AutonTimer.Reset();
-////			}
-////			break;
-//		case AB1_WAIT:
-//			//waits a couple of seconds for balls
-//			if (timedDrive(BLUE_1_CASE4_FWD_TIME, BLUE_1_CASE4_FWD_LEFT_SPD,
-//			BLUE_1_CASE4_FWD_RIGHT_SPD)) {
-//				modeState = AB1_FWD2;
-//				resetEncoder();
-//				ahrs->ZeroYaw();
-//			}
-//			break;
-//		case AB1_FWD2:
-//			//go backward 4-ish feet
-//			if (forward(BLUE_1_CASE5_FWD)) {
-//				modeState = AB1_FACE_BOILER;
-//				ahrs->ZeroYaw();
-//			}
-//			break;
-//		case AB1_FACE_BOILER:
-//			// turn enough degrees to face boiler
-//			if (autonTurn(BLUE_1_CASE6_TURN)) {
-//				modeState = AB1_TO_BOILER;
-//				resetEncoder();
-//				ahrs->ZeroYaw();
-//			}
-//			break;
-//			//possibly will take out if can shoot from hopper
-//		case AB1_TO_BOILER:
-//			//go forward 7-ish feet to run into boiler
-//			//change to timed drive
-//			if (forward(BLUE_1_CASE7_FWD)) {
-//				modeState = AB1_TIME_FWD;
-//				ahrs->ZeroYaw();
-//			}
-//			break;
-//		case AB1_TIME_FWD:
-//			//go forward 7-ish feet to run into boiler
-//			//change to timed drive
-//			if (timedDrive(BLUE_1_CASE8_TIME, BLUE_1_CASE8_LSPEED,
-//			BLUE_1_CASE8_RSPEED)) {
-//				modeState = AB1_SHOOT;
-//				ahrs->ZeroYaw();
-//			}
-//			break;
-//		case AB1_SHOOT:
-//			if (shoot()) {
-//				modeState = AB1_END;
-//			}
-//			break;
-//		default:
-//			stopMotors();
-//		}
-//		return;
-//	}
-//
-////#define AR1_INIT 1
-//#define AR1_FWD 2
-//#define AR1_TURN90 3
-//#define AR1_BKUP 4
-//#define AR1_WAIT 5
-//#define AR1_FWD2 6
-//#define AR1_FACE_BOILER 7
-//#define AR1_TO_BOILER 8
-//#define	AR1_TIME_FWD 9
-//#define AR1_SHOOT 10
-//#define AR1_END 11
-//	void autoRed1(void) {
-//		//Red center position code
-//		//this version turns the robot in a right angle
-//
-//		switch (modeState) {
-//		case AR1_INIT:
-//			GearDeflector->Set(true);
-//			FloorIntakeArm->Set(true);
-//			modeState = AR1_FWD;
-//			break;
-//		case AR1_FWD:
-//			// go forward 7 ft
-//			if (forward(RED_1_CASE1_FWD)) {
-//				modeState = AR1_TURN90;
-//				ahrs->ZeroYaw();
-//			}
-//			break;
-//		case AR1_TURN90:
-//			// turn 90 degrees counterclockwise
-//			if (autonTurn(RED_1_CASE2_TURN)) {
-//				modeState = AR1_WAIT;
-//				resetEncoder();
-//				ahrs->ZeroYaw();
-//			}
-//			break;
-////		case AR1_BKUP:
-////			//change to timed drive
-////			// go forward 7 ft to hit hopper
-////			if (forward(RED_1_CASE3_FWD)) {
-////				modeState = AR1_WAIT;
-////				AutonTimer.Reset();
-////			}
-////			break;
-//		case AR1_WAIT:
-//			//waits in front of hopper a couple of seconds for balls
-//			if (timedDrive(RED_1_CASE4_FWD_TIME, RED_1_CASE4_FWD_LEFT_SPD,
-//			RED_1_CASE4_FWD_RIGHT_SPD)) {
-//				modeState = AR1_FWD2;
-//				resetEncoder();
-//				ahrs->ZeroYaw();
-//			}
-//			break;
-//
-//		case AR1_FWD2:
-//			//go backward 3-ish feet
-//			if (forward(RED_1_CASE5_FWD)) {
-//				modeState = AR1_FACE_BOILER;
-//				ahrs->ZeroYaw();
-//			}
-//			break;
-//		case AR1_FACE_BOILER:
-//			// turns counterclockwise enough degrees to face boiler
-//			if (autonTurn(RED_1_CASE6_TURN)) {
-//				modeState = AR1_TO_BOILER;
-//				resetEncoder();
-//				ahrs->ZeroYaw();
-//			}
-//			break;
-//		case AR1_TO_BOILER:
-//			//change to timed drive
-//			//go forward 7-ish feet to run into boiler
-//			if (forward(RED_1_CASE7_FWD)) {
-//				modeState = AR1_TIME_FWD;
-//				ahrs->ZeroYaw();
-//			}
-//			break;
-//		case AR1_TIME_FWD:
-//			//change to timed drive
-//			//go forward 7-ish feet to run into boiler
-//			if (timedDrive(RED_1_CASE8_TIME, RED_1_CASE8_LSPEED,
-//			RED_1_CASE8_RSPEED)) {
-//				modeState = AR1_SHOOT;
-//				ahrs->ZeroYaw();
-//			}
-//			break;
-//		case AR1_SHOOT:
-//			if (shoot()) {
-//				modeState = AR1_END;
-//			}
-//			break;
-//		default:
-//			stopMotors();
-//		}
-//		return;
-//	}
-
-
