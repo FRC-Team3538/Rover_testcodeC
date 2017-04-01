@@ -35,7 +35,27 @@
 //		launch the "fuel."
 //
 
-//Blue 1
+//Blue 1 - middle gear shoot auto (autoBlueMiddleShoot)
+// 1) Initialize for this auto.							Done: Set gear deflector
+//															Set floor intake arm
+// 2) Move forward 71"									Done: reset timer
+//		gyro keeps us straight
+//		measured by encoders
+// 3) Move forward 0.5 sec at 20% power.				Done: reset timer
+//		time measured by timer
+// 4) Wait for 0.5 seconds	(hard coded)				Done: 
+//		time measured by timer
+// 5) Start deploying the gear							Done: reset encoders, 
+//		Always terminates the first time though				zero gyro yaw, 
+// 6) Back up 48"										Done: Zero yaw
+//		gyro keeps us straight
+// 		encoders measure distance
+// 7) Turn to face the boiler							Done: reset encoders,
+//		turn measured by the gyro								Zero yaw
+// 8) Go forward ~7 ft.									Done: Zero yaw
+//		gyro keeps us straight
+// 9) Shoot
+//10) Stop
 #define BLUE_1_CASE1_FWD (71.0)
 #define BLUE_1_CASE2_FWD_TIME (0.5)
 #define BLUE_1_CASE2_FWD_LEFT_SPD (-0.2)
@@ -45,6 +65,14 @@
 #define BLUE_1_CASE7_FWD (-60.0)
 
 //drives along the key line into the hopper, backs up, turns, runs into the boiler and shoots
+// (autoBlueKeyShoot)
+// 1) Initialize for this auto.							Done: Set gear deflector
+//															Set floor intake arm
+// 2) Move forward 48"									Done: reset timer	////////Why is this negative???????????
+//		gyro keeps us straight
+//		measured by encoders
+// 3) Make a wide turn to the hopper					Done: Reset timer
+//		timer-based dead reckoning
 #define BLUE_1A_CASE1_FWD (-4.0 * 12.0)
 #define BLUE_1A_CASE2_HOPPER_TIME (2.2)
 #define BLUE_1A_CASE2_LSPEED (0.5)
@@ -74,6 +102,12 @@
 #define BLUE_3_CASE6_BACK (-48.0)
 #define BLUE_3_CASE7_TURN (-190.0)
 
+//left side gear calibrations
+#define BLUE_4_CASE1_FWD (6.7 * 12.0)
+#define BLUE_4_CASE2_TURN (60.0)
+#define BLUE_4_CASE3_STR8 (56.0)
+#define BLUE_4_CASE6_BACK (-48.0)
+
 // This will go to the middle of the field,
 //		turn away from the hopper,
 //		back up into the hopper.  (Timed so that collision with the hopper will set the robot position.)
@@ -95,12 +129,6 @@
 #define RED_1_CASE5_BACK (-48.0)
 #define RED_1_CASE6_TURN (-100.0)
 #define RED_1_CASE7_FWD (-60.0)
-
-#define RED_1_CASE3_FWD (7.6 * -1 * 12.0)
-#define RED_1_CASE5_FWD (3.5 * 12.0)
-#define RED_1_CASE8_TIME (0.3)
-#define RED_1_CASE8_LSPEED (-0.4)
-#define RED_1_CASE8_RSPEED (-0.4)
 
 //drives along the key line into the hopper, backs up, turns, runs into the boiler and shoots
 #define RED_1A_CASE1_FWD (-4.0 * 12.0)
@@ -130,9 +158,15 @@
 //    go forward 2 ft
 #define RED_3_CASE1_FWD (9 * 12.0)
 #define RED_3_CASE2_TURN (-60)
-#define RED_3_CASE3_STR8 (36.0)
+#define RED_3_CASE3_STR8 (34.0)
 #define RED_3_CASE6_BACK (-48.0)
 #define RED_3_CASE7_TURN (190.0)
+
+//right side gear auto calibrations
+#define RED_4_CASE1_FWD (6.0 * 12.0)
+#define RED_4_CASE2_TURN (-60.0)
+#define RED_4_CASE3_STR8 (56.0)
+#define RED_4_CASE6_BACK (-48.0)
 
 //linear calibrations
 #define LINEAR_TOLERANCE (0.2)
@@ -198,7 +232,7 @@ public:
 					0), DriveLeft1(1), DriveLeft2(2), DriveRight0(3), DriveRight1(
 					4), DriveRight2(5), EncoderLeft(0, 1), EncoderRight(2, 3), table(
 			NULL), ahrs(NULL), modeState(0), DiIn9(9), DiIn8(8), DiIn7(7), Winch0(
-					11), Winch1(9), Shooter0(12), Shooter1(7), Conveyor(13), Agitator0(
+					11), Winch1(9), Winch2(7), Shooter0(12), Conveyor(13), Agitator0(
 					6), Agitator1(15), FloorIntakeRoller(14), KickerWheel(8), DeflectorMotor(
 					10), EncoderKicker(20, 21), EncoderShoot(4, 5, false,
 					CounterBase::k1X), WinchStop(6), DeflectorAnglePOT(0, 270,
@@ -223,10 +257,12 @@ public:
 		chooseAutonSelector.AddObject(autonNameRed1A, autonNameRed1A);
 		chooseAutonSelector.AddObject(autonNameRed2, autonNameRed2);
 		chooseAutonSelector.AddObject(autonNameRed3, autonNameRed3);
+		chooseAutonSelector.AddObject(autonNameRed4, autonNameRed4);
 		chooseAutonSelector.AddObject(autonNameBlue1, autonNameBlue1);
 		chooseAutonSelector.AddObject(autonNameBlue1A, autonNameBlue1A);
 		chooseAutonSelector.AddObject(autonNameBlue2, autonNameBlue2);
 		chooseAutonSelector.AddObject(autonNameBlue3, autonNameBlue3);
+		chooseAutonSelector.AddObject(autonNameBlue4, autonNameBlue4);
 		frc::SmartDashboard::PutData("Auto Modes", &chooseAutonSelector);
 
 		chooseDriveEncoder.AddDefault(LH_Encoder, LH_Encoder);
@@ -397,7 +433,7 @@ public:
 	void RobotPeriodic() {
 		//links multiple motors together
 		Winch1.Set(-Winch0.Get());
-		Shooter1.Set(-Shooter0.Get());
+		Winch2.Set(-Winch0.Get());
 		DriveLeft1.Set(DriveLeft0.Get());
 		DriveLeft2.Set(DriveLeft0.Get());
 		DriveRight1.Set(DriveRight0.Get());
@@ -448,6 +484,12 @@ public:
 			case 9:
 				autoSelected = autonNameRed1A;
 				break;
+			case 10:
+				autoSelected = autonNameRed4;
+				break;
+			case 11:
+				autoSelected = autonNameBlue4;
+				break;
 
 			default:
 				autoSelected = autonNameOFF;
@@ -492,6 +534,10 @@ public:
 			autoMiddleGearEject();
 		else if (autoSelected == autonNameBlue3)
 			autoBlue3();
+		else if (autoSelected == autonNameRed4)
+			autoGearLeft();
+		else if (autoSelected == autonNameBlue4)
+			autoGearRight();
 		else
 			stopMotors();
 
@@ -779,7 +825,8 @@ public:
 			break;
 		case AB1_TIMED:
 			//timed drive to get gear on peg
-			if (timedDrive(BLUE_1_CASE2_FWD_TIME, BLUE_1_CASE2_FWD_LEFT_SPD, BLUE_1_CASE2_FWD_RIGHT_SPD)) {
+			if (timedDrive(BLUE_1_CASE2_FWD_TIME, BLUE_1_CASE2_FWD_LEFT_SPD,
+			BLUE_1_CASE2_FWD_RIGHT_SPD)) {
 				modeState = AB1_WAIT;
 				AutonTimer.Reset();
 			}
@@ -871,7 +918,7 @@ public:
 			break;
 		case AB1A_SHOOT:
 			//launch
-			if(shoot()){
+			if (shoot()) {
 				modeState = AB1A_END;
 			}
 			break;
@@ -1052,7 +1099,8 @@ public:
 			break;
 		case AR1_TIMED:
 			// turn 90 degrees counterclockwise
-			if (timedDrive(RED_1_CASE2_FWD_TIME, RED_1_CASE2_FWD_LEFT_SPD , RED_1_CASE2_FWD_RIGHT_SPD)) {
+			if (timedDrive(RED_1_CASE2_FWD_TIME, RED_1_CASE2_FWD_LEFT_SPD,
+			RED_1_CASE2_FWD_RIGHT_SPD)) {
 				modeState = AR1_WAIT;
 				AutonTimer.Reset();
 			}
@@ -1144,7 +1192,7 @@ public:
 			break;
 		case AR1A_SHOOT:
 			//launch
-			if(shoot()){
+			if (shoot()) {
 				modeState = AR1A_END;
 			}
 			break;
@@ -1227,7 +1275,7 @@ public:
 			break;
 		case AR3_STR8:
 			// go forward to put gear on peg
-			if (forward (RED_3_CASE3_STR8)) {
+			if (forward(RED_3_CASE3_STR8)) {
 				modeState = AR3_GEAR_WAIT;
 				AutonTimer.Reset();
 			}
@@ -1270,6 +1318,137 @@ public:
 		}
 		return;
 	}
+
+#define AB4_INIT 1
+#define AB4_FWD 2
+#define AB4_TURN 3
+#define AB4_STR8 4
+#define AB4_GEAR_WAIT 5
+#define AB4_GEAR 6
+#define AB4_BACK 7
+#define AB4_END 8
+	void autoGearLeft(void) {
+		//puts gear on pin on right side of airship
+		switch (modeState) {
+		case AB4_INIT:
+			modeState = AB3_FWD;
+			break;
+		case AB4_FWD:
+			// go forward 7 ft
+			if (forward(BLUE_4_CASE1_FWD)) {
+				modeState = AB4_TURN;
+				ahrs->ZeroYaw();
+			}
+			break;
+		case AB4_TURN:
+			// turn 90 degrees counterclockwise
+			if (autonTurn(BLUE_4_CASE2_TURN)) {
+				modeState = AB4_STR8;
+				resetEncoder();
+				ahrs->ZeroYaw();
+			}
+			break;
+		case AB4_STR8:
+			// go forward
+			//timed drive
+			if (forward(BLUE_4_CASE3_STR8)) {
+				modeState = AB4_GEAR_WAIT;
+				resetEncoder();
+			}
+			break;
+		case AB4_GEAR_WAIT:
+			// go forward
+			//timed drive
+			//AutonTimer.Get() > 1.5
+			if (timedDrive(1.0, -0.2, -0.2)) {
+				modeState = AB4_GEAR;
+			}
+			break;
+		case AB4_GEAR:
+			// deploy gear
+			if (1) {
+				modeState = AB4_BACK;
+				resetEncoder();
+				GearOut->Set(true);
+			}
+			break;
+		case AB4_BACK:
+			//back up to the shooting radius
+			//forward(BLUE_4_CASE6_BACK)
+			if (timedDrive(4.0, 0.3, 0.3)) {
+				GearOut->Set(false);
+				ahrs->ZeroYaw();
+				modeState = AB4_END;
+			}
+			break;
+		default:
+			stopMotors();
+		}
+	}
+
+#define AR4_INIT 1
+#define AR4_FWD 2
+#define AR4_TURN 3
+#define AR4_STR8 4
+#define AR4_GEAR_WAIT 5
+#define AR4_GEAR 6
+#define AR4_BACK 7
+#define AR4_END 8
+	void autoGearRight(void) {
+		//puts gear onto left side of airship
+		switch (modeState) {
+		case AR4_INIT:
+			modeState = AR4_FWD;
+			break;
+		case AR4_FWD:
+			// go forward 7 ft
+			if (forward(RED_4_CASE1_FWD)) {
+				modeState = AR4_TURN;
+				ahrs->ZeroYaw();
+			}
+			break;
+		case AR4_TURN:
+			// turn 60 degrees clockwise
+			if (autonTurn(RED_4_CASE2_TURN)) {
+				modeState = AR4_STR8;
+				resetEncoder();
+				ahrs->ZeroYaw();
+			}
+			break;
+		case AR4_STR8:
+			// go forward to put gear on peg
+			if (forward(RED_4_CASE3_STR8)) {
+				modeState = AR4_GEAR_WAIT;
+				AutonTimer.Reset();
+			}
+			break;
+		case AR4_GEAR_WAIT:
+			// wait for gear to be lined up
+			if (timedDrive(1.0, -0.2, -0.2)) {
+				modeState = AR4_GEAR;
+			}
+			break;
+		case AR4_GEAR:
+			//deploy gear
+			if (1) {
+				modeState = AR4_BACK;
+				ahrs->ZeroYaw();
+				resetEncoder();
+			}
+			break;
+		case AR4_BACK:
+			//back up to radius
+			//forward(RED_4_CASE6_BACK)
+			if (timedDrive(4.0, 0.3, 0.3)) {
+				modeState = AR4_END;
+				ahrs->ZeroYaw();
+			}
+			break;
+		default:
+			stopMotors();
+		}
+	}
+
 	void SmartDashboardUpdate() {
 
 		// Auto State
@@ -1382,9 +1561,9 @@ public:
 		SmartDashboard::PutNumber("Drive R2 Output", DriveRight2.Get());
 
 		SmartDashboard::PutNumber("Shooter Motor0 Output", Shooter0.Get());
-		SmartDashboard::PutNumber("Shooter Motor1 Output", Shooter1.Get());
 		SmartDashboard::PutNumber("Winch Motor0 Output", Winch0.Get());
 		SmartDashboard::PutNumber("Winch Motor1 Output", Winch1.Get());
+		SmartDashboard::PutNumber("Winch Motor2 Output", Winch2.Get());
 		SmartDashboard::PutNumber("Kicker Motor Output", KickerWheel.Get());
 		SmartDashboard::PutNumber("Agitator Motor0 Output", Agitator0.Get());
 		SmartDashboard::PutNumber("Agitator Motor1 Output", Agitator1.Get());
@@ -1646,11 +1825,13 @@ private:
 	const std::string autonNameBlue1 = "Blue Middle Gear Shoot";
 	const std::string autonNameBlue1A = "Blue Key Shoot";
 	const std::string autonNameBlue2 = "Middle Gear Eject";
-	const std::string autonNameBlue3 = "Blue Right Side Gear";
+	const std::string autonNameBlue3 = "Blue Right Side Gear Shoot";
+	const std::string autonNameBlue4 = "Right Side Gear";
 	const std::string autonNameRed1 = "Red Middle Gear Shoot";
 	const std::string autonNameRed1A = "Red Key Shoot";
 	const std::string autonNameRed2 = "Go Forward Only";
-	const std::string autonNameRed3 = "Red Right Side Gear";
+	const std::string autonNameRed3 = "Red Left Side Gear Shoot";
+	const std::string autonNameRed4 = "Left Side Gear";
 	const std::string RH_Encoder = "RH_Encoder";
 	const std::string LH_Encoder = "LH_Encoder";
 	const std::string chooserClosedLoop = "Closed Loop";
@@ -1686,8 +1867,8 @@ private:
 	PowerDistributionPanel *pdp = new PowerDistributionPanel();
 
 //manipulator
-	VictorSP Winch0, Winch1;
-	VictorSP Shooter0, Shooter1;
+	VictorSP Winch0, Winch1, Winch2;
+	VictorSP Shooter0;
 	VictorSP Conveyor;
 	VictorSP Agitator0, Agitator1;
 	VictorSP FloorIntakeRoller;
