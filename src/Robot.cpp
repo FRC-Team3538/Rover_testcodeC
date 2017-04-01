@@ -234,7 +234,7 @@ public:
 			NULL), ahrs(NULL), modeState(0), DiIn9(9), DiIn8(8), DiIn7(7), Winch0(
 					11), Winch1(9), Winch2(7), Shooter0(12), Conveyor(13), Agitator0(
 					6), Agitator1(15), FloorIntakeRoller(14), KickerWheel(8), DeflectorMotor(
-					10), EncoderKicker(20, 21), EncoderShoot(4, 5, false,
+					10), EncoderKicker(20, 21), EncoderShoot(4, 5, true,
 					CounterBase::k1X), WinchStop(6), DeflectorAnglePOT(0, 270,
 					0), DeflectorTarget(0), ConvCommandPWM(0.1), ShootCommandPWM(
 					0.75), DeflectAngle(145), DeflectorHighLimit(22), DeflectorLowLimit(
@@ -288,9 +288,9 @@ public:
 		// Inialize settings from Smart Dashboard
 		ShootCommandPWM = 0.85;
 		ShootCommandRPM = 2600;
-		ShootKP = -0.02;
+		ShootKP = 0.02;
 		ShootKI = 0.0;
-		ShootKD = -0.003;
+		ShootKD = 0.003;
 		//ShootKF = -1.0 / 3200.0; //   1 / MAX RPM
 		KickerCommandPWM = 0.5;
 		KickerCommandRPM = 500;
@@ -714,17 +714,25 @@ public:
 		if (OperatorStick.GetRawButton(6)) {
 			intakeDeployed = false;
 			FloorIntakeArm->Set(intakeDeployed);
-
 		}
-		// LH Bumper - Deploy Intake
-		if (OperatorStick.GetRawButton(5)) {
+
+		//prevents robot from violating frame perimeter rules
+		//if X button release gear
+		GearOut->Set(OperatorStick.GetRawButton(3));
+		//if X button pressed, retract intake
+		if (OperatorStick.GetRawButton(3)) {
+			intakeDeployed = false;
+			FloorIntakeArm->Set(intakeDeployed);
+		}
+		//else LH Bumper - Deploy Intake
+		else if (OperatorStick.GetRawButton(5)) {
 			intakeDeployed = true;
 			FloorIntakeArm->Set(intakeDeployed);
 		}
 
-		//X Button to get and B button release the gear
+		//B Button to get and X button release the gear
 		GearIn->Set(OperatorStick.GetRawButton(2));
-		GearOut->Set(OperatorStick.GetRawButton(3));
+
 		//A Button - Gear Deflector
 		if (OperatorStick.GetRawAxis(3) < Deadband)
 			GearDeflector->Set(OperatorStick.GetRawButton(1));
