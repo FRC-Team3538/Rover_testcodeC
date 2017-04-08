@@ -232,7 +232,7 @@ public:
 					0), DriveLeft1(1), DriveLeft2(2), DriveRight0(3), DriveRight1(
 					4), DriveRight2(5), EncoderLeft(0, 1), EncoderRight(2, 3), table(
 			NULL), ahrs(NULL), modeState(0), DiIn9(9), DiIn8(8), DiIn7(7), Winch0(
-					11), Winch1(9), Winch2(7), Shooter0(12), Conveyor(13), Agitator0(
+					11), Winch1(9), Winch2(7), Shooter0(12), Shooter1(13), Agitator0(
 					6), Agitator1(15), FloorIntakeRoller(14), KickerWheel(8), DeflectorMotor(
 					10), EncoderKicker(20, 21), EncoderShoot(4, 5, true,
 					CounterBase::k1X), WinchStop(6), DeflectorAnglePOT(0, 270,
@@ -405,6 +405,8 @@ public:
 		DriveRight0.Set(0);
 		DriveRight1.Set(0);
 		DriveRight2.Set(0);
+		//Turn off shooter motor
+		Shooter0.Set(0.0);
 		//zeros the navX
 		if (ahrs) {
 			ahrs->ZeroYaw();
@@ -426,8 +428,8 @@ public:
 	}
 
 	void TeleopInit() {
-
 		OutputX = 0, OutputY = 0;
+		Shooter0.Set(0.0);
 	}
 
 	void RobotPeriodic() {
@@ -439,6 +441,7 @@ public:
 		DriveRight1.Set(DriveRight0.Get());
 		DriveRight2.Set(DriveRight0.Get());
 		Agitator1.Set(Agitator0.Get());
+		Shooter1.Set(-Shooter0.Get());
 
 		// Encoder Selection for autotools
 		encoderSelected = chooseDriveEncoder.GetSelected();
@@ -636,21 +639,17 @@ public:
 		 * MANIP CODE
 		 */
 
-		// Turn on the shooter when right hand trigger is pushed
-		if (OperatorStick.GetRawAxis(3) > Deadband) {
-			GearDeflector->Set(true);
-			if (!operatorRightTriggerPrev and ShooterClosedLoop) { //Start timer and enable PID if closed loop
-				ShooterDelay.Reset();
-				ShooterDelay.Start();
-
+		//****change so shooter stays on after trigger pushed
+		//****need rumble??
+		// Turn on the shooter when left hand trigger is pushed
+		if (OperatorStick.GetRawAxis(2) > Deadband) {
+			if (!operatorRightTriggerPrev and ShooterClosedLoop) {
 				if (ShooterClosedLoop) {
 					ShooterPID.Reset();
 					ShooterPID.Enable();
 				}
 				operatorRightTriggerPrev = true;
-			} else if (!operatorRightTriggerPrev) { //Start timer if not closed loop
-				ShooterDelay.Reset();
-				ShooterDelay.Start();
+			} else if (!operatorRightTriggerPrev) {
 				operatorRightTriggerPrev = true;
 			}
 
@@ -658,10 +657,10 @@ public:
 				//1.75 is a scaling factor to make the PID reach desired RPM
 				ShooterPID.SetSetpoint(ShootCommandRPM / 60.0);
 			} else {
-				Shooter0.Set(-ShootCommandPWM); // negative so they turn the correct way.
+				Shooter0.Set(ShootCommandPWM); // positive so they turn the correct way.
 			}
-
-		} else {
+		//right POV button - shooter off
+		} else if (OperatorStick.GetPOV(0) == 270) {
 			operatorRightTriggerPrev = false;
 			if (ShooterClosedLoop) {
 				ShooterPID.SetSetpoint(0.0); // ADLAI - this might be redundant with the disable but I don't think it matters.
@@ -672,10 +671,7 @@ public:
 		}
 
 		// Turn on Kicker Wheel, conveyor, and agitators when right trigger is pressed
-		if (OperatorStick.GetRawAxis(3) > Deadband
-				and ShooterDelay.Get() > 0.5) {
-
-			Conveyor.Set(OperatorStick.GetRawAxis(3));
+		if (OperatorStick.GetRawAxis(3) > Deadband) {
 			Agitator0.Set(OperatorStick.GetRawAxis(3));
 
 			if (KickerClosedLoop) {
@@ -685,8 +681,6 @@ public:
 				KickerWheel.Set(KickerCommandPWM);
 			}
 		} else {
-
-			Conveyor.Set(0.0);
 			Agitator0.Set(0.0);
 
 			if (KickerClosedLoop) {
@@ -697,24 +691,8 @@ public:
 			}
 		}
 
-		//Spin intake when left trigger is pushed
-		if (OperatorStick.GetRawAxis(2) > Deadband
-				and !OperatorStick.GetRawButton(4)) {
-			FloorIntakeRoller.Set(OperatorStick.GetRawAxis(2));
-		}
-		//spin intake in reverse direction when y button is pushed
-		else if (OperatorStick.GetRawButton(4)
-				&& OperatorStick.GetRawAxis(2) < Deadband) {
-			FloorIntakeRoller.Set(-0.8);
-		} else {
-			FloorIntakeRoller.Set(0.0);
-		}
-
-		// RH Bumper - Retract Intake
-		if (OperatorStick.GetRawButton(6)) {
-			intakeDeployed = false;
-			FloorIntakeArm->Set(intakeDeployed);
-		}
+		//B Button to get and X button release the gear
+		GearIn->Set(OperatorStick.GetRawButton(2));
 
 		//prevents robot from violating frame perimeter rules
 		//if X button release gear
@@ -730,12 +708,14 @@ public:
 			FloorIntakeArm->Set(intakeDeployed);
 		}
 
-		//B Button to get and X button release the gear
-		GearIn->Set(OperatorStick.GetRawButton(2));
+		// RH Bumper - Retract Intake
+		if (OperatorStick.GetRawButton(6)) {
+			intakeDeployed = false;
+			FloorIntakeArm->Set(intakeDeployed);
+		}
 
-		//A Button - Gear Deflector
-		if (OperatorStick.GetRawAxis(3) < Deadband)
-			GearDeflector->Set(OperatorStick.GetRawButton(1));
+		//A Button - close shot/ gear flipper up
+		GearDeflector->Set(OperatorStick.GetRawButton(1));
 
 		//Right joystick for agitator un-jam
 		if (fabs(OperatorStick.GetRawAxis(4)) > Deadband)
@@ -748,54 +728,16 @@ public:
 			Winch0.Set(0.0);
 		}
 
-		//move deflector using d-pad(POV)
-		double DeflectorLimitLower = 120.0;	//degrees
-		double DeflectorLimitUpper = 183.0;	//degrees
-		double DeflectorMotorOutputMax = 0.1;	//PWM
-		double DeflectorIncrement = 0.03;	//degrees
-
-		if (!DeflectorClosedLoop) {
-			//move deflector up
-			if (DeflectorAnglePOT.Get() < DeflectorLimitUpper
-					&& OperatorStick.GetPOV(0) == 0) {
-				DeflectorMotor.Set(DeflectorMotorOutputMax);
-			}
-			//move deflector down
-			else if (DeflectorAnglePOT.Get() > DeflectorLimitLower
-					&& OperatorStick.GetPOV(0) == 180) {
-				DeflectorMotor.Set(-DeflectorMotorOutputMax);
-			} else {
-				DeflectorMotor.Set(0.0);
-			}
+		//POV will control floor intake stuff
+		//top POV button - spin roller to intake gear
+		if (OperatorStick.GetPOV(0) == 0) {
+			FloorIntakeRoller.Set(0.8);
 		}
-		//in closed loop
-		else {
-			if (OperatorStick.GetPOV(0) == 0
-					and DeflectorTarget < DeflectorLimitUpper) {
-				//will increment the DeflectorTarget by value set by joysticks
-				DeflectorTarget += DeflectorIncrement;
-			} else if (OperatorStick.GetPOV(0) == 180
-					and DeflectorTarget > DeflectorLimitLower) {
-				//will increment the DeflectorTarget by value set by joysticks
-				DeflectorTarget -= DeflectorIncrement;
-			}
-
-			//Control the angle of the deflector
-			if (OperatorStick.GetPOV(0) == 90) {
-				DeflectorTarget = 163.0;
-			}
-			if (OperatorStick.GetPOV(0) == 270) {
-				DeflectorTarget = 135.0;
-			}
-
-			DeflectorPID.SetSetpoint(DeflectorTarget);
-
-			// Emergency Disable
-			if (DeflectorAnglePOT.Get() > DeflectorLimitUpper
-					or DeflectorAnglePOT.Get() < DeflectorLimitLower) {
-				DeflectorPID.Disable();
-				DeflectorMotor.Set(0.0);
-			}
+		//bottom POV button - spin roller to intake balls
+		else if (OperatorStick.GetPOV(0) == 180) {
+			FloorIntakeRoller.Set(-0.8);
+		} else {
+			FloorIntakeRoller.Set(0.0);
 		}
 
 	}
@@ -1569,6 +1511,7 @@ public:
 		SmartDashboard::PutNumber("Drive R2 Output", DriveRight2.Get());
 
 		SmartDashboard::PutNumber("Shooter Motor0 Output", Shooter0.Get());
+		SmartDashboard::PutNumber("Shooter Motor1  Output", Shooter1.Get());
 		SmartDashboard::PutNumber("Winch Motor0 Output", Winch0.Get());
 		SmartDashboard::PutNumber("Winch Motor1 Output", Winch1.Get());
 		SmartDashboard::PutNumber("Winch Motor2 Output", Winch2.Get());
@@ -1577,7 +1520,6 @@ public:
 		SmartDashboard::PutNumber("Agitator Motor1 Output", Agitator1.Get());
 		SmartDashboard::PutNumber("Floor Intake Motor Output",
 				FloorIntakeRoller.Get());
-		SmartDashboard::PutNumber("Conveyor Motor  Output", Conveyor.Get());
 		SmartDashboard::PutNumber("Deflector Motor Output",
 				DeflectorMotor.Get());
 //
@@ -1775,7 +1717,6 @@ public:
 		}
 
 		//turn on conveyor, agitators, and kicker
-		Conveyor.Set(0.8);
 		Agitator0.Set(0.8);
 
 		if (KickerClosedLoop) {
@@ -1796,29 +1737,6 @@ public:
 		return 1;
 	}
 
-	int setDeflectorAngle(double target) {
-		DeflectorPID.SetSetpoint(target);
-		//if the absolute value of the error is less than 1 degree return 1
-		return (abs(DeflectorPID.GetError()) < 1.0);
-	}
-
-	int kickerSpeed(double speed) {
-		KickerPID.SetSetpoint(speed);
-		//if value of the error is less than 50 rpm return 1
-		return (abs(KickerPID.GetError()) < 50.0);
-	}
-
-	int shooterSpeed(double speed) {
-
-		if (ShooterClosedLoop) {
-			ShooterPID.SetSetpoint(speed);
-			//if value of the error is less than 50 rpm return 1
-			return (abs(ShooterPID.GetError()) < 50.0);
-		}
-
-		return 1; // Not implemented or used anywhere...
-	}
-
 	void TestPeriodic() {
 		lw->Run();
 	}
@@ -1833,12 +1751,12 @@ private:
 	const std::string autonNameBlue1 = "Blue Middle Gear Shoot";
 	const std::string autonNameBlue1A = "Blue Key Shoot";
 	const std::string autonNameBlue2 = "Middle Gear Eject";
-	const std::string autonNameBlue3 = "Blue Right Side Gear Shoot";
+	const std::string autonNameBlue3 = "Blue Left Side Gear Shoot";
 	const std::string autonNameBlue4 = "Right Side Gear";
 	const std::string autonNameRed1 = "Red Middle Gear Shoot";
 	const std::string autonNameRed1A = "Red Key Shoot";
 	const std::string autonNameRed2 = "Go Forward Only";
-	const std::string autonNameRed3 = "Red Left Side Gear Shoot";
+	const std::string autonNameRed3 = "Red Right Side Gear Shoot";
 	const std::string autonNameRed4 = "Left Side Gear";
 	const std::string RH_Encoder = "RH_Encoder";
 	const std::string LH_Encoder = "LH_Encoder";
@@ -1857,7 +1775,6 @@ private:
 	VictorSP DriveRight2;
 	Timer AutonTimer;
 	Timer EncoderCheckTimer;
-	Timer ShooterDelay;
 	Encoder EncoderLeft;
 	Encoder EncoderRight;
 	std::shared_ptr<NetworkTable> table;
@@ -1876,8 +1793,7 @@ private:
 
 //manipulator
 	VictorSP Winch0, Winch1, Winch2;
-	VictorSP Shooter0;
-	VictorSP Conveyor;
+	VictorSP Shooter0, Shooter1;
 	VictorSP Agitator0, Agitator1;
 	VictorSP FloorIntakeRoller;
 	VictorSP KickerWheel;
