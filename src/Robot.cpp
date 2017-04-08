@@ -1731,7 +1731,7 @@ public:
 			//1.75 is a scaling factor to make the PID reach desired RPM
 			ShooterPID.SetSetpoint(ShootCommandRPM / 60.0);
 		} else {
-			Shooter0.Set(-ShootCommandPWM); // negative so they turn the correct way.
+			Shooter0.Set(ShootCommandPWM); // positive so they turn the correct way.
 		}
 
 		return 1;
