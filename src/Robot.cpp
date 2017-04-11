@@ -174,12 +174,12 @@
 //		while going straight.
 #define KP_LINEAR (0.27)
 // This is the gain for using the gyroscope to go straight
-#define KP_ROTATION (0.012)
+#define KP_ROTATION (0.017)
 #define LINEAR_SETTLING_TIME (0.1)
 #define LINEAR_MAX_DRIVE_SPEED (0.75)
 
 //turning calibrations
-#define ROTATIONAL_TOLERANCE (5.0)
+#define ROTATIONAL_TOLERANCE (1.0)
 // This is the gain for turning using the gyroscope
 #define ERROR_GAIN (-0.05)
 #define ROTATIONAL_SETTLING_TIME (0.1)
@@ -286,7 +286,7 @@ public:
 		frc::SmartDashboard::PutData("Deflector Limits", &chooseDeflectorLimit);
 
 		// Inialize settings from Smart Dashboard
-		ShootCommandPWM = 0.85;
+		ShootCommandPWM = 0.9;
 		ShootCommandRPM = 2600;
 		ShootKP = 0.02;
 		ShootKI = 0.0;
@@ -407,6 +407,8 @@ public:
 		DriveRight2.Set(0);
 		//Turn off shooter motor
 		Shooter0.Set(0.0);
+		KickerWheel.Set(0.0);
+		Agitator0.Set(0.0);
 		//zeros the navX
 		if (ahrs) {
 			ahrs->ZeroYaw();
@@ -600,7 +602,7 @@ public:
 		OperatorStick.SetRumble(Vibrate, RHClimb);// Set Right Rumble to RH Trigger
 
 		//drive controls ADLAI - I know this works, I just don't understand how returning only negative values works for this.
-		double SpeedLinear = Drivestick.GetRawAxis(1) * -1; // get Yaxis value (forward)
+		double SpeedLinear = Drivestick.GetRawAxis(1) * 1; // get Yaxis value (forward)
 		double SpeedRotate = Drivestick.GetRawAxis(4) * -1; // get Xaxis value (turn)
 
 		// Set dead band for X and Y axis
@@ -639,10 +641,9 @@ public:
 		 * MANIP CODE
 		 */
 
-		//****change so shooter stays on after trigger pushed
-		//****need rumble??
 		// Turn on the shooter when left hand trigger is pushed
 		if (OperatorStick.GetRawAxis(2) > Deadband) {
+			shooterOn = true;
 			if (!operatorRightTriggerPrev and ShooterClosedLoop) {
 				if (ShooterClosedLoop) {
 					ShooterPID.Reset();
@@ -661,6 +662,7 @@ public:
 			}
 		//right POV button - shooter off
 		} else if (OperatorStick.GetPOV(0) == 270) {
+			shooterOn = false;
 			operatorRightTriggerPrev = false;
 			if (ShooterClosedLoop) {
 				ShooterPID.SetSetpoint(0.0); // ADLAI - this might be redundant with the disable but I don't think it matters.
@@ -955,13 +957,14 @@ public:
 		//puts gear on pin on side of airship
 		switch (modeState) {
 		case AB3_INIT:
-			GearDeflector->Set(true);
-			FloorIntakeArm->Set(true);
+			GearDeflector->Set(false);
+			FloorIntakeArm->Set(false);
 			modeState = AB3_FWD;
 			break;
 		case AB3_FWD:
 			// go forward 7 ft
-			if (forward(BLUE_3_CASE1_FWD)) {
+			if (forward(100.0)) {
+				//modeState = AB3_TURN;
 				modeState = AB3_TURN;
 				ahrs->ZeroYaw();
 			}
@@ -977,7 +980,7 @@ public:
 		case AB3_STR8:
 			// go forward
 			//timed drive
-			if (forward(BLUE_3_CASE3_STR8)) {
+			if (forward(18.0)) {
 				modeState = AB3_GEAR_WAIT;
 				resetEncoder();
 			}
@@ -999,7 +1002,8 @@ public:
 			break;
 		case AB3_BACK:
 			//back up to the shooting radius
-			if (forward(BLUE_3_CASE6_BACK)) {
+			Shooter0.Set(0.95);
+			if (forward(-65.0)) {
 				GearOut->Set(false);
 				ahrs->ZeroYaw();
 				modeState = AB3_TURN2;
@@ -1007,7 +1011,7 @@ public:
 			break;
 		case AB3_TURN2:
 			//turn to face boiler
-			if (autonTurn(BLUE_3_CASE7_TURN)) {
+			if (autonTurn(-15.0)) {
 				modeState = AB3_SHOOT;
 			}
 			break;
@@ -1435,6 +1439,7 @@ public:
 		 */
 
 		//shooter
+		SmartDashboard::PutBoolean("Shooter Running", shooterOn);
 		SmartDashboard::PutNumber("Shooter Encoder (RAW)",
 				EncoderShoot.GetRaw());
 		SmartDashboard::PutNumber("Shooter Encoder (RPM)",
@@ -1817,7 +1822,7 @@ private:
 	PIDController DeflectorPID, KickerPID, ShooterPID, DrivePID;
 
 	bool driveRightTriggerPrev = false;bool driveButtonYPrev = false;bool operatorRightTriggerPrev =
-	false;bool intakeDeployed = false;bool intakeSecondJointDeployed = false;
+	false;bool intakeDeployed = false;bool intakeSecondJointDeployed = false; bool shooterOn = false;
 
 	double autoBackupDistance;
 	double deflectorTargetMemory;
