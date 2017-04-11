@@ -10,9 +10,6 @@
 #include <SmartDashboard/SendableChooser.h>
 #include <SmartDashboard/SmartDashboard.h>
 
-//RJ-Libraries
-//#include "MultiSpeedController.h"
-
 // vision:
 // Use x and y coordinates from "myContours report"
 // if there are no objects use dead reckoning,
@@ -169,6 +166,7 @@
 #define RED_4_CASE6_BACK (-48.0)
 
 //linear calibrations
+// tolerance in inches
 #define LINEAR_TOLERANCE (0.2)
 // This is the gain for using the encoders to set the distance
 //		while going straight.
@@ -189,41 +187,6 @@
 
 //------------------------Bob on tile calibrations END---------------------
 
-//------------------------Rover calibrations START-------------------------
-//Rover calibrations are out of date, but it gives us somewhere to start,
-//	if we need to.
-//Blue 1
-//				carpet:	forward7ft( 0.8, 7 * -1 * 12.0)tile:forward7ft( 0.8, 7 * -1 * 12.0)
-//				carpet:	forward7ft(-0.8, 6.5 * 12.0)tile: 	forward7ft(-0.8, 6.5 *12.0)
-//b1 case 2:	carpet:	autonTurn(85, 5, -0.012)	tile:	autonTurn(75, 5, -0.012)
-//b1 case 4:	carpet:	pause(1, 0.1)				tile:	pause(1, 0.1)
-//b1 case 5:	carpet:	forward(   -0.8, 4 * 12.0)	tile:	forward7ft(-0.8, 4 * 12.0)
-//b1 case 5:	carpet:	autonTurn(120, 5, -0.012)	tile:	autonTurn(105, 5, -0.012)
-//b1 case 7:	carpet:	forward7ft(-0.8, 8.5 * 12.0)tile: 	forward7ft(-0.8, 8.5 * 12.0)
-//b2 			carpet:	forward7ft(-0.8, 7 * 12.0)	tile: 	forward7ft(-0.8, 7 * 12.0)
-//b3 AB3_FWD:	carpet:	forward7ft(-0.8, 7 * 12.0)	tile: 	forward7ft(-0.8, 7 * 12.0)
-//b3 AB3_TURN	carpet: autonTurn(-60, 5, -0.012)	tile: 	autonTurn(-60, 5, -0.012)
-//b3 AB3_STR8	carpet:	forward7ft(-0.6, 2 * 12.0)	tile: 	forward7ft(-0.5, 2 * 12)
-//R1 CASE1_FWD	carpet: forward7ft(-0.8, 6.5 * 12.0)tile: 	forward7ft(-0.8, 6.5 * 12.0)
-//R1_CASE2_TURN	carpet:	autonTurn(-95, 5, -0.012)	tile: 	autonTurn(-82, 5, -0.012)
-//R1_CASE3_FWD	carpet:	forward7ft(0.8, 7 * -1 * 12.0)tile:	forward7ft(0.8, 7 * 12.0)
-//R1_CASE4_FWD_TIMEcarpet:pause(1, 0)				tile: 	pause(1, 0)
-//R1_CASE5_FWD	carpet:	forward7ft(-0.8, 3 * 12.0)	tile:	forward7ft(-0.8, 3 * 12.0)
-//R1_CASE6_TURN	carpet:	autonTurn(-125, 5, -0.012)	tile: 	autonTurn(-115, 5, -0.012)
-//R1_CASE7_FWD	carpet:	forward7ft(-0.8, 8.5 * 12.0)tile: 	forward7ft(-0.8, 8.5*12.0)
-//R2_CASE2_TIME	carpet: forward7ft(-0.8, 7 * 12.0)	tile:	forward7ft(-0.8, 7 * 12.0)
-//R3_CASE1_FWD	carpet: forward7ft(-0.8, 9 * 12.0)	tile:	forward7ft(-0.8, 9 * 12.0)
-//R3_CASE2_TURN	carpet: autonTurn(60, 5, -0.019)	tile:	autonTurn(60, 5, -0.012)
-//R3_CASE3_FWD	carpet: forward7ft(-0.6, 2 * 12)	tile:	forward7ft(-0.5, 2 * 12.0)
-
-////linear calibrations
-//#define LINEAR_TOLERANCE ()
-//#define KP_LINEAR (-0.8)
-//#define KP_ROTATION ()
-//#define LINEAR_SETTLING_TIME ()
-//#define LINEAR_MAX_DRIVE_SPEED ()
-//------------------------Rover calibrations END---------------------------
-
 class Robot: public frc::IterativeRobot {
 
 public:
@@ -231,35 +194,23 @@ public:
 			Adrive(DriveLeft0, DriveRight0), Drivestick(0), OperatorStick(1), DriveLeft0(
 					0), DriveLeft1(1), DriveLeft2(2), DriveRight0(3), DriveRight1(
 					4), DriveRight2(5), EncoderLeft(0, 1), EncoderRight(2, 3), table(
-			NULL), ahrs(NULL), modeState(0), DiIn9(9), DiIn8(8), DiIn7(7), Winch0(
-					11), Winch1(9), Winch2(7), Shooter0(12), Shooter1(13), Agitator0(
-					6), Agitator1(15), FloorIntakeRoller(14), KickerWheel(8), DeflectorMotor(
-					10), EncoderKicker(20, 21), EncoderShoot(4, 5, true,
-					CounterBase::k1X), WinchStop(6), DeflectorAnglePOT(0, 270,
-					0), DeflectorTarget(0), ConvCommandPWM(0.1), ShootCommandPWM(
-					0.75), DeflectAngle(145), DeflectorHighLimit(22), DeflectorLowLimit(
-					23), DeflectorPID(-0.08, 0.0, 0.0, &DeflectorAnglePOT,
-					&DeflectorMotor), KickerPID(0.003, 0.0, 0.0, &EncoderKicker,
-					&KickerWheel), ShooterPID(0.0, 0.0, -0.003, 0.0,
-					&EncoderShoot, &Shooter0), DrivePID(0.0, 0.0, 0.0, 0.0,
-					&EncoderRight, &DriveRight0) {
-
-		//GRIPTable = NetworkTable::GetTable("GRIP/myContuorsReport");
-		//Shooter = new MultiSpeedController();
+			NULL), ahrs(NULL), modeState(0), Winch0(11), Winch1(9), Shooter0(
+					12), Shooter1(13), Agitator0(6), Agitator1(15), FloorIntakeRoller(
+					14), KickerWheel(8), EncoderKicker(20, 21), EncoderShoot(4,
+					5, true, CounterBase::k1X), ShootCommandPWM(0.75), KickerPID(
+					0.003, 0.0, 0.0, &EncoderKicker, &KickerWheel), ShooterPID(
+					0.0, 0.0, -0.003, 0.0, &EncoderShoot, &Shooter0) {
 
 	}
 
 	void RobotInit() {
 		//setup smartDashboard choosers
-		chooseAutonSelector.AddDefault(AutonNameSwitch, AutonNameSwitch);
-		chooseAutonSelector.AddObject(autonNameOFF, autonNameOFF);
+		chooseAutonSelector.AddDefault(autonNameOFF, autonNameOFF);
 		chooseAutonSelector.AddObject(autonNameRed1, autonNameRed1);
-		chooseAutonSelector.AddObject(autonNameRed1A, autonNameRed1A);
 		chooseAutonSelector.AddObject(autonNameRed2, autonNameRed2);
 		chooseAutonSelector.AddObject(autonNameRed3, autonNameRed3);
 		chooseAutonSelector.AddObject(autonNameRed4, autonNameRed4);
 		chooseAutonSelector.AddObject(autonNameBlue1, autonNameBlue1);
-		chooseAutonSelector.AddObject(autonNameBlue1A, autonNameBlue1A);
 		chooseAutonSelector.AddObject(autonNameBlue2, autonNameBlue2);
 		chooseAutonSelector.AddObject(autonNameBlue3, autonNameBlue3);
 		chooseAutonSelector.AddObject(autonNameBlue4, autonNameBlue4);
@@ -269,10 +220,6 @@ public:
 		chooseDriveEncoder.AddObject(RH_Encoder, RH_Encoder);
 		frc::SmartDashboard::PutData("Encoder", &chooseDriveEncoder);
 
-		chooseDeflector.AddObject(chooserClosedLoop, chooserClosedLoop);
-		chooseDeflector.AddDefault(chooserOpenLoop, chooserOpenLoop);
-		frc::SmartDashboard::PutData("Deflector", &chooseDeflector);
-
 		chooseKicker.AddDefault(chooserOpenLoop, chooserOpenLoop);
 		chooseKicker.AddObject(chooserClosedLoop, chooserClosedLoop);
 		frc::SmartDashboard::PutData("Kicker", &chooseKicker);
@@ -280,10 +227,6 @@ public:
 		chooseShooter.AddDefault(chooserOpenLoop, chooserOpenLoop);
 		chooseShooter.AddObject(chooserClosedLoop, chooserClosedLoop);
 		frc::SmartDashboard::PutData("Shooter", &chooseShooter);
-
-		chooseDeflectorLimit.AddDefault(Enable, Enable);
-		chooseDeflectorLimit.AddObject(Disable, Disable);
-		frc::SmartDashboard::PutData("Deflector Limits", &chooseDeflectorLimit);
 
 		// Inialize settings from Smart Dashboard
 		ShootCommandPWM = 0.9;
@@ -294,8 +237,6 @@ public:
 		//ShootKF = -1.0 / 3200.0; //   1 / MAX RPM
 		KickerCommandPWM = 0.5;
 		KickerCommandRPM = 500;
-		DeflectorTarget = 164.0;  // Default Angle (Degrees)
-		ConvCommandPWM = 0.2;
 		AgitatorCommandPWM = 0.2;
 		IntakeCommandPWM = 0.75;
 		autoBackupDistance = -2.0;
@@ -308,8 +249,6 @@ public:
 		SmartDashboard::PutNumber("IN: ShootKF", ShootKF);
 		SmartDashboard::PutNumber("IN: Kicker CMD (PWM)", KickerCommandPWM);
 		SmartDashboard::PutNumber("IN: Kicker CMD (RPM)", KickerCommandRPM);
-		SmartDashboard::PutNumber("IN: Deflector CMD (DEG)", DeflectorTarget);
-		SmartDashboard::PutNumber("IN: Conveyor CMD (PWM)", ConvCommandPWM);
 		SmartDashboard::PutNumber("IN: Agitator CMD (PWM)", AgitatorCommandPWM);
 		SmartDashboard::PutNumber("IN: Intake CMD (PWM)", IntakeCommandPWM);
 		SmartDashboard::PutNumber("IN: Auto Backup Distance (Inch)",
@@ -318,7 +257,7 @@ public:
 		//turn off shifter solenoids
 		driveSolenoid->Set(false);
 
-		//disable drive watchdogs ADLAI - Is this something we should be doing?
+		//disable drive watchdogs
 		Adrive.SetSafetyEnabled(false);
 
 		//changes these original negative values to positive values
@@ -336,22 +275,13 @@ public:
 
 		EncoderShoot.SetSamplesToAverage(120);
 
-		//configure PIDs
-		DeflectorPID.SetOutputRange(-0.1, 0.2);
-
-		//drive command averaging filter ADLAI - Does this just make sure joysticks are reading 0? Should it be both here and in teleopinit?
+		//drive command averaging filter
 		OutputX = 0, OutputY = 0;
 
 		//variable that chooses which encoder robot is reading for autonomous mode
 		useRightEncoder = true;
 
 		// Turn off the the sensors/reset
-		if (DeflectorClosedLoop) {
-			DeflectorPID.Enable();
-		} else {
-			DeflectorPID.Disable();
-		}
-
 		if (KickerClosedLoop) {
 			KickerPID.Enable();
 		} else {
@@ -365,7 +295,6 @@ public:
 		}
 
 		//determines that a sensor is being read for either displacement or velocity
-		DeflectorAnglePOT.SetPIDSourceType(PIDSourceType::kDisplacement);
 		EncoderKicker.SetPIDSourceType(PIDSourceType::kRate);
 		EncoderShoot.SetPIDSourceType(PIDSourceType::kRate);
 
@@ -414,8 +343,6 @@ public:
 			ahrs->ZeroYaw();
 		}
 
-		DeflectorPID.Reset();
-
 		//forces robot into low gear
 		driveSolenoid->Set(false);
 
@@ -437,7 +364,6 @@ public:
 	void RobotPeriodic() {
 		//links multiple motors together
 		Winch1.Set(-Winch0.Get());
-		Winch2.Set(-Winch0.Get());
 		DriveLeft1.Set(DriveLeft0.Get());
 		DriveLeft2.Set(DriveLeft0.Get());
 		DriveRight1.Set(DriveRight0.Get());
@@ -449,67 +375,10 @@ public:
 		encoderSelected = chooseDriveEncoder.GetSelected();
 		useRightEncoder = (encoderSelected == RH_Encoder);
 
-		//Read Auton Switch
-		AutoSw1 = DiIn7.Get();
-		AutoSw2 = DiIn8.Get();
-		AutoSw3 = DiIn9.Get();
-
-		AutoVal = !AutoSw1 * 1 + !AutoSw2 * 2 + !AutoSw3 * 4;
-
 		// Select Auto Program
 		autoSelected = chooseAutonSelector.GetSelected();
-		if (autoSelected == AutonNameSwitch) {
-			// This decodes all of the possible switch outputs.
-			// Only 3 bits are connected to the RoboRio, so they aren't all needed.
-			switch (AutoVal) {
-			case 1:
-				autoSelected = autonNameBlue1;
-				break;
-			case 2:
-				autoSelected = autonNameBlue2;
-				break;
-			case 3:
-				autoSelected = autonNameBlue3;
-				break;
-			case 4:
-				autoSelected = autonNameRed1;
-				break;
-			case 5:
-				autoSelected = autonNameRed2;
-				break;
-			case 6:
-				autoSelected = autonNameRed3;
-				break;
-			case 7:
-				autoSelected = autonNameRed2;
-				break;
-			case 8:
-				autoSelected = autonNameBlue1A;
-				break;
-			case 9:
-				autoSelected = autonNameRed1A;
-				break;
-			case 10:
-				autoSelected = autonNameRed4;
-				break;
-			case 11:
-				autoSelected = autonNameBlue4;
-				break;
-
-			default:
-				autoSelected = autonNameOFF;
-			}
-		}
-
-		//enables deflector PID
-		if (DeflectorClosedLoop) {
-			DeflectorPID.Enable();
-		} else {
-			DeflectorPID.Disable();
-		}
 
 		//displays sensor and motor info to smartDashboard
-
 		try {
 			SmartDashboardUpdate();
 		} catch (std::exception ex) {
@@ -522,19 +391,15 @@ public:
 	void DisabledPeriodic() {
 		//SmartDashboardUpdate();
 	}
-	void AutonomousPeriodic() { // ADLAI - This stuff probably shouldn't be in here, we shouldn't need to change program after autonomous begins?
+	void AutonomousPeriodic() {
 		if (autoSelected == autonNameRed1)
 			autoRedMiddleShoot();
-		else if (autoSelected == autonNameRed1A)
-			autoRedKeyShoot();
 		else if (autoSelected == autonNameRed2)
 			autoForward();
 		else if (autoSelected == autonNameRed3)
 			autoRed3();
 		else if (autoSelected == autonNameBlue1)
 			autoBlueMiddleShoot();
-		else if (autoSelected == autonNameBlue1A)
-			autoBlueKeyShoot();
 		else if (autoSelected == autonNameBlue2)
 			autoMiddleGearEject();
 		else if (autoSelected == autonNameBlue3)
@@ -601,7 +466,7 @@ public:
 		Vibrate = Joystick::kRightRumble;		// set vibrate to Right
 		OperatorStick.SetRumble(Vibrate, RHClimb);// Set Right Rumble to RH Trigger
 
-		//drive controls ADLAI - I know this works, I just don't understand how returning only negative values works for this.
+		//drive controls
 		double SpeedLinear = Drivestick.GetRawAxis(1) * 1; // get Yaxis value (forward)
 		double SpeedRotate = Drivestick.GetRawAxis(4) * -1; // get Xaxis value (turn)
 
@@ -660,12 +525,12 @@ public:
 			} else {
 				Shooter0.Set(ShootCommandPWM); // positive so they turn the correct way.
 			}
-		//right POV button - shooter off
+			//right POV button - shooter off
 		} else if (OperatorStick.GetPOV(0) == 270) {
 			shooterOn = false;
 			operatorRightTriggerPrev = false;
 			if (ShooterClosedLoop) {
-				ShooterPID.SetSetpoint(0.0); // ADLAI - this might be redundant with the disable but I don't think it matters.
+				ShooterPID.SetSetpoint(0.0);
 				ShooterPID.Disable();
 			} else {
 				Shooter0.Set(0.0);
@@ -824,54 +689,6 @@ public:
 		case AB1_SHOOT:
 			if (shoot()) {
 				modeState = AB1_END;
-			}
-			break;
-		default:
-			stopMotors();
-		}
-		return;
-	}
-
-#define AB1A_INIT 1
-#define AB1A_FWD 2
-#define AB1A_HOPPER_TURN 3
-#define AB1A_WAIT 4
-#define AB1A_SHOOT 5
-#define AB1A_END 6
-
-	void autoBlueKeyShoot(void) {
-		//drives along the key line and hits hopper
-		switch (modeState) {
-		case AB1A_INIT:
-			GearDeflector->Set(true);
-			FloorIntakeArm->Set(true);
-			modeState = AB1A_FWD;
-			break;
-		case AB1A_FWD:
-			// go forward 8 ft
-			if (forward(BLUE_1A_CASE1_FWD)) {
-				modeState = AB1A_HOPPER_TURN;
-				AutonTimer.Reset();
-			}
-			break;
-		case AB1A_HOPPER_TURN:
-			// robot drives into hopper and collects balls
-			if (timedDrive(BLUE_1A_CASE2_HOPPER_TIME, BLUE_1A_CASE2_LSPEED,
-			BLUE_1A_CASE2_RSPEED)) {
-				modeState = AB1A_WAIT;
-				AutonTimer.Reset();
-			}
-			break;
-		case AB1A_WAIT:
-			//waits for robot to collect balls
-			if (AutonTimer.Get() < 0.5) {
-				modeState = AB1A_SHOOT;
-			}
-			break;
-		case AB1A_SHOOT:
-			//launch
-			if (shoot()) {
-				modeState = AB1A_END;
 			}
 			break;
 		default:
@@ -1100,54 +917,6 @@ public:
 		case AR1_SHOOT:
 			if (shoot()) {
 				modeState = AR1_END;
-			}
-			break;
-		default:
-			stopMotors();
-		}
-		return;
-	}
-
-#define AR1A_INIT 1
-#define AR1A_FWD 2
-#define AR1A_HOPPER_TURN 3
-#define	AR1A_WAIT 4
-#define AR1A_SHOOT 5
-#define AR1A_END 6
-
-	void autoRedKeyShoot(void) {
-		//drives along the key line and hits hopper
-		switch (modeState) {
-		case AR1A_INIT:
-			GearDeflector->Set(true);
-			FloorIntakeArm->Set(true);
-			modeState = AR1A_FWD;
-			break;
-		case AR1A_FWD:
-			// go forward 8 ft
-			if (forward(RED_1A_CASE1_FWD)) {
-				modeState = AR1A_HOPPER_TURN;
-				AutonTimer.Reset();
-			}
-			break;
-		case AR1A_HOPPER_TURN:
-			// makes sure robot drives into hopper and collects balls
-			if (timedDrive(RED_1A_CASE2_HOPPER_TIME, RED_1A_CASE2_LSPEED,
-			RED_1A_CASE2_RSPEED)) {
-				modeState = AR1A_WAIT;
-				AutonTimer.Reset();
-			}
-			break;
-		case AR1A_WAIT:
-			// makes sure robot drives into hopper and collects balls
-			if (AutonTimer.Get() < 0.5) {
-				modeState = AR1A_SHOOT;
-			}
-			break;
-		case AR1A_SHOOT:
-			//launch
-			if (shoot()) {
-				modeState = AR1A_END;
 			}
 			break;
 		default:
@@ -1478,27 +1247,6 @@ public:
 		SmartDashboard::PutNumber("Kicker CMD (RPM)", KickerCommandRPM);
 		KickerPID.SetPID(ShootKP, ShootKI, ShootKD, ShootKF);
 
-		//winch/climber... whatever you want to call it
-		SmartDashboard::PutBoolean("Winch Stop Switch", !WinchStop.Get());
-
-		//deflector
-		SmartDashboard::PutBoolean("Deflector Limit Low",
-				!DeflectorLowLimit.Get());
-		SmartDashboard::PutBoolean("Deflector Limit High",
-				!DeflectorHighLimit.Get());
-		SmartDashboard::PutNumber("Deflector Angle POT (DEG)",
-				DeflectorAnglePOT.Get());
-
-		double deflectorTargetCommand;
-		deflectorTargetCommand = SmartDashboard::GetNumber(
-				"IN: Deflector CMD (DEG)", DeflectorTarget);
-		if (deflectorTargetCommand != deflectorTargetMemory) {
-			deflectorTargetMemory = deflectorTargetCommand;
-			DeflectorTarget = deflectorTargetCommand;
-		}
-
-		SmartDashboard::PutNumber("Deflector CMD (Deg)", DeflectorTarget);
-
 		//Conveyor, Agitator, Intake Settings
 		ConvCommandPWM = SmartDashboard::GetNumber("IN: Conveyor CMD (PWM)",
 				ConvCommandPWM);
@@ -1519,44 +1267,19 @@ public:
 		SmartDashboard::PutNumber("Shooter Motor1  Output", Shooter1.Get());
 		SmartDashboard::PutNumber("Winch Motor0 Output", Winch0.Get());
 		SmartDashboard::PutNumber("Winch Motor1 Output", Winch1.Get());
-		SmartDashboard::PutNumber("Winch Motor2 Output", Winch2.Get());
 		SmartDashboard::PutNumber("Kicker Motor Output", KickerWheel.Get());
 		SmartDashboard::PutNumber("Agitator Motor0 Output", Agitator0.Get());
 		SmartDashboard::PutNumber("Agitator Motor1 Output", Agitator1.Get());
 		SmartDashboard::PutNumber("Floor Intake Motor Output",
 				FloorIntakeRoller.Get());
-		SmartDashboard::PutNumber("Deflector Motor Output",
-				DeflectorMotor.Get());
-//
-//		//chooser code for manip in open/closed loop
 
+//		//chooser code for manip in open/closed loop
 		ShooterClosedLoop = (chooseShooter.GetSelected() == chooserClosedLoop);
 		KickerClosedLoop = (chooseKicker.GetSelected() == chooserClosedLoop);
-		DeflectorClosedLoop = (chooseDeflector.GetSelected()
-				== chooserClosedLoop);
-		SmartDashboard::PutNumber("DBG: Deflector Closed Loop Value",
-				DeflectorClosedLoop);
-		DeflectorLimitEnabled = (chooseDeflectorLimit.GetSelected() == Enable);
-
-		//grip table data
-		//GRIPTable = NetworkTable::GetTable("GRIP/myContoursReport");
-
-		//NetworkTable* t = GRIPTable.get();
-
-//		std::vector<double> arr = GRIPTable->GetNumberArray("centerX",
-//				llvm::ArrayRef<double>());
-//
-//		SmartDashboard::PutNumber("VisionTargetFind", arr.size());
-//
-//		if (arr.size() > 0) {
-//			SmartDashboard::PutNumber("VisionCenterX", arr[0]);
-//		} else {
-//			SmartDashboard::PutNumber("VisionCenterX", 0);
-//		}
 
 	}
 
-	void motorSpeed(double leftMotor, double rightMotor) { // ADLAI - Possibly redundant with the previous drive motor setup in robotperiodic
+	void motorSpeed(double leftMotor, double rightMotor) {
 		DriveLeft0.Set(leftMotor * -1);
 		DriveLeft1.Set(leftMotor * -1);
 		DriveLeft2.Set(leftMotor * -1);
@@ -1565,37 +1288,30 @@ public:
 		DriveRight2.Set(rightMotor);
 	}
 
-	//simplify later
 	int forward(double targetDistance) {
-		//put all encoder stuff in same place
 		double encoderDistance = readEncoder();
 		double encoderError = encoderDistance - targetDistance;
 		double driveCommandLinear = encoderError * KP_LINEAR;
-		SmartDashboard::PutNumber("DBG: Encoder Distance", encoderDistance);
 		//limits max drive speed
 		if (driveCommandLinear > LINEAR_MAX_DRIVE_SPEED) {
 			driveCommandLinear = LINEAR_MAX_DRIVE_SPEED;
-		} else if (driveCommandLinear < -1 * LINEAR_MAX_DRIVE_SPEED) { /////***** "-1" is a "magic number." At least put a clear comment in here.
-			driveCommandLinear = -1 * LINEAR_MAX_DRIVE_SPEED; /////***** same as above.
+		} else if (driveCommandLinear < -1 * LINEAR_MAX_DRIVE_SPEED) { 								/////***** "-1" is a "magic number." At least put a clear comment in here.
+			driveCommandLinear = -1 * LINEAR_MAX_DRIVE_SPEED;
 		}
-
 		//gyro values that make the robot drive straight
 		double gyroAngle = ahrs->GetAngle();
 		double driveCommandRotation = gyroAngle * KP_ROTATION;
-
-		//encdoer check TODO: NOT QUITE THERE YET
+		//encdoer check
 		if (EncoderCheckTimer.Get() > MAX_DRIVE_TIME) {
 			motorSpeed(0.0, 0.0);
-			DriverStation::ReportError(
-					"(forward) Encoder Max Drive Time Exceeded");
+			DriverStation::ReportError("(forward) Encoder Max Drive Time Exceeded");
 		} else {
 			//calculates and sets motor speeds
 			motorSpeed(driveCommandLinear + driveCommandRotation,
 					driveCommandLinear - driveCommandRotation);
 		}
-
 		//routine helps prevent the robot from overshooting the distance
-		if (isWaiting == 0) { /////***** Rename "isWaiting."  This isWaiting overlaps with the autonTurn() isWaiting.  There is nothing like 2 globals that are used for different things, but have the same name.
+		if (isWaiting == 0) {
 			if (abs(encoderError) < LINEAR_TOLERANCE) {
 				isWaiting = 1;
 				AutonTimer.Reset();
@@ -1605,13 +1321,12 @@ public:
 		else {
 			float currentTime = AutonTimer.Get();
 			if (abs(encoderError) > LINEAR_TOLERANCE) {
-				isWaiting = 0;					/////***** Rename
+				isWaiting = 0;
 			} else if (currentTime > LINEAR_SETTLING_TIME) {
-				isWaiting = 0;					/////***** Rename
+				isWaiting = 0;
 				return 1;
 			}
 		}
-
 		return 0;
 	}
 
@@ -1647,33 +1362,6 @@ public:
 		float currentTime = AutonTimer.Get();
 		if (currentTime < driveTime) {
 			motorSpeed(leftMotorSpeed, rightMotorSpeed);
-		} else {
-			stopMotors();
-			return 1;
-		}
-		return 0;
-	}
-
-	//UNTESTED UNTESTED UNTESTED UNTESTED
-	//
-	// This implements the timed drive with the direction determined
-	//		by the gyro.
-	// This points the robot to zero degrees,
-	//		so reset the gyro if you want it to go straight.
-	//
-	// The signs of the motorSpeed may be wrong.  I changed the signs on
-	//		leftMotorSpeed and rightMotorSpeed so that positive motor
-	//		speeds should send the robot forward.
-	// ---> I don't know if the signs on driveCommandRotation are correct.
-	//		These signs match the way 'forward' does it.
-	// ---> I think KP_ROTATION is correct, because this code comes from 'forward'.
-	int timedGyroDrive(double driveTime, double leftMotorSpeed,
-			double rightMotorSpeed) {
-		float currentTime = AutonTimer.Get();
-		if (currentTime < driveTime) {
-			double driveCommandRotation = ahrs->GetAngle() * KP_ROTATION;
-			motorSpeed(-leftMotorSpeed + driveCommandRotation,
-					-rightMotorSpeed - driveCommandRotation);
 		} else {
 			stopMotors();
 			return 1;
@@ -1750,16 +1438,14 @@ private:
 	RobotDrive Adrive;
 	frc::LiveWindow* lw = LiveWindow::GetInstance();
 	frc::SendableChooser<std::string> chooseAutonSelector, chooseDriveEncoder,
-			chooseDeflector, chooseKicker, chooseShooter, chooseDeflectorLimit;
+			chooseKicker, chooseShooter;
 	const std::string AutonNameSwitch = "Use Switch";
 	const std::string autonNameOFF = "0 OFF";
 	const std::string autonNameBlue1 = "Blue Middle Gear Shoot";
-	const std::string autonNameBlue1A = "Blue Key Shoot";
 	const std::string autonNameBlue2 = "Middle Gear Eject";
 	const std::string autonNameBlue3 = "Blue Left Side Gear Shoot";
 	const std::string autonNameBlue4 = "Right Side Gear";
 	const std::string autonNameRed1 = "Red Middle Gear Shoot";
-	const std::string autonNameRed1A = "Red Key Shoot";
 	const std::string autonNameRed2 = "Go Forward Only";
 	const std::string autonNameRed3 = "Red Right Side Gear Shoot";
 	const std::string autonNameRed4 = "Left Side Gear";
@@ -1785,11 +1471,9 @@ private:
 	std::shared_ptr<NetworkTable> table;
 	AHRS *ahrs;
 //tells us what state we are in in each auto mode
-	int modeState;bool AutonOverride, AutoSw1, AutoSw2, AutoSw3;
-	DigitalInput DiIn9, DiIn8, DiIn7;
-	int AutoVal, AutoVal0, AutoVal1, AutoVal2;
+	int modeState;bool AutonOverride;
+	int AutoVal;
 	float OutputX, OutputY;
-	std::shared_ptr<NetworkTable> GRIPTable;
 	int isWaiting = 0;			/////***** Divide this into 2 variables.
 
 	Solenoid *driveSolenoid = new Solenoid(0);
@@ -1797,36 +1481,29 @@ private:
 	PowerDistributionPanel *pdp = new PowerDistributionPanel();
 
 //manipulator
-	VictorSP Winch0, Winch1, Winch2;
+	VictorSP Winch0, Winch1;
 	VictorSP Shooter0, Shooter1;
 	VictorSP Agitator0, Agitator1;
 	VictorSP FloorIntakeRoller;
 	VictorSP KickerWheel;
-	VictorSP DeflectorMotor;
 	Solenoid *GearOut = new Solenoid(1);
 	Solenoid *GearIn = new Solenoid(3);
 	Solenoid *GearDeflector = new Solenoid(5);
 	Solenoid *FloorIntakeArm = new Solenoid(2);
 	Encoder EncoderKicker;
 	Encoder EncoderShoot;
-	DigitalInput WinchStop;
-	AnalogPotentiometer DeflectorAnglePOT;
-	double DeflectorTarget, IntakeCommandPWM, AgitatorCommandPWM,
-			ConvCommandPWM, ShootCommandRPM, ShootCommandPWM, DeflectAngle,
-			KickerCommandRPM, KickerCommandPWM, ShootKP, ShootKI, ShootKD,
-			ShootKF;
-	DigitalInput DeflectorHighLimit, DeflectorLowLimit;
+	double IntakeCommandPWM, AgitatorCommandPWM, ConvCommandPWM,
+			ShootCommandRPM, ShootCommandPWM, KickerCommandRPM,
+			KickerCommandPWM, ShootKP, ShootKI, ShootKD, ShootKF;
 
-	bool useRightEncoder;bool DeflectorClosedLoop;bool KickerClosedLoop;bool ShooterClosedLoop;bool DeflectorLimitEnabled;
+	bool useRightEncoder;bool KickerClosedLoop;bool ShooterClosedLoop;
 
-	PIDController DeflectorPID, KickerPID, ShooterPID, DrivePID;
+	PIDController KickerPID, ShooterPID;
 
 	bool driveRightTriggerPrev = false;bool driveButtonYPrev = false;bool operatorRightTriggerPrev =
-	false;bool intakeDeployed = false;bool intakeSecondJointDeployed = false; bool shooterOn = false;
+	false;bool intakeDeployed = false;bool shooterOn = false;
 
 	double autoBackupDistance;
-	double deflectorTargetMemory;
-//MultiSpeedController *Shooter;
 
 }
 ;
