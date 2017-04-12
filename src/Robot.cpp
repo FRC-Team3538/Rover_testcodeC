@@ -61,20 +61,6 @@
 #define BLUE_1_CASE6_TURN (100.0)
 #define BLUE_1_CASE7_FWD (-60.0)
 
-//drives along the key line into the hopper, backs up, turns, runs into the boiler and shoots
-// (autoBlueKeyShoot)
-// 1) Initialize for this auto.							Done: Set gear deflector
-//															Set floor intake arm
-// 2) Move forward 48"									Done: reset timer	////////Why is this negative???????????
-//		gyro keeps us straight
-//		measured by encoders
-// 3) Make a wide turn to the hopper					Done: Reset timer
-//		timer-based dead reckoning
-#define BLUE_1A_CASE1_FWD (-4.0 * 12.0)
-#define BLUE_1A_CASE2_HOPPER_TIME (2.2)
-#define BLUE_1A_CASE2_LSPEED (0.5)
-#define BLUE_1A_CASE2_RSPEED (0.6)
-
 // This will go to the gear in front of the middle start position.
 //		This is timed so that collision with the airship will put the robot in position.
 //		This can be supported with vision when it is ready.
@@ -93,17 +79,17 @@
 //
 // go forward 7 ft, turn counter-clockwise 60 degrees
 //    go forward 2 ft
-#define BLUE_3_CASE1_FWD (7 * 12.0)
+#define BLUE_3_CASE1_FWD (100.0)
 #define BLUE_3_CASE2_TURN (60.0)
-#define BLUE_3_CASE3_STR8 (36.0)
-#define BLUE_3_CASE6_BACK (-48.0)
-#define BLUE_3_CASE7_TURN (-190.0)
+#define BLUE_3_CASE3_STR8 (18.0)
+#define BLUE_3_CASE6_BACK (-65.0)
+#define BLUE_3_CASE7_TURN (-15.0)
 
 //left side gear calibrations
-#define BLUE_4_CASE1_FWD (6.7 * 12.0)
+#define BLUE_4_CASE1_FWD (100.0)
 #define BLUE_4_CASE2_TURN (60.0)
-#define BLUE_4_CASE3_STR8 (56.0)
-#define BLUE_4_CASE6_BACK (-48.0)
+#define BLUE_4_CASE3_STR8 (18.0)
+#define BLUE_4_CASE6_BACK (-65.0)
 
 // This will go to the middle of the field,
 //		turn away from the hopper,
@@ -127,21 +113,16 @@
 #define RED_1_CASE6_TURN (-100.0)
 #define RED_1_CASE7_FWD (-60.0)
 
-//drives along the key line into the hopper, backs up, turns, runs into the boiler and shoots
-#define RED_1A_CASE1_FWD (-4.0 * 12.0)
-#define RED_1A_CASE2_HOPPER_TIME (2.2)
-#define RED_1A_CASE2_LSPEED (0.6)
-#define RED_1A_CASE2_RSPEED (0.5)
-
 // This will go to the gear in front of the middle start position.
 //		This is timed so that collision with the airship will put the robot in position.
 //		This can be supported with vision when it is ready.
 //
 // Time forward: go forward for 0.75 seconds.
 // This will get us to the gear and stop.
-#define RED_2_CASE2_TIME (0.75)
-#define RED_2_CASE2_LSPEED (-0.9)
-#define RED_2_CASE2_RSPEED (-0.9)
+#define RED_2_CASE2_FWD (71.0)
+#define RED_2_CASE3_TIME (1.0)
+#define RED_2_CASE3_LSPEED (-0.2)
+#define RED_2_CASE3_RSPEED (-0.2)
 
 // Go to the correct position to see the gear position in front of position 3
 //	Turn until the gear intake points to the gear.
@@ -153,17 +134,17 @@
 //
 // go forward 9 ft, turn clockwise 60 degrees
 //    go forward 2 ft
-#define RED_3_CASE1_FWD (9 * 12.0)
-#define RED_3_CASE2_TURN (-60)
-#define RED_3_CASE3_STR8 (34.0)
-#define RED_3_CASE6_BACK (-48.0)
-#define RED_3_CASE7_TURN (190.0)
+#define RED_3_CASE1_FWD (100.0)
+#define RED_3_CASE2_TURN (-60.0)
+#define RED_3_CASE3_STR8 (18.0)
+#define RED_3_CASE6_BACK (-65.0)
+#define RED_3_CASE7_TURN (15.0)
 
 //right side gear auto calibrations
-#define RED_4_CASE1_FWD (6.0 * 12.0)
+#define RED_4_CASE1_FWD (100.0)
 #define RED_4_CASE2_TURN (-60.0)
-#define RED_4_CASE3_STR8 (56.0)
-#define RED_4_CASE6_BACK (-48.0)
+#define RED_4_CASE3_STR8 (18.0)
+#define RED_4_CASE6_BACK (15.0)
 
 //linear calibrations
 // tolerance in inches
@@ -774,20 +755,18 @@ public:
 		//puts gear on pin on side of airship
 		switch (modeState) {
 		case AB3_INIT:
-			GearDeflector->Set(false);
-			FloorIntakeArm->Set(false);
 			modeState = AB3_FWD;
 			break;
 		case AB3_FWD:
 			// go forward 7 ft
-			if (forward(100.0)) {
+			if (forward(BLUE_3_CASE1_FWD)) {
 				//modeState = AB3_TURN;
 				modeState = AB3_TURN;
 				ahrs->ZeroYaw();
 			}
 			break;
 		case AB3_TURN:
-			// turn 90 degrees counterclockwise
+			// turn 60 degrees counterclockwise
 			if (autonTurn(BLUE_3_CASE2_TURN)) {
 				modeState = AB3_STR8;
 				resetEncoder();
@@ -796,15 +775,13 @@ public:
 			break;
 		case AB3_STR8:
 			// go forward
-			//timed drive
-			if (forward(18.0)) {
+			if (forward(BLUE_3_CASE3_STR8)) {
 				modeState = AB3_GEAR_WAIT;
 				resetEncoder();
 			}
 			break;
 		case AB3_GEAR_WAIT:
-			// go forward
-			//timed drive
+			// wait for robot to be at peg
 			if (AutonTimer.Get() > 0.5) {
 				modeState = AB3_GEAR;
 			}
@@ -820,7 +797,7 @@ public:
 		case AB3_BACK:
 			//back up to the shooting radius
 			Shooter0.Set(0.95);
-			if (forward(-65.0)) {
+			if (forward(BLUE_3_CASE6_BACK)) {
 				GearOut->Set(false);
 				ahrs->ZeroYaw();
 				modeState = AB3_TURN2;
@@ -828,7 +805,7 @@ public:
 			break;
 		case AB3_TURN2:
 			//turn to face boiler
-			if (autonTurn(-15.0)) {
+			if (autonTurn(BLUE_3_CASE7_TURN)) {
 				modeState = AB3_SHOOT;
 			}
 			break;
@@ -941,17 +918,13 @@ public:
 			modeState = AR2_FWD;
 			break;
 		case AR2_FWD:
-			if (forward(71.0)) {
-				//timedDrive(BLUE_2_CASE2_TIME, BLUE_2_CASE2_LSPEED,
-				//BLUE_2_CASE2_RSPEED)
-				//if (forward7ft(-0.4, 7 * 12.0)) {
+			if (forward(RED_2_CASE2_FWD)) {
 				AutonTimer.Reset();
 				modeState = AR2_TIMED;
 			}
 			break;
 		case AR2_TIMED:
-			if (timedDrive(1.0, -0.2, -0.2)) {
-				//if (forward7ft(-0.4, 7 * 12.0)) {
+			if (timedDrive(RED_2_CASE2_FWD, RED_2_CASE3_LSPEED, RED_2_CASE3_RSPEED)) {
 				AutonTimer.Reset();
 				modeState = AR2_END;
 			}
