@@ -79,14 +79,14 @@
 //
 // go forward 7 ft, turn counter-clockwise 60 degrees
 //    go forward 2 ft
-#define BLUE_3_CASE1_FWD (100.0)
+#define BLUE_3_CASE1_FWD (95.0)
 #define BLUE_3_CASE2_TURN (60.0)
 #define BLUE_3_CASE3_STR8 (18.0)
 #define BLUE_3_CASE6_BACK (-65.0)
 #define BLUE_3_CASE7_TURN (-15.0)
 
 //left side gear calibrations
-#define BLUE_4_CASE1_FWD (100.0)
+#define BLUE_4_CASE1_FWD (95.0)
 #define BLUE_4_CASE2_TURN (60.0)
 #define BLUE_4_CASE3_STR8 (18.0)
 #define BLUE_4_CASE6_BACK (-65.0)
@@ -134,14 +134,14 @@
 //
 // go forward 9 ft, turn clockwise 60 degrees
 //    go forward 2 ft
-#define RED_3_CASE1_FWD (100.0)
+#define RED_3_CASE1_FWD (95.0)
 #define RED_3_CASE2_TURN (-60.0)
 #define RED_3_CASE3_STR8 (18.0)
 #define RED_3_CASE6_BACK (-65.0)
 #define RED_3_CASE7_TURN (15.0)
 
 //right side gear auto calibrations
-#define RED_4_CASE1_FWD (100.0)
+#define RED_4_CASE1_FWD (95.0)
 #define RED_4_CASE2_TURN (-60.0)
 #define RED_4_CASE3_STR8 (18.0)
 #define RED_4_CASE6_BACK (15.0)
@@ -174,7 +174,8 @@ public:
 	Robot() :
 			Adrive(DriveLeft0, DriveRight0), Drivestick(0), OperatorStick(1), DriveLeft0(
 					0), DriveLeft1(1), DriveLeft2(2), DriveRight0(3), DriveRight1(
-					4), DriveRight2(5), EncoderLeft(0, 1), EncoderRight(2, 3), table(
+					4), DriveRight2(5), JesusLight(7), EncoderLeft(0, 1), EncoderRight(
+					2, 3), table(
 			NULL), ahrs(NULL), modeState(0), Winch0(11), Winch1(9), Shooter0(
 					12), Shooter1(13), Agitator0(6), Agitator1(15), FloorIntakeRoller(
 					14), KickerWheel(8), EncoderKicker(20, 21), EncoderShoot(4,
@@ -210,13 +211,13 @@ public:
 		frc::SmartDashboard::PutData("Shooter", &chooseShooter);
 
 		// Inialize settings from Smart Dashboard
-		ShootCommandPWM = 0.9;
+		ShootCommandPWM = 1.0;
 		ShootCommandRPM = 2600;
 		ShootKP = 0.02;
 		ShootKI = 0.0;
 		ShootKD = 0.003;
 		//ShootKF = -1.0 / 3200.0; //   1 / MAX RPM
-		KickerCommandPWM = 0.5;
+		KickerCommandPWM = 1.0;
 		KickerCommandRPM = 500;
 		AgitatorCommandPWM = 0.2;
 		IntakeCommandPWM = 0.75;
@@ -405,14 +406,14 @@ public:
 		if (Drivestick.GetRawButton(5))
 			driveSolenoid->Set(false);			// Low gear press RH bumper
 
-		// Temporary high gear when right trigger pushed
-		if (Drivestick.GetRawAxis(3) > Deadband) {
-			driveSolenoid->Set(true);
-			driveRightTriggerPrev = true;
-		} else if (driveRightTriggerPrev) {
-			driveSolenoid->Set(false);
-			driveRightTriggerPrev = false;
-		}
+//		// Temporary high gear when right trigger pushed
+//		if (Drivestick.GetRawAxis(3) > Deadband) {
+//			driveSolenoid->Set(true);
+//			driveRightTriggerPrev = true;
+//		} else if (driveRightTriggerPrev) {
+//			driveSolenoid->Set(false);
+//			driveRightTriggerPrev = false;
+//		}
 
 		//  Rumble code
 		//  Read all motor current from PDP and display on drivers station
@@ -461,6 +462,13 @@ public:
 		if (Drivestick.GetRawAxis(2) > Deadband) {
 			SpeedLinear = SpeedLinear * DriveCreepSpeed;  // Reduce turn speed
 			SpeedRotate = SpeedRotate * DriveCreepSpeed;  // Reduce drive speed
+		}
+
+		//Jesus Light On
+		if (Drivestick.GetRawAxis(3) > Deadband) {
+			JesusLight.Set(Drivestick.GetRawAxis(3));		  //Turn Jesus Light on
+		} else {
+			JesusLight.Set(0.0);  // Turn LED off
 		}
 
 		//slow down direction changes from 1 cycle to 5
@@ -521,7 +529,6 @@ public:
 		// Turn on Kicker Wheel, conveyor, and agitators when right trigger is pressed
 		if (OperatorStick.GetRawAxis(3) > Deadband) {
 			Agitator0.Set(OperatorStick.GetRawAxis(3));
-
 			if (KickerClosedLoop) {
 				KickerPID.SetSetpoint(KickerCommandRPM / 60.0);
 				KickerPID.Enable();
@@ -563,10 +570,10 @@ public:
 		}
 
 		//A Button - close shot/ gear flipper up
-		GearDeflector->Set(OperatorStick.GetRawButton(1));
+		//GearDeflector->Set(OperatorStick.GetRawButton(1));
 
 		//Right joystick for agitator un-jam
-		if (fabs(OperatorStick.GetRawAxis(4)) > Deadband)
+		if (fabs(OperatorStick.GetRawAxis(4)) > 0.25)
 			Agitator0.Set(OperatorStick.GetRawAxis(4));
 
 		//turn on winch using the left joystick
@@ -603,15 +610,14 @@ public:
 #define AB1_BACK 6
 #define AB1_TURN 7
 #define AB1_FWD2 8
-#define AB1_SHOOT 9
-#define AB1_END 10
+#define AB1_TURN2 9
+#define AB1_SHOOT 10
+#define AB1_END 11
 
 	void autoBlueMiddleShoot(void) {
 		//Blue middle gear then shoot auto
 		switch (modeState) {
 		case AB1_INIT:
-			GearDeflector->Set(true);
-			FloorIntakeArm->Set(true);
 			modeState = AB1_FWD;
 			break;
 		case AB1_FWD:
@@ -646,15 +652,15 @@ public:
 			break;
 		case AB1_BACK:
 			//move backwards
-			if (forward(BLUE_1_CASE5_BACK)) {
+			Shooter0.Set(1.0);
+			if (forward(-36.0)) {
 				modeState = AB1_TURN;
 				ahrs->ZeroYaw();
 			}
 			break;
 		case AB1_TURN:
 			//turn to face boiler
-			//not entirely sure if angle is right sign (3/25/17)
-			if (autonTurn(BLUE_1_CASE6_TURN)) {
+			if (autonTurn(90.0)) {
 				modeState = AB1_FWD2;
 				resetEncoder();
 				ahrs->ZeroYaw();
@@ -663,8 +669,14 @@ public:
 		case AB1_FWD2:
 			//go forward 7-ish feet to get itno position to shoot
 			if (forward(BLUE_1_CASE7_FWD)) {
-				modeState = AB1_SHOOT;
+				modeState = AB1_TURN2;
 				ahrs->ZeroYaw();
+			}
+			break;
+		case AB1_TURN2:
+			//turn to face boiler
+			if (autonTurn(10.0)) {
+				modeState = AB1_SHOOT;
 			}
 			break;
 		case AB1_SHOOT:
@@ -829,13 +841,12 @@ public:
 #define AR1_BACK 6
 #define AR1_TURN 7
 #define AR1_FWD2 8
-#define AR1_SHOOT 9
-#define AR1_END 10
+#define AR1_TURN2 9
+#define AR1_SHOOT 10
+#define AR1_END 11
 	void autoRedMiddleShoot(void) {
 		switch (modeState) {
 		case AR1_INIT:
-			GearDeflector->Set(true);
-			FloorIntakeArm->Set(true);
 			modeState = AR1_FWD;
 			break;
 		case AR1_FWD:
@@ -846,7 +857,7 @@ public:
 			}
 			break;
 		case AR1_TIMED:
-			// turn 90 degrees counterclockwise
+			//small time drive to get robot and gear on peg
 			if (timedDrive(RED_1_CASE2_FWD_TIME, RED_1_CASE2_FWD_LEFT_SPD,
 			RED_1_CASE2_FWD_RIGHT_SPD)) {
 				modeState = AR1_WAIT;
@@ -854,13 +865,13 @@ public:
 			}
 			break;
 		case AR1_WAIT:
-			//waits in front of hopper a couple of seconds for balls
+			//wait for gear to be on peg
 			if (AutonTimer.Get() > 0.5) {
 				modeState = AR1_GEAR;
 			}
 			break;
 		case AR1_GEAR:
-			//go backward 3-ish feet
+			//eject gear
 			if (1) {
 				GearOut->Set(true);
 				resetEncoder();
@@ -869,8 +880,9 @@ public:
 			}
 			break;
 		case AR1_BACK:
-			// turns counterclockwise enough degrees to face boiler
-			if (forward(RED_1_CASE5_BACK)) {
+			//back up from peg
+			Shooter0.Set(1.0);
+			if (forward(-65.0)) {
 				modeState = AR1_TURN;
 				ahrs->ZeroYaw();
 			}
@@ -878,7 +890,7 @@ public:
 		case AR1_TURN:
 			//change to timed drive
 			//go forward 7-ish feet to run into boiler
-			if (autonTurn(RED_1_CASE6_TURN)) {
+			if (autonTurn(-90.0)) {
 				modeState = AR1_FWD2;
 				resetEncoder();
 				ahrs->ZeroYaw();
@@ -888,6 +900,14 @@ public:
 			//change to timed drive
 			//go forward 7-ish feet to run into boiler
 			if (forward(RED_1_CASE7_FWD)) {
+				modeState = AR1_TURN2;
+				ahrs->ZeroYaw();
+			}
+			break;
+		case AR1_TURN2:
+			//change to timed drive
+			//go forward 7-ish feet to run into boiler
+			if (autonTurn(-10.0)) {
 				modeState = AR1_SHOOT;
 			}
 			break;
@@ -924,7 +944,8 @@ public:
 			}
 			break;
 		case AR2_TIMED:
-			if (timedDrive(RED_2_CASE2_FWD, RED_2_CASE3_LSPEED, RED_2_CASE3_RSPEED)) {
+			if (timedDrive(RED_2_CASE2_FWD, RED_2_CASE3_LSPEED,
+			RED_2_CASE3_RSPEED)) {
 				AutonTimer.Reset();
 				modeState = AR2_END;
 			}
@@ -950,8 +971,6 @@ public:
 		//puts gear onto side of airship and shoots
 		switch (modeState) {
 		case AR3_INIT:
-			GearDeflector->Set(true);
-			FloorIntakeArm->Set(true);
 			modeState = AR3_FWD;
 			break;
 		case AR3_FWD:
@@ -1027,7 +1046,7 @@ public:
 		//puts gear on pin on right side of airship
 		switch (modeState) {
 		case AB4_INIT:
-			modeState = AB3_FWD;
+			modeState = AB4_FWD;
 			break;
 		case AB4_FWD:
 			// go forward 7 ft
@@ -1268,7 +1287,7 @@ public:
 		//limits max drive speed
 		if (driveCommandLinear > LINEAR_MAX_DRIVE_SPEED) {
 			driveCommandLinear = LINEAR_MAX_DRIVE_SPEED;
-		} else if (driveCommandLinear < -1 * LINEAR_MAX_DRIVE_SPEED) { 								/////***** "-1" is a "magic number." At least put a clear comment in here.
+		} else if (driveCommandLinear < -1 * LINEAR_MAX_DRIVE_SPEED) { /////***** "-1" is a "magic number." At least put a clear comment in here.
 			driveCommandLinear = -1 * LINEAR_MAX_DRIVE_SPEED;
 		}
 		//gyro values that make the robot drive straight
@@ -1277,7 +1296,8 @@ public:
 		//encdoer check
 		if (EncoderCheckTimer.Get() > MAX_DRIVE_TIME) {
 			motorSpeed(0.0, 0.0);
-			DriverStation::ReportError("(forward) Encoder Max Drive Time Exceeded");
+			DriverStation::ReportError(
+					"(forward) Encoder Max Drive Time Exceeded");
 		} else {
 			//calculates and sets motor speeds
 			motorSpeed(driveCommandLinear + driveCommandRotation,
@@ -1310,7 +1330,7 @@ public:
 
 		motorSpeed(-1 * yawError * ERROR_GAIN, yawError * ERROR_GAIN);
 
-		if (isWaiting == 0) {/////***** Rename "isWaiting."  This isWaiting overlaps with the forward() isWaiting.  There is nothing like 2 globals that are used for different things, but have the same name.
+		if (isWaiting == 0) { /////***** Rename "isWaiting."  This isWaiting overlaps with the forward() isWaiting.  There is nothing like 2 globals that are used for different things, but have the same name.
 			if (abs(yawError) < ROTATIONAL_TOLERANCE) {
 				isWaiting = 1;
 				AutonTimer.Reset();
@@ -1373,32 +1393,12 @@ public:
 
 	int shoot() {
 		//resets shooter and kicker encoders
-		if (ShooterClosedLoop) {
-			ShooterPID.Reset();
-			ShooterPID.Enable();
-		}
-		if (KickerClosedLoop) {
-			KickerPID.Reset();
-			KickerPID.Enable();
-		}
+		Shooter0.Set(1.0);
 
 		//turn on conveyor, agitators, and kicker
 		Agitator0.Set(0.8);
 
-		if (KickerClosedLoop) {
-			KickerPID.SetSetpoint(KickerCommandRPM / 60.0);
-			KickerPID.Enable();
-		} else {
-			KickerWheel.Set(KickerCommandPWM);
-		}
-
-		//launch
-		if (ShooterClosedLoop) {
-			//1.75 is a scaling factor to make the PID reach desired RPM
-			ShooterPID.SetSetpoint(ShootCommandRPM / 60.0);
-		} else {
-			Shooter0.Set(ShootCommandPWM); // positive so they turn the correct way.
-		}
+		KickerWheel.Set(1.0);
 
 		return 1;
 	}
@@ -1437,6 +1437,7 @@ private:
 	VictorSP DriveRight0;
 	VictorSP DriveRight1;
 	VictorSP DriveRight2;
+	VictorSP JesusLight;
 	Timer AutonTimer;
 	Timer EncoderCheckTimer;
 	Encoder EncoderLeft;
@@ -1472,6 +1473,7 @@ private:
 	bool useRightEncoder;bool KickerClosedLoop;bool ShooterClosedLoop;
 
 	PIDController KickerPID, ShooterPID;
+
 
 	bool driveRightTriggerPrev = false;bool driveButtonYPrev = false;bool operatorRightTriggerPrev =
 	false;bool intakeDeployed = false;bool shooterOn = false;
