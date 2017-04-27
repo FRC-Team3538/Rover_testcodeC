@@ -9,6 +9,8 @@
 #include <LiveWindow/LiveWindow.h>
 #include <SmartDashboard/SendableChooser.h>
 #include <SmartDashboard/SmartDashboard.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/core/core.hpp>
 
 // vision:
 // Use x and y coordinates from "myContours report"
@@ -40,10 +42,10 @@
 //		measured by encoders
 // 3) Move forward 0.5 sec at 20% power.				Done: reset timer
 //		time measured by timer
-// 4) Wait for 0.5 seconds	(hard coded)				Done: 
+// 4) Wait for 0.5 seconds	(hard coded)				Done:
 //		time measured by timer
-// 5) Start deploying the gear							Done: reset encoders, 
-//		Always terminates the first time though				zero gyro yaw, 
+// 5) Start deploying the gear							Done: reset encoders,
+//		Always terminates the first time though				zero gyro yaw,
 // 6) Back up 48"										Done: Zero yaw
 //		gyro keeps us straight
 // 		encoders measure distance
@@ -57,7 +59,7 @@
 #define BLUE_1_CASE2_FWD_TIME (0.5)
 #define BLUE_1_CASE2_FWD_LEFT_SPD (-0.2)
 #define BLUE_1_CASE2_FWD_RIGHT_SPD (-0.2)
-#define BLUE_1_CASE5_BACK (-48.0)
+#define BLUE_1_CASE5_BACK (-58.5)
 #define BLUE_1_CASE6_TURN (100.0)
 #define BLUE_1_CASE7_FWD (-60.0)
 
@@ -109,9 +111,9 @@
 #define RED_1_CASE2_FWD_TIME (0.5)
 #define RED_1_CASE2_FWD_LEFT_SPD (-0.2)
 #define RED_1_CASE2_FWD_RIGHT_SPD (-0.2)
-#define RED_1_CASE5_BACK (-48.0)
+#define RED_1_CASE5_BACK (-58.5)
 #define RED_1_CASE6_TURN (-100.0)
-#define RED_1_CASE7_FWD (-60.0)
+#define RED_1_CASE7_FWD (-85.0)
 
 // This will go to the gear in front of the middle start position.
 //		This is timed so that collision with the airship will put the robot in position.
@@ -161,7 +163,7 @@
 #define ROTATIONAL_TOLERANCE (1.0)
 // This is the gain for turning using the gyroscope
 #define ERROR_GAIN (-0.05)
-#define ROTATIONAL_SETTLING_TIME (0.1)
+#define ROTATIONAL_SETTLING_TIME (1.1)
 
 //encoder max drive time
 #define MAX_DRIVE_TIME (3.0)
@@ -184,6 +186,23 @@ public:
 					0.0, 0.0, -0.003, 0.0, &EncoderShoot, &Shooter0) {
 
 	}
+
+//private:
+//	static void VisionThread()
+//	{
+//		cs::UsbCamera Camera = CameraServer::GetInstance()->StartAutomaticCapture();
+//		Camera.SetResolution(640 , 480);
+//		cs::CvSink cvSink = CameraServer::GetInstance()->GetVideo();
+//		cs::CvSource outputStreamStd = CameraServer::GetInstance()->PutVideo("Grey" , 640 , 480);
+//		cv::Mat Source;
+//		cv::Mat output;
+//		while(true) {
+//			cvSink.GrabFrame(Source);
+//			cvtColor(Source, output, CV_RGB2GRAY);
+//			cvtColor(Source, output, cv::COLOR_RGB2GRAY);
+//			outputStreamStd.PutFrame(output);
+//		}
+//	}
 
 	void RobotInit() {
 		//setup smartDashboard choosers
@@ -221,6 +240,7 @@ public:
 		KickerCommandRPM = 500;
 		AgitatorCommandPWM = 0.2;
 		IntakeCommandPWM = 0.75;
+		IntakeCommandCurrent = 8.0;
 		autoBackupDistance = -2.0;
 
 		SmartDashboard::PutNumber("IN: Shooter CMD (PWM)", ShootCommandPWM);
@@ -235,6 +255,7 @@ public:
 		SmartDashboard::PutNumber("IN: Intake CMD (PWM)", IntakeCommandPWM);
 		SmartDashboard::PutNumber("IN: Auto Backup Distance (Inch)",
 				autoBackupDistance);
+		SmartDashboard::PutNumber("IN: Max Intake Roller Current", IntakeCommandCurrent);
 
 		//turn off shifter solenoids
 		driveSolenoid->Set(false);
@@ -297,6 +318,11 @@ public:
 		// RobotInit runs well before the autonomous mode starts,
 		//		so there is plenty of time.
 		Wait(1);
+
+		//Camera
+		//std::thread visionThread(VisionThread);
+		//visionThread.detach();
+		CameraServer::GetInstance()->StartAutomaticCapture();
 	}
 
 	void AutonomousInit() override {
@@ -434,19 +460,32 @@ public:
 		double climberCurrentRight = pdp->GetCurrent(12);
 		SmartDashboard::PutNumber("DBG climber current", climberCurrentLeft);
 
-		// rumble if current to high
-		double LHClimb = 0.0;		// Define value for rumble
-		double climberMaxCurrent = 30.0;//needs to be changed... 30.0 is a guess
+		// rumble if climber current to high
+		double LHClimb = 0.0;
+		double climberMaxCurrent = 30.0;			//needs to be changed... 30.0 is a guess
 		if (climberCurrentLeft > climberMaxCurrent)	// Rumble Left if greater than climberMaxCurrent
 			LHClimb = 0.5;
-		Vibrate = Joystick::kLeftRumble;		// set Vibrate to Left
-		OperatorStick.SetRumble(Vibrate, LHClimb); // Set Left Rumble to LH Trigger
+		Vibrate = Joystick::kLeftRumble;			// set Vibrate to Left
+		OperatorStick.SetRumble(Vibrate, LHClimb);  // Set Left Rumble to LH Trigger
 
-		double RHClimb = 0.0;		// Define value for rumble
-		if (climberCurrentRight > climberMaxCurrent)// Rumble Right if greater than climberMaxCurrent
+		double RHClimb = 0.0;
+		if (climberCurrentRight > climberMaxCurrent) // Rumble Right if greater than climberMaxCurrent
 			RHClimb = 0.5;
-		Vibrate = Joystick::kRightRumble;		// set vibrate to Right
-		OperatorStick.SetRumble(Vibrate, RHClimb);// Set Right Rumble to RH Trigger
+		Vibrate = Joystick::kRightRumble;			 // set vibrate to Right
+		OperatorStick.SetRumble(Vibrate, RHClimb);	 // Set Right Rumble to RH Trigger
+
+		//  Read intake motor current from PDP
+		double intakeCurrent = pdp->GetCurrent(6);
+		SmartDashboard::PutNumber("Intake Roller Current", intakeCurrent);
+
+		//rumble when gear intake motor stalls
+		double rumbleIntake = 0.0;
+		if (intakeCurrent > IntakeCommandCurrent)
+			rumbleIntake = 0.75;
+		Vibrate = Joystick::kLeftRumble;
+		OperatorStick.SetRumble(Vibrate, rumbleIntake);
+		Vibrate = Joystick::kRightRumble;
+		OperatorStick.SetRumble(Vibrate, rumbleIntake);
 
 		//drive controls
 		double SpeedLinear = Drivestick.GetRawAxis(1) * 1; // get Yaxis value (forward)
@@ -466,7 +505,7 @@ public:
 
 		//Jesus Light On
 		if (Drivestick.GetRawAxis(3) > Deadband) {
-			JesusLight.Set(Drivestick.GetRawAxis(3));		  //Turn Jesus Light on
+			JesusLight.Set(Drivestick.GetRawAxis(3));	//Turn Jesus Light on
 		} else {
 			JesusLight.Set(0.0);  // Turn LED off
 		}
@@ -675,7 +714,7 @@ public:
 			break;
 		case AB1_TURN2:
 			//turn to face boiler
-			if (autonTurn(10.0)) {
+			if (autonTurn(25.0)) {
 				modeState = AB1_SHOOT;
 			}
 			break;
@@ -907,7 +946,7 @@ public:
 		case AR1_TURN2:
 			//change to timed drive
 			//go forward 7-ish feet to run into boiler
-			if (autonTurn(-10.0)) {
+			if (autonTurn(-25.0)) {
 				modeState = AR1_SHOOT;
 			}
 			break;
@@ -1239,13 +1278,18 @@ public:
 		SmartDashboard::PutNumber("Kicker CMD (RPM)", KickerCommandRPM);
 		KickerPID.SetPID(ShootKP, ShootKI, ShootKD, ShootKF);
 
-		//Conveyor, Agitator, Intake Settings
+		//Conveyor, Agitator Settings
 		ConvCommandPWM = SmartDashboard::GetNumber("IN: Conveyor CMD (PWM)",
 				ConvCommandPWM);
 		AgitatorCommandPWM = SmartDashboard::GetNumber("IN: Agitator CMD (PWM)",
 				AgitatorCommandPWM);
+
+		//Intake Settings
 		IntakeCommandPWM = SmartDashboard::GetNumber("IN: Intake CMD (PWM)",
 				IntakeCommandPWM);
+		IntakeCommandCurrent = SmartDashboard::GetNumber("IN: Max Intake Roller Current",
+						IntakeCommandCurrent);
+		SmartDashboard::PutNumber("Max Intake Roller Current", IntakeCommandCurrent);
 
 		// PWM displays
 		SmartDashboard::PutNumber("Drive L0 Output", DriveLeft0.Get());
@@ -1268,6 +1312,22 @@ public:
 //		//chooser code for manip in open/closed loop
 		ShooterClosedLoop = (chooseShooter.GetSelected() == chooserClosedLoop);
 		KickerClosedLoop = (chooseKicker.GetSelected() == chooserClosedLoop);
+
+		//grip table data
+		//GRIPTable = NetworkTable::GetTable("GRIP/myContoursReport");
+
+		//NetworkTable* t = GRIPTable.get();
+
+//		std::vector<double> arr = GRIPTable->GetNumberArray("centerX",
+//				llvm::ArrayRef<double>());
+//
+//		SmartDashboard::PutNumber("VisionTargetFind", arr.size());
+//
+//		if (arr.size() > 0) {
+//			SmartDashboard::PutNumber("VisionCenterX", arr[0]);
+//		} else {
+//			SmartDashboard::PutNumber("VisionCenterX", 0);
+//		}
 
 	}
 
@@ -1327,9 +1387,19 @@ public:
 
 		float currentYaw = ahrs->GetAngle();
 		float yawError = currentYaw - targetYaw;
+		//value that determines drive output
+		float autoTurnValue = yawError * ERROR_GAIN;
 
-		motorSpeed(-1 * yawError * ERROR_GAIN, yawError * ERROR_GAIN);
+		//if the robot is getting motor outputs but not actually moving, default motor outputs to 0.15
+		if((yawError * ERROR_GAIN) < 0.15 and (yawError * ERROR_GAIN) > 0.03){
+			autoTurnValue = 0.15;
+		} else if((yawError * ERROR_GAIN) > -0.15 and (yawError * ERROR_GAIN) < -0.03){
+			autoTurnValue = -0.15;
+		}
 
+		motorSpeed(-1 * autoTurnValue, autoTurnValue);
+
+		//turn until within tolerance
 		if (isWaiting == 0) { /////***** Rename "isWaiting."  This isWaiting overlaps with the forward() isWaiting.  There is nothing like 2 globals that are used for different things, but have the same name.
 			if (abs(yawError) < ROTATIONAL_TOLERANCE) {
 				isWaiting = 1;
@@ -1339,6 +1409,7 @@ public:
 		//timed wait
 		else {
 			float currentTime = AutonTimer.Get();
+			//if overshoot, then keep turning
 			if (abs(yawError) > ROTATIONAL_TOLERANCE) {
 				isWaiting = 0;					/////***** Rename
 			} else if (currentTime > ROTATIONAL_SETTLING_TIME) {
@@ -1468,12 +1539,11 @@ private:
 	Encoder EncoderShoot;
 	double IntakeCommandPWM, AgitatorCommandPWM, ConvCommandPWM,
 			ShootCommandRPM, ShootCommandPWM, KickerCommandRPM,
-			KickerCommandPWM, ShootKP, ShootKI, ShootKD, ShootKF;
+			KickerCommandPWM, ShootKP, ShootKI, ShootKD, ShootKF, IntakeCommandCurrent;
 
 	bool useRightEncoder;bool KickerClosedLoop;bool ShooterClosedLoop;
 
 	PIDController KickerPID, ShooterPID;
-
 
 	bool driveRightTriggerPrev = false;bool driveButtonYPrev = false;bool operatorRightTriggerPrev =
 	false;bool intakeDeployed = false;bool shooterOn = false;
