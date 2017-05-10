@@ -55,7 +55,7 @@
 //		gyro keeps us straight
 // 9) Shoot
 //10) Stop
-#define BLUE_1_CASE1_FWD (71.0)
+#define BLUE_1_CASE1_FWD (72.0)
 #define BLUE_1_CASE2_FWD_TIME (0.5)
 #define BLUE_1_CASE2_FWD_LEFT_SPD (-0.2)
 #define BLUE_1_CASE2_FWD_RIGHT_SPD (-0.2)
@@ -107,7 +107,7 @@
 // go forward 6.5 ft, turn counterclockwise 90 degrees
 //    back up 7 ft, go slowly forward for 1 second [**** is the sign backwards?****]
 //    turn counterclockwise 125 degrees, go forwards 8.5 ft
-#define RED_1_CASE1_FWD (71.0)
+#define RED_1_CASE1_FWD (72.0)
 #define RED_1_CASE2_FWD_TIME (0.5)
 #define RED_1_CASE2_FWD_LEFT_SPD (-0.2)
 #define RED_1_CASE2_FWD_RIGHT_SPD (-0.2)
@@ -163,7 +163,7 @@
 #define ROTATIONAL_TOLERANCE (1.0)
 // This is the gain for turning using the gyroscope
 #define ERROR_GAIN (-0.05)
-#define ROTATIONAL_SETTLING_TIME (1.1)
+#define ROTATIONAL_SETTLING_TIME (0.5)
 
 //encoder max drive time
 #define MAX_DRIVE_TIME (3.0)
@@ -187,22 +187,28 @@ public:
 
 	}
 
-//private:
-//	static void VisionThread()
-//	{
-//		cs::UsbCamera Camera = CameraServer::GetInstance()->StartAutomaticCapture();
-//		Camera.SetResolution(640 , 480);
-//		cs::CvSink cvSink = CameraServer::GetInstance()->GetVideo();
-//		cs::CvSource outputStreamStd = CameraServer::GetInstance()->PutVideo("Grey" , 640 , 480);
-//		cv::Mat Source;
-//		cv::Mat output;
-//		while(true) {
-//			cvSink.GrabFrame(Source);
-//			cvtColor(Source, output, CV_RGB2GRAY);
-//			cvtColor(Source, output, cv::COLOR_RGB2GRAY);
-//			outputStreamStd.PutFrame(output);
-//		}
-//	}
+private:
+	static void VisionThread()
+	{
+		cs::UsbCamera camera = CameraServer::GetInstance()->StartAutomaticCapture();
+		//1189, only 9 ports
+		//camera.SetResolution(320,240);
+		//camera.SetFPS(15);
+		//camera.SetPixelFormat(cs::VideoMode::kMJPEG)
+		//camera.SetVideoMode(video);
+		camera.SetVideoMode(cs::VideoMode::kMJPEG ,320,240,30);
+		cs::CvSink cvSink = CameraServer::GetInstance()->GetVideo();
+		cs::CvSource outputStreamStd = CameraServer::GetInstance()->PutVideo("Gray",160,120);
+		cv::Mat source;
+		cv::Mat output;
+		while(true) {
+			cvSink.GrabFrame(source);
+			cvtColor(source, output, cv::COLOR_BGR2GRAY);
+			outputStreamStd.PutFrame(output);
+		}
+	}
+
+
 
 	void RobotInit() {
 		//setup smartDashboard choosers
@@ -320,9 +326,9 @@ public:
 		Wait(1);
 
 		//Camera
-		//std::thread visionThread(VisionThread);
-		//visionThread.detach();
-		CameraServer::GetInstance()->StartAutomaticCapture();
+		std::thread visionThread(VisionThread);
+		visionThread.detach();
+		//CameraServer::GetInstance()->StartAutomaticCapture();
 	}
 
 	void AutonomousInit() override {
@@ -484,8 +490,10 @@ public:
 			rumbleIntake = 0.75;
 		Vibrate = Joystick::kLeftRumble;
 		OperatorStick.SetRumble(Vibrate, rumbleIntake);
+		Drivestick.SetRumble(Vibrate, rumbleIntake);
 		Vibrate = Joystick::kRightRumble;
 		OperatorStick.SetRumble(Vibrate, rumbleIntake);
+		Drivestick.SetRumble(Vibrate, rumbleIntake);
 
 		//drive controls
 		double SpeedLinear = Drivestick.GetRawAxis(1) * 1; // get Yaxis value (forward)
@@ -657,6 +665,7 @@ public:
 		//Blue middle gear then shoot auto
 		switch (modeState) {
 		case AB1_INIT:
+			FloorIntakeArm->Set(false);
 			modeState = AB1_FWD;
 			break;
 		case AB1_FWD:
@@ -706,6 +715,7 @@ public:
 			}
 			break;
 		case AB1_FWD2:
+			FloorIntakeArm->Set(true);
 			//go forward 7-ish feet to get itno position to shoot
 			if (forward(BLUE_1_CASE7_FWD)) {
 				modeState = AB1_TURN2;
@@ -714,7 +724,7 @@ public:
 			break;
 		case AB1_TURN2:
 			//turn to face boiler
-			if (autonTurn(25.0)) {
+			if (autonTurn(-25.0)) {
 				modeState = AB1_SHOOT;
 			}
 			break;
@@ -747,7 +757,7 @@ public:
 			modeState = AB2_FWD;
 			break;
 		case AB2_FWD:
-			if (forward(71.0)) {
+			if (forward(69.0)) {
 				//timedDrive(BLUE_2_CASE2_TIME, BLUE_2_CASE2_LSPEED,
 				//BLUE_2_CASE2_RSPEED)
 				//if (forward7ft(-0.4, 7 * 12.0)) {
@@ -886,6 +896,7 @@ public:
 	void autoRedMiddleShoot(void) {
 		switch (modeState) {
 		case AR1_INIT:
+			FloorIntakeArm->Set(false);
 			modeState = AR1_FWD;
 			break;
 		case AR1_FWD:
@@ -938,6 +949,7 @@ public:
 		case AR1_FWD2:
 			//change to timed drive
 			//go forward 7-ish feet to run into boiler
+			FloorIntakeArm->Set(true);
 			if (forward(RED_1_CASE7_FWD)) {
 				modeState = AR1_TURN2;
 				ahrs->ZeroYaw();
@@ -946,7 +958,7 @@ public:
 		case AR1_TURN2:
 			//change to timed drive
 			//go forward 7-ish feet to run into boiler
-			if (autonTurn(-25.0)) {
+			if (autonTurn(25.0)) {
 				modeState = AR1_SHOOT;
 			}
 			break;
@@ -1105,7 +1117,7 @@ public:
 		case AB4_STR8:
 			// go forward
 			//timed drive
-			if (forward(BLUE_4_CASE3_STR8)) {
+			if (forward(15.5)) {
 				modeState = AB4_GEAR_WAIT;
 				resetEncoder();
 			}
@@ -1171,7 +1183,7 @@ public:
 			break;
 		case AR4_STR8:
 			// go forward to put gear on peg
-			if (forward(RED_4_CASE3_STR8)) {
+			if (forward(15.5)) {
 				modeState = AR4_GEAR_WAIT;
 				AutonTimer.Reset();
 			}
@@ -1188,6 +1200,7 @@ public:
 				modeState = AR4_BACK;
 				ahrs->ZeroYaw();
 				resetEncoder();
+				GearOut->Set(true);
 			}
 			break;
 		case AR4_BACK:
@@ -1468,7 +1481,6 @@ public:
 
 		//turn on conveyor, agitators, and kicker
 		Agitator0.Set(0.8);
-
 		KickerWheel.Set(1.0);
 
 		return 1;
